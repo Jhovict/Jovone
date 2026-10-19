@@ -279,16 +279,20 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   </div>
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="sheet">
-      <div class="ver" id="newsVer">Versão 2.3</div>
-      <h2 id="newsTitle">Chegada em todos os mapas</h2>
+      <div class="ver" id="newsVer">Versão 2.4</div>
+      <h2 id="newsTitle">Trechos mais curtos</h2>
       <h3>Novo</h3>
       <ul>
-        <li><b>Sertão e Floresta</b> agora têm um trecho de 18 km com linha de chegada, prêmio em moedas e melhor tempo, como os mapas curtos.</li>
-        <li>O contador mostra quanto falta para a chegada do trecho.</li>
+        <li><b>Todos os mapas</b> agora têm um trecho curto com linha de chegada: Sertão e Floresta 8 km, Cânions 8 km, Litoral 7 km e Cidade 6 km.</li>
+        <li>No modo contra o relógio o percurso é de até 5 km.</li>
+      </ul>
+      <h3>Versão 2.3 · Chegada em todos os mapas</h3>
+      <ul>
+        <li>Linha de chegada, prêmio em moedas e melhor tempo também no Sertão e na Floresta.</li>
       </ul>
       <h3>Versão 2.2 · Contra o relógio</h3>
       <ul>
-        <li>Modo com percurso fixo, cronômetro, carro fantasma do seu melhor tempo e ranking de tempos por mapa (botão "⏱ Modo" na garagem).</li>
+        <li>Percurso fixo, cronômetro, carro fantasma do seu melhor tempo e ranking de tempos por mapa (botão "⏱ Modo" na garagem).</li>
       </ul>
       <h3>Versão 2.1 · Som, moedas e estrada viva</h3>
       <ul>
@@ -1759,32 +1763,32 @@ document.querySelectorAll('.tod button').forEach(b => b.onclick = () => applyMod
 
 /* ---------- maps ---------- */
 const MAPS = [
-  {id:'sertao', name:'Sertão', emoji:'🌵', road:'BR-316', from:'Teresina', dest:'PICOS', km:310, leg:18,
+  {id:'sertao', name:'Sertão', emoji:'🌵', road:'BR-316', from:'Teresina', dest:'PICOS', km:310, leg:8,
    curve:[1,1,1], hill:1, farL:-6, farR:-6, far:'serra', base:0xa98250, bird:0x18181a,
    ground:['#b48c58',['#a37c4b','#c29a64','#8e8a4c','#7f8645'],['#9b7546','#c7a170']], shoulder:['#9a774c','#86663f','#ad8a5c'],
    makers:[carnauba, carnauba, mandacaru, moita, moita, carnauba, mandacaru, moita], count:96, houses:6,
    pools:['turbines','stations','billboards','barracas','herds','flocks']},
-  {id:'litoral', name:'Litoral', emoji:'🏖️', road:'PI-116', from:'Luís Correia', dest:'PARNAÍBA', km:18,
+  {id:'litoral', name:'Litoral', emoji:'🏖️', road:'PI-116', from:'Luís Correia', dest:'PARNAÍBA', km:18, leg:7,
    curve:[0.8,0.85,0.7], hill:0.2, farL:-10, farR:2, far:'coast', base:0x2a7fa8, bird:0xf4f4f4, water:true,
    hills:{dia:[0xe8d9b0,0xf0e4c4], tarde:[0xe9b98a,0xf0c99c], noite:[0x1a2238,0x222c46]},
    ground:['#e3cf9e',['#d8c08a','#ecdcb0','#c9b27a','#a8b07a'],['#d2bb86','#f0e2bd']], shoulder:['#e0cb98','#cdb47e','#efdcae'],
    makers:[coqueiro, coqueiro, coqueiro, duna, moita, quiosque, coqueiro], count:84, houses:5,
    pools:['turbines','stations','billboards','boats','lighthouses','flocks']},
-  {id:'canions', name:'Cânions', emoji:'🪨', road:'BR-222', from:'Sete Cidades', dest:'PIRIPIRI', km:26,
+  {id:'canions', name:'Cânions', emoji:'🪨', road:'BR-222', from:'Sete Cidades', dest:'PIRIPIRI', km:26, leg:8,
    curve:[1.1,1.15,1.2], hill:1.45, farL:-4, farR:-4, far:'mesas', base:0x9c5530, bird:0x18181a,
    hills:{dia:[0xb06a48,0xc98060], tarde:[0xa8503a,0xc0664a], noite:[0x1a1020,0x241628]},
    fog:{dia:0xe8d2bc},
    ground:['#b8643a',['#a5552f','#c97a4c','#8f6a3a','#9a7c45'],['#9a4f2c','#d08a5c']], shoulder:['#a55a34','#8f4b2a','#c06d43'],
    makers:[pedra, pedra, arvoreCerrado, arvoreCerrado, moita, pedra, mandacaru], count:92, houses:3,
    pools:['stations','billboards','barracas','herds','flocks']},
-  {id:'cidade', name:'Cidade', emoji:'🏙️', road:'AV. MARGINAL', from:'Teresina', dest:'CENTRO', km:14,
+  {id:'cidade', name:'Cidade', emoji:'🏙️', road:'AV. MARGINAL', from:'Teresina', dest:'CENTRO', km:14, leg:6,
    curve:[0.35,0.4,0.3], hill:0.15, farL:-1, farR:-1, far:'skyline', base:0x5d6555, bird:0x18181a, traffic:1.35,
    hills:{dia:[0x8a96a8,0x9fa9b8], tarde:[0x7a6a78,0x8f7d88], noite:[0x0b1226,0x111a32]},
    fog:{dia:0xc9d3dc, tarde:0xe8b998},
    ground:['#7d8a6a',['#6f7d5c','#8b9877','#7a7f78','#8a8a84'],['#6a7560','#949c86']], shoulder:['#a7a9ad','#96989c','#b6b8bc'],
    makers:[arvoreRua], count:44, houses:0,
    pools:['buildings','busStops','stations','billboards']},
-  {id:'floresta', name:'Floresta', emoji:'🌳', road:'BR-163', from:'Itaituba', dest:'SANTARÉM', km:370, leg:18,
+  {id:'floresta', name:'Floresta', emoji:'🌳', road:'BR-163', from:'Itaituba', dest:'SANTARÉM', km:370, leg:8,
    curve:[1,1.1,1.15], hill:1.0, farL:-6, farR:-6, far:'green', base:0x3b5426, bird:0x18181a, rain:true, fogMul:0.62,
    hills:{dia:[0x5d7f63,0x6f9274], tarde:[0x6b6a4a,0x7d7a55], noite:[0x0b1712,0x0f1d16]},
    fog:{dia:0xb7c4b8, tarde:0xc7b48f, noite:0x0d1714},
@@ -2445,7 +2449,7 @@ $('optHow').onclick = () => { tutOn = true; tutT = 0; try{ localStorage.removeIt
 /* ---------- modo contra o relógio: percurso fixo, cronômetro e carro fantasma ---------- */
 let trial = false; try{ trial = localStorage.getItem('br316tt') === '1'; }catch(e){}
 const legKm = () => MAP.leg || MAP.km, destTxt = () => MAP.leg ? 'fim do trecho' : cap(MAP.dest);
-const trialKm = () => Math.min(legKm(), 6);
+const trialKm = () => Math.min(legKm(), 5);
 const fmtT = t => { const m = Math.floor(t / 60), sec = t - m * 60; return m + ':' + sec.toFixed(1).padStart(4, '0').replace('.', ','); };
 let ghostObj = null, ghostData = null, ghostRec = [], ghostNow = 0;
 const ghostKey = () => 'br316ghost_' + MAP.id;
@@ -2498,7 +2502,7 @@ function finishTrial(){
 function syncTT(){ const g = loadGhost(); $('ttBtn').textContent = trial ? '⏱ Contra o relógio' + (g ? ' · melhor ' + fmtT(g.t) : '') : '⏱ Modo: Livre'; }
 $('ttBtn').onclick = () => { trial = !trial; try{ localStorage.setItem('br316tt', trial ? '1' : '0'); }catch(e){} syncTT(); sfx('click'); };
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.3';
+const VERSION = '2.4';
 function openNews(){ $('news').hidden = false; const sh = $('news').firstElementChild; sh.scrollTop = 0; $('newsClose').focus({preventScroll:true}); sh.scrollTop = 0; }
 function closeNews(){
   $('news').hidden = true;
