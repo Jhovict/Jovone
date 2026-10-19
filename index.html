@@ -279,13 +279,16 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   </div>
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="sheet">
-      <div class="ver" id="newsVer">Versão 2.2</div>
-      <h2 id="newsTitle">Contra o relógio</h2>
-      <h3>Novo modo</h3>
+      <div class="ver" id="newsVer">Versão 2.3</div>
+      <h2 id="newsTitle">Chegada em todos os mapas</h2>
+      <h3>Novo</h3>
       <ul>
-        <li><b>Contra o relógio</b>: ative em "⏱ Modo" na garagem. Percurso fixo de até 6 km por mapa, com cronômetro na tela.</li>
-        <li><b>Carro fantasma</b>: o seu melhor tempo vira um carro translúcido que corre com você, e o cronômetro mostra quanto você está à frente ou atrás dele.</li>
-        <li><b>Ranking de tempos</b> por mapa. Sem gasolina, moedas ou postos: batidas e obstáculos custam segundos. Terminar rende moedas, e bater o recorde rende mais.</li>
+        <li><b>Sertão e Floresta</b> agora têm um trecho de 18 km com linha de chegada, prêmio em moedas e melhor tempo, como os mapas curtos.</li>
+        <li>O contador mostra quanto falta para a chegada do trecho.</li>
+      </ul>
+      <h3>Versão 2.2 · Contra o relógio</h3>
+      <ul>
+        <li>Modo com percurso fixo, cronômetro, carro fantasma do seu melhor tempo e ranking de tempos por mapa (botão "⏱ Modo" na garagem).</li>
       </ul>
       <h3>Versão 2.1 · Som, moedas e estrada viva</h3>
       <ul>
@@ -1756,7 +1759,7 @@ document.querySelectorAll('.tod button').forEach(b => b.onclick = () => applyMod
 
 /* ---------- maps ---------- */
 const MAPS = [
-  {id:'sertao', name:'Sertão', emoji:'🌵', road:'BR-316', from:'Teresina', dest:'PICOS', km:310,
+  {id:'sertao', name:'Sertão', emoji:'🌵', road:'BR-316', from:'Teresina', dest:'PICOS', km:310, leg:18,
    curve:[1,1,1], hill:1, farL:-6, farR:-6, far:'serra', base:0xa98250, bird:0x18181a,
    ground:['#b48c58',['#a37c4b','#c29a64','#8e8a4c','#7f8645'],['#9b7546','#c7a170']], shoulder:['#9a774c','#86663f','#ad8a5c'],
    makers:[carnauba, carnauba, mandacaru, moita, moita, carnauba, mandacaru, moita], count:96, houses:6,
@@ -1781,7 +1784,7 @@ const MAPS = [
    ground:['#7d8a6a',['#6f7d5c','#8b9877','#7a7f78','#8a8a84'],['#6a7560','#949c86']], shoulder:['#a7a9ad','#96989c','#b6b8bc'],
    makers:[arvoreRua], count:44, houses:0,
    pools:['buildings','busStops','stations','billboards']},
-  {id:'floresta', name:'Floresta', emoji:'🌳', road:'BR-163', from:'Itaituba', dest:'SANTARÉM', km:370,
+  {id:'floresta', name:'Floresta', emoji:'🌳', road:'BR-163', from:'Itaituba', dest:'SANTARÉM', km:370, leg:18,
    curve:[1,1.1,1.15], hill:1.0, farL:-6, farR:-6, far:'green', base:0x3b5426, bird:0x18181a, rain:true, fogMul:0.62,
    hills:{dia:[0x5d7f63,0x6f9274], tarde:[0x6b6a4a,0x7d7a55], noite:[0x0b1712,0x0f1d16]},
    fog:{dia:0xb7c4b8, tarde:0xc7b48f, noite:0x0d1714},
@@ -1967,7 +1970,7 @@ function renderGarage(){
     `<span>${k}</span><div class="bar">${Array.from({length:10},(_,i)=>`<i class="${i<v?'on':''}"></i>`).join('')}</div><em>${v}</em>`).join('');
   $('gDots').innerHTML = CARS.map((_,i) => `<i class="${i===carIdx?'on':''}${isOwned(CARS[i])?'':' lock'}"></i>`).join('');
   $('gMaps').innerHTML = MAPS.map((m,i) => `<button type="button" data-i="${i}" aria-pressed="${i===mapIdx}">${m.emoji} ${m.name}</button>`).join('');
-  $('gRoute').textContent = MAP.road + ' · ' + MAP.from + ' → ' + cap(MAP.dest);
+  $('gRoute').textContent = MAP.road + ' · ' + MAP.from + ' → ' + cap(MAP.dest) + (MAP.leg ? ' · trecho de ' + MAP.leg + ' km' : '');
   $('carName').textContent = CAR.name; syncTT();
 }
 function selectCar(i){
@@ -2421,7 +2424,7 @@ function updateGoals(dt){
     sfx('check');
     showBanner('Etapa ' + st + ' concluída', trial ? fmtT(runT) : fmtTime(stageT) + (under ? ' · no tempo' : '') + ' · +' + reward + ' 🪙 · +15% combustível'); stageT = 0;
   }
-  const fin = (trial ? trialKm() : MAP.km) * 1000;
+  const fin = (trial ? trialKm() : legKm()) * 1000;
   if(!finishGate && fin - ps < 700 && fin - ps > 0){ finishGate = makeFinish(); finishGate.userData.s = fin; placeOnRoad(finishGate, fin, 0); scene.add(finishGate); }
   if(finishGate){ const d = finishGate.userData.s - ps; if(d > 15 && d < 600 && tipTxt === '') tipTxt = '🏁 Chegada em ' + Math.round(d / 10) * 10 + ' m'; }
   if(ps >= fin){ crash('win'); return; }
@@ -2441,7 +2444,8 @@ $('optHow').onclick = () => { tutOn = true; tutT = 0; try{ localStorage.removeIt
 
 /* ---------- modo contra o relógio: percurso fixo, cronômetro e carro fantasma ---------- */
 let trial = false; try{ trial = localStorage.getItem('br316tt') === '1'; }catch(e){}
-const trialKm = () => Math.min(MAP.km, 6);
+const legKm = () => MAP.leg || MAP.km, destTxt = () => MAP.leg ? 'fim do trecho' : cap(MAP.dest);
+const trialKm = () => Math.min(legKm(), 6);
 const fmtT = t => { const m = Math.floor(t / 60), sec = t - m * 60; return m + ':' + sec.toFixed(1).padStart(4, '0').replace('.', ','); };
 let ghostObj = null, ghostData = null, ghostRec = [], ghostNow = 0;
 const ghostKey = () => 'br316ghost_' + MAP.id;
@@ -2494,7 +2498,7 @@ function finishTrial(){
 function syncTT(){ const g = loadGhost(); $('ttBtn').textContent = trial ? '⏱ Contra o relógio' + (g ? ' · melhor ' + fmtT(g.t) : '') : '⏱ Modo: Livre'; }
 $('ttBtn').onclick = () => { trial = !trial; try{ localStorage.setItem('br316tt', trial ? '1' : '0'); }catch(e){} syncTT(); sfx('click'); };
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.2';
+const VERSION = '2.3';
 function openNews(){ $('news').hidden = false; const sh = $('news').firstElementChild; sh.scrollTop = 0; $('newsClose').focus({preventScroll:true}); sh.scrollTop = 0; }
 function closeNews(){
   $('news').hidden = true;
@@ -2535,12 +2539,12 @@ function crash(reason){
   const km = ps / 1000; let rec = false;
   if(km > best){ best = km; rec = true; try{localStorage.setItem(bestKey(), best)}catch(e){} $('best').textContent = fmtKm(best); }
   $('over').querySelector('h1').textContent = win ? 'CHEGOU!' : reason === 'fuel' ? 'SEM GASOLINA' : 'BATEU!';
-  if(win) showBanner('CHEGADA!', cap(MAP.dest) + ' · ' + fmtTime(runT));
+  if(win) showBanner('CHEGADA!', (MAP.leg ? 'Fim do trecho' : cap(MAP.dest)) + ' · ' + fmtTime(runT));
   $('final').textContent = fmtKm(km);
   const bonus = Math.round(km * 20) + (win ? 150 : 0); if(bonus > 0) addCoins(bonus);
   const rid = Date.now(); renderTop(recordRun(km, rid), rid);
   let tRec = false; if(win){ const tk = 'br316time_' + MAP.id; try{ const old = parseFloat(localStorage.getItem(tk)); if(!(old > 0) || runT < old){ localStorage.setItem(tk, runT); tRec = true; } }catch(e){} }
-  $('msg').textContent = win ? 'Com o ' + CAR.name + ': chegada em ' + cap(MAP.dest) + ' em ' + fmtTime(runT) + (tRec ? ' · melhor tempo!' : '') + ' · +' + runCoins + ' 🪙' : (rec ? 'Novo recorde! ' : '') + 'Com o ' + CAR.name + ': ' + (km < 0.5 ? 'mal saiu do posto.' : km < 2 ? 'boa arrancada, agora é segurar nas curvas.' : km < 5 ? 'já está pegando o jeito da BR.' : 'piloto de estrada, ' + cap(MAP.dest) + ' que se prepare!') + (runCoins > 0 ? ' +' + runCoins + ' 🪙 nesta corrida.' : '');
+  $('msg').textContent = win ? 'Com o ' + CAR.name + ': chegada ' + (MAP.leg ? 'ao fim do trecho' : 'em ' + cap(MAP.dest)) + ' em ' + fmtTime(runT) + (tRec ? ' · melhor tempo!' : '') + ' · +' + runCoins + ' 🪙' : (rec ? 'Novo recorde! ' : '') + 'Com o ' + CAR.name + ': ' + (km < 0.5 ? 'mal saiu do posto.' : km < 2 ? 'boa arrancada, agora é segurar nas curvas.' : km < 5 ? 'já está pegando o jeito da BR.' : 'piloto de estrada, ' + cap(MAP.dest) + ' que se prepare!') + (runCoins > 0 ? ' +' + runCoins + ' 🪙 nesta corrida.' : '');
   setTimeout(() => { $('over').hidden = false; $('againBtn').focus(); player.userData.body.visible = true; player.userData.wheels.forEach(w => { w.visible = true; }); }, 1700);
 }
 function togglePause(){
@@ -2860,8 +2864,8 @@ function updateCamera(dt){
 function hud(){
   $('spd').textContent = Math.round(state === 'play' ? speed * 3.6 : 0);
   $('dist').textContent = fmtKm(ps/1000);
-  $('destLabel').textContent = trial ? 'Chegada' : cap(MAP.dest);
-  $('picos').textContent = trial ? Math.max(0, trialKm() - ps/1000).toFixed(1).replace('.', ',') + ' km' : Math.max(0, Math.round(MAP.km - ps/1000)) + ' km';
+  $('destLabel').textContent = (trial || MAP.leg) ? 'Chegada' : cap(MAP.dest);
+  $('picos').textContent = trial ? Math.max(0, trialKm() - ps/1000).toFixed(1).replace('.', ',') + ' km' : Math.max(0, Math.round(legKm() - ps/1000)) + ' km';
   const tm = $('timer');
   if(state === 'play' && trial){
     tm.hidden = false; let tt = '⏱ ' + fmtT(runT);
