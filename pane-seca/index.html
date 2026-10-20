@@ -88,6 +88,8 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .hb kbd{position:absolute;left:4px;top:2px;font-family:var(--body);font-size:.58rem;color:var(--muted)}
 .hb[aria-pressed="true"]{background:rgba(242,182,50,.35)}
 .hb.empty{opacity:.45}
+.cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 1.5px rgba(0,0,0,.45);pointer-events:none}
+.cross.on{width:10px;height:10px;margin:-5px 0 0 -5px;background:var(--stripe)}
 
 .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
   background:rgba(13,20,32,.62);text-align:center;padding:24px;z-index:3}
@@ -215,6 +217,7 @@ body.touch:not([data-st=menu]) .overlay{padding-top:44px}
   <div class="haze"></div>
   <div class="dark" id="dark"></div>
   <div class="vig" id="vig"></div>
+  <div class="cross" id="cross" hidden></div>
   <div class="compass" id="compass" hidden><span class="arr" id="cmpArr">▲</span><span id="cmpTxt">Carro · 0 m</span></div>
   <div class="clock" id="clock" hidden>08:00</div>
   <div class="vitals" id="vitals" hidden>
@@ -229,6 +232,7 @@ body.touch:not([data-st=menu]) .overlay{padding-top:44px}
     <button class="hb" id="hbHeal" type="button" aria-label="Curar"><kbd>3</kbd>🩹<em id="hbHealN">0</em></button>
     <button class="hb" id="hbLamp" type="button" aria-label="Lanterna" aria-pressed="false"><kbd>L</kbd>🔦</button>
     <button class="hb" id="hbBag" type="button" aria-label="Mochila"><kbd>Tab</kbd>🎒</button>
+    <button class="hb" id="hbCam" type="button" aria-label="Trocar câmera"><kbd>V</kbd>📷</button>
   </div>
   <button class="tip" id="tip" type="button" hidden></button>
   <div class="banner" id="banner" hidden></div>
@@ -295,8 +299,12 @@ body.touch:not([data-st=menu]) .overlay{padding-top:44px}
 
   <div class="overlay sheetwrap" id="how" hidden role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <div class="sheet">
-      <div class="ver">Versão 1.1 · casas e açude refeitos</div>
+      <div class="ver">Versão 1.2 · primeira pessoa</div>
       <h3>Novo nesta versão</h3>
+      <ul>
+        <li><b>Primeira pessoa completa:</b> botão 📷 na barra (ou V) alterna câmera longe, perto e primeira pessoa. Na visão dos olhos aparecem os braços, a lança ou o facão, a lanterna na outra mão, a mira no centro (fica amarela sobre o que dá para usar) e o balanço da cabeça ao andar.</li>
+      </ul>
+      <h3>Versão 1.1</h3>
       <ul>
         <li><b>Celular:</b> a etiqueta da ação (Vasculhar, Beber…) agora é um botão, o AÇÃO mostra o que vai fazer e o toque é reconhecido mesmo no modo computador do navegador.</li>
         <li><b>Açude de verdade:</b> bacia funda, água translúcida com reflexo e ondas, lama rachada na margem, juncos, aguapé, galhos secos, barragem de terra com pedras e sangradouro. A água funda não dá pé.</li>
@@ -1469,7 +1477,42 @@ function hud(){
 
 /* ---------- câmera ---------- */
 const cam = {yaw:0, pitch:.32, mode:store.get('cam', 0) % 3, dist:6.2};
-const CAMS = [{d:6.4, h:1.5}, {d:3.6, h:1.55}, {d:0, h:1.62}];
+const CAMS = [{d:6.4, h:1.5, n:'Câmera longe'}, {d:3.6, h:1.55, n:'Câmera perto'}, {d:0, h:1.62, n:'Primeira pessoa'}];
+function cycleCam(){ cam.mode = (cam.mode + 1) % 3; store.set('cam', cam.mode); if(state === 'play') toast('📷 ' + CAMS[cam.mode].n); if(cam.mode === 2) cam.pitch = clamp(cam.pitch - .25, -.4, .6); }
+
+/* ---------- primeira pessoa: braços e ferramenta presos à câmera, desenhados por cima do mundo ---------- */
+scene.add(camera);
+const fpv = new THREE.Group(); fpv.visible = false; camera.add(fpv);
+const fpMat = c => new THREE.MeshLambertMaterial({color:c, transparent:true, opacity:1, depthWrite:true});
+const fpSkin = fpMat(0xc68a5e), fpSleeve = fpMat(0xb5683a), fpWood = fpMat(0x7a5a3a), fpSteel = new THREE.MeshPhongMaterial({color:0xc9ced6, shininess:120, specular:0xffffff, transparent:true}), fpDark = fpMat(0x3a2a1a);
+const fpBox = (g, w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.renderOrder = 1001; g.add(o); return o; };
+{ // o primeiro objeto limpa a profundidade: os braços nunca atravessam parede nem árvore
+  const clr = new THREE.Mesh(new THREE.PlaneGeometry(.001, .001), new THREE.MeshBasicMaterial({transparent:true, opacity:0, depthWrite:false}));
+  clr.renderOrder = 1000; clr.position.z = -.5; clr.frustumCulled = false; clr.onBeforeRender = r => r.clearDepth(); fpv.add(clr); }
+const fpR = new THREE.Group(); fpR.position.set(.3, -.3, -.42); fpv.add(fpR);
+fpBox(fpR, .1, .1, .42, fpSleeve, 0, 0, .12); fpBox(fpR, .085, .085, .14, fpSkin, 0, 0, -.14);
+const fpLanca = new THREE.Group(); fpLanca.position.set(0, .01, -.16); fpR.add(fpLanca);
+fpBox(fpLanca, .028, .028, 1.1, fpWood, 0, 0, -.2); { const t = new THREE.Mesh(new THREE.ConeGeometry(.035, .16, 5), fpSteel); t.rotation.x = -Math.PI/2; t.position.z = -.83; t.renderOrder = 1001; fpLanca.add(t); }
+const fpFacao = new THREE.Group(); fpFacao.position.set(0, .01, -.16); fpFacao.rotation.x = .5; fpR.add(fpFacao);
+fpBox(fpFacao, .03, .05, .1, fpDark, 0, 0, 0); fpBox(fpFacao, .012, .045, .38, fpSteel, 0, .005, -.23);
+const fpL = new THREE.Group(); fpL.position.set(-.3, -.32, -.45); fpv.add(fpL);
+fpBox(fpL, .1, .1, .42, fpSleeve, 0, 0, .12); fpBox(fpL, .085, .085, .14, fpSkin, 0, 0, -.14);
+const fpTorch = new THREE.Group(); fpTorch.position.set(0, .02, -.2); fpL.add(fpTorch);
+{ const b = new THREE.Mesh(new THREE.CylinderGeometry(.028, .034, .2, 10), fpMat(0x2a2d33)); b.rotation.x = Math.PI/2; b.renderOrder = 1001; fpTorch.add(b);
+  const lens = new THREE.Mesh(new THREE.CircleGeometry(.03, 12), new THREE.MeshBasicMaterial({color:0xfff6d0, transparent:true})); lens.position.z = -.101; lens.renderOrder = 1002; fpTorch.add(lens); }
+function updateFP(dt){
+  const on = cam.mode === 2 && state !== 'menu'; fpv.visible = on; $('cross').hidden = !(on && state === 'play');
+  if(!on) return;
+  const w = weapon(), mv = Math.min(1, P.spd/4.2), ph = P.walk;
+  fpLanca.visible = w === 'lanca'; fpFacao.visible = w === 'facao';
+  const bx = Math.sin(ph)*.016*mv, by = -Math.abs(Math.cos(ph))*.018*mv;
+  fpR.position.set(.3 + bx, -.3 + by, -.42); fpL.position.set(-.3 + bx, -.32 + by, -.45);
+  // golpe: ergue e desce o braço direito
+  if(P.swing > 0){ const k = 1 - P.swing/.32, a = k < .35 ? k/.35 : 1 - (k - .35)/.65; fpR.rotation.set(.9*a - (k > .35 ? .8*(1 - a) : 0), -.25*a, 0); fpR.position.z -= .12*a; }
+  else fpR.rotation.set(damp(fpR.rotation.x, w ? .12 : 0, 10, dt), 0, 0);
+  fpL.visible = P.lamp; fpL.rotation.set(-.05 + Math.sin(ph*.5)*.02*mv, .12, 0);
+  $('cross').classList.toggle('on', !!target);
+}
 const camT = new THREE.Vector3();
 function updateCamera(dt, t){
   if(state === 'menu'){
@@ -1481,6 +1524,8 @@ function updateCamera(dt, t){
   camT.set(P.x, P.y + C.h, P.z);
   if(C.d === 0){
     camera.position.copy(camT).addScaledVector(new THREE.Vector3(-Math.sin(P.rot), 0, -Math.cos(P.rot)), .12);
+    if(P.ground){ const mv = Math.min(1, P.spd/4.2); camera.position.y += Math.abs(Math.sin(P.walk))*.05*mv - .02*mv; camera.position.x += Math.cos(P.walk)*.025*mv*Math.cos(cam.yaw); camera.position.z -= Math.cos(P.walk)*.025*mv*Math.sin(cam.yaw); }
+    if(P.hurt > 0){ camera.position.x += (Math.random() - .5)*P.hurt*.1; camera.position.y += (Math.random() - .5)*P.hurt*.1; }
     const cp = Math.cos(cam.pitch); camera.lookAt(camera.position.x - Math.sin(cam.yaw)*cp*10, camera.position.y - Math.sin(cam.pitch)*10, camera.position.z - Math.cos(cam.yaw)*cp*10);
   } else {
     const cp = Math.cos(cam.pitch);
@@ -1489,6 +1534,8 @@ function updateCamera(dt, t){
     camera.position.set(x, y, z); camera.lookAt(camT.x, camT.y + .2, camT.z);
   }
   player.userData.body.forEach(m => m.visible = C.d !== 0);
+  player.userData.arms.forEach(a => a.visible = C.d !== 0);
+  updateFP(dt);
 }
 
 /* ---------- entrada ---------- */
@@ -1513,7 +1560,7 @@ addEventListener('keydown', e => {
     case 'Digit2': if(state === 'play') quickDrink(); break;
     case 'Digit3': if(state === 'play') quickHeal(); break;
     case 'KeyL': if(state === 'play') toggleLamp(); break;
-    case 'KeyV': case 'KeyC': cam.mode = (cam.mode + 1) % 3; store.set('cam', cam.mode); break;
+    case 'KeyV': case 'KeyC': cycleCam(); break;
     case 'KeyM': toggleMute(); break;
     case 'KeyP': case 'Escape': if(state === 'play') pauseOn(); else if(state === 'pause') pauseOff(); break;
   }
@@ -1589,7 +1636,7 @@ function pollPad(dt){
   if(state === 'play'){
     cam.yaw -= pad.lx*2.6*sens*dt; cam.pitch = clamp(cam.pitch + pad.ly*1.8*sens*dt, -.55, 1.15);
     if(pressed(0)) doAction(); if(pressed(1)) input.jump = true; if(pressed(2)) quickHeal(); if(pressed(3)) openInv();
-    if(pressed(4)) quickEat(); if(pressed(5)) quickDrink(); if(pressed(6)) toggleLamp(); if(pressed(9)) pauseOn(); if(pressed(8)){ cam.mode = (cam.mode + 1) % 3; store.set('cam', cam.mode); }
+    if(pressed(4)) quickEat(); if(pressed(5)) quickDrink(); if(pressed(6)) toggleLamp(); if(pressed(9)) pauseOn(); if(pressed(8)) cycleCam();
   } else if(state === 'menu'){ if(pressed(0) || pressed(9)) startGame(!!loadSave()); }
   else if(state === 'pause'){ if(pressed(0) || pressed(9)) pauseOff(); if(pressed(1)) toMenu(); }
   else if(state === 'inv'){ if(pressed(1) || pressed(3)) closeInv(); }
@@ -1770,7 +1817,7 @@ function renderInv(){
 }
 function openInv(){ if(state !== 'play') return; state = 'inv'; renderInv(); $('inv').hidden = false; if(locked) document.exitPointerLock?.(); $('invClose').focus({preventScroll:true}); }
 function closeInv(){ $('inv').hidden = true; if(state === 'inv') state = 'play'; }
-$('invClose').onclick = closeInv; onTap($('hbBag'), openInv);
+$('invClose').onclick = closeInv; onTap($('hbBag'), openInv); onTap($('hbCam'), cycleCam);
 onTap($('hbFood'), quickEat); onTap($('hbWater'), quickDrink); onTap($('hbHeal'), quickHeal); onTap($('hbLamp'), toggleLamp);
 
 /* ---------- salvar / carregar ---------- */
