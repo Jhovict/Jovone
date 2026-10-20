@@ -52,7 +52,9 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .fade.on{opacity:1}
 
 .tip{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);background:rgba(13,20,32,.85);color:var(--ink);font-family:var(--display);font-size:.85rem;
-  padding:7px 14px;border-radius:999px;pointer-events:none;box-shadow:0 0 0 2px var(--stripe);white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+  padding:7px 14px;border-radius:999px;pointer-events:auto;cursor:pointer;border:0;box-shadow:0 0 0 2px var(--stripe);white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis;z-index:2;touch-action:none;-webkit-tap-highlight-color:transparent}
+.tip:active{background:rgba(242,182,50,.45)}
+.tip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .tip kbd{font-family:var(--body);background:var(--stripe);color:var(--night);border-radius:4px;padding:0 6px;margin-right:6px}
 .toast{position:absolute;left:50%;top:58px;transform:translateX(-50%);background:var(--ok);color:var(--night);font-family:var(--display);
   padding:6px 14px;border-radius:999px;font-size:.85rem;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;z-index:5;max-width:94%;overflow:hidden;text-overflow:ellipsis}
@@ -154,42 +156,42 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 .pads{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));display:none;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;z-index:2}
 .pads .rowp{display:flex;gap:8px;align-items:flex-end}
 .pad{pointer-events:auto;border:0;border-radius:50%;width:62px;height:62px;background:rgba(27,34,48,.62);color:var(--ink);font-family:var(--display);font-size:.62rem;line-height:1.05;touch-action:none;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 0 0 2px rgba(233,237,243,.18)}
-.pad.act{width:84px;height:84px;background:rgba(242,182,50,.55);font-size:.78rem}
+.pad.act{width:88px;height:88px;background:rgba(242,182,50,.6);font-size:.72rem;letter-spacing:-.02em}
+.pad.act.long{font-size:.58rem}
 .pad.on{background:rgba(242,182,50,.8);color:#fff}
 .joy{position:absolute;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(233,237,243,.08);box-shadow:inset 0 0 0 2px rgba(233,237,243,.28);pointer-events:none;z-index:2}
 .joy i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:rgba(233,237,243,.42)}
 .mobile-only{display:none}
-@media (pointer:coarse){.mobile-only{display:flex}.desk-only{display:none!important}}
-@media (pointer:coarse){
-  body[data-st=play] .pads{display:flex}
-  body:not([data-st=menu]){padding:0;gap:0}
-  body:not([data-st=menu]) .stage{border-radius:0;box-shadow:none;max-width:none}
-  body:not([data-st=menu]) .top{position:fixed;left:0;right:0;top:0;width:auto;max-width:none;z-index:7;pointer-events:none;justify-content:center;
-    padding:max(4px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left))}
-  body:not([data-st=menu]) :is(.brand,.muteBtn){display:none}
-  body:not([data-st=menu]) .stats{gap:4px;flex-wrap:nowrap;justify-content:center}
-  body:not([data-st=menu]) .stat{padding:2px 8px;min-width:0;background:rgba(13,20,32,.72)}
-  body:not([data-st=menu]) .stat.car{background:rgba(122,42,32,.8)}
-  body:not([data-st=menu]) .stat small{font-size:.5rem;letter-spacing:.1em}
-  body:not([data-st=menu]) .stat b{font-size:.78rem}
-  body:not([data-st=menu]) .compass{top:44px;left:max(8px,env(safe-area-inset-left));padding:4px 10px 4px 6px;font-size:.7rem}
-  body:not([data-st=menu]) .clock{top:44px;right:max(8px,env(safe-area-inset-right));padding:4px 10px;font-size:.78rem}
-  body:not([data-st=menu]) .toast{top:84px}
-  .compass .arr{width:20px;height:20px;font-size:.8rem}
-  .vitals{left:max(8px,env(safe-area-inset-left));top:78px;bottom:auto;grid-template-columns:auto 76px;padding:6px 9px;gap:4px 6px}
-  .hotbar{left:auto;right:max(8px,env(safe-area-inset-right));top:78px;bottom:auto;transform:none;flex-direction:column}
-  .hb{width:44px;height:44px;font-size:1.1rem}
-  .hb kbd{display:none}
-  .tip{bottom:66px;font-size:.78rem}
-  .keys{display:none}
-  body:not([data-st=menu]) .overlay{padding-top:44px}
-  @media (orientation:landscape){.hotbar{top:auto;right:auto;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);flex-direction:row}}
-  @media (orientation:portrait){.hotbar{top:auto;bottom:200px}.tip{bottom:172px}}
-}
-@media (pointer:coarse) and (max-height:480px){
-  .vitals{top:70px}.hb{width:40px;height:40px;font-size:1rem}.tip{bottom:58px}
-  .menu{padding:10px 12px}.menu .head p{display:none}.menu h1{font-size:2.2rem}
-  .menu .foot{gap:8px}.btn{padding:9px 20px;font-size:.9rem}
+body.touch .mobile-only{display:flex}
+body.touch .desk-only{display:none!important}
+body.touch[data-st=play] .pads{display:flex}
+body.touch:not([data-st=menu]){padding:0;gap:0}
+body.touch:not([data-st=menu]) .stage{border-radius:0;box-shadow:none;max-width:none}
+body.touch:not([data-st=menu]) .top{position:fixed;left:0;right:0;top:0;width:auto;max-width:none;z-index:7;pointer-events:none;justify-content:center;
+  padding:max(4px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left))}
+body.touch:not([data-st=menu]) :is(.brand,.muteBtn){display:none}
+body.touch:not([data-st=menu]) .stats{gap:4px;flex-wrap:nowrap;justify-content:center}
+body.touch:not([data-st=menu]) .stat{padding:2px 8px;min-width:0;background:rgba(13,20,32,.72)}
+body.touch:not([data-st=menu]) .stat.car{background:rgba(122,42,32,.8)}
+body.touch:not([data-st=menu]) .stat small{font-size:.5rem;letter-spacing:.1em}
+body.touch:not([data-st=menu]) .stat b{font-size:.78rem}
+body.touch:not([data-st=menu]) .compass{top:44px;left:max(8px,env(safe-area-inset-left));padding:4px 10px 4px 6px;font-size:.7rem}
+body.touch:not([data-st=menu]) .clock{top:44px;right:max(8px,env(safe-area-inset-right));padding:4px 10px;font-size:.78rem}
+body.touch:not([data-st=menu]) .toast{top:84px}
+body.touch .compass .arr{width:20px;height:20px;font-size:.8rem}
+body.touch .vitals{left:max(8px,env(safe-area-inset-left));top:78px;bottom:auto;grid-template-columns:auto 76px;padding:6px 9px;gap:4px 6px}
+body.touch .hotbar{left:auto;right:max(8px,env(safe-area-inset-right));top:78px;bottom:auto;transform:none;flex-direction:column}
+body.touch .hb{width:44px;height:44px;font-size:1.1rem}
+body.touch .hb kbd{display:none}
+body.touch .tip{bottom:68px;font-size:.84rem;padding:10px 18px}
+body.touch .keys{display:none}
+body.touch:not([data-st=menu]) .overlay{padding-top:44px}
+@media (orientation:landscape){body.touch .hotbar{top:auto;right:auto;left:50%;bottom:max(8px,env(safe-area-inset-bottom));transform:translateX(-50%);flex-direction:row}}
+@media (orientation:portrait){body.touch .hotbar{top:auto;bottom:200px}body.touch .tip{bottom:176px}}
+@media (max-height:480px){
+  body.touch .vitals{top:70px}body.touch .hb{width:40px;height:40px;font-size:1rem}body.touch .tip{bottom:58px}
+  body.touch .menu{padding:10px 12px}body.touch .menu .head p{display:none}body.touch .menu h1{font-size:2.2rem}
+  body.touch .menu .foot{gap:8px}body.touch .btn{padding:9px 20px;font-size:.9rem}
 }
 @media (max-height:760px){.keys{display:none}}
 @media (max-width:560px){.stat{min-width:0}.vitals{grid-template-columns:auto 84px}}
@@ -228,7 +230,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
     <button class="hb" id="hbLamp" type="button" aria-label="Lanterna" aria-pressed="false"><kbd>L</kbd>🔦</button>
     <button class="hb" id="hbBag" type="button" aria-label="Mochila"><kbd>Tab</kbd>🎒</button>
   </div>
-  <div class="tip" id="tip" hidden></div>
+  <button class="tip" id="tip" type="button" hidden></button>
   <div class="banner" id="banner" hidden></div>
   <div class="toast" id="toast"></div>
   <div class="joy" id="joy" hidden><i id="knob"></i></div>
@@ -293,7 +295,14 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 
   <div class="overlay sheetwrap" id="how" hidden role="dialog" aria-modal="true" aria-labelledby="howTitle">
     <div class="sheet">
-      <div class="ver">Versão 1.0 · baseado no Turbo BR-316</div>
+      <div class="ver">Versão 1.1 · casas e açude refeitos</div>
+      <h3>Novo nesta versão</h3>
+      <ul>
+        <li><b>Celular:</b> a etiqueta da ação (Vasculhar, Beber…) agora é um botão, o AÇÃO mostra o que vai fazer e o toque é reconhecido mesmo no modo computador do navegador.</li>
+        <li><b>Açude de verdade:</b> bacia funda, água translúcida com reflexo e ondas, lama rachada na margem, juncos, aguapé, galhos secos, barragem de terra com pedras e sangradouro. A água funda não dá pé.</li>
+        <li><b>Casas sertanejas:</b> reboco caiado com barrado, telha colonial, alpendre com esteios, janelas de madeira, cisterna de placa e cerca de varas.</li>
+        <li>O jogo salvo da versão 1.0 recomeça do zero, porque o mapa mudou.</li>
+      </ul>
       <h2 id="howTitle">Como sobreviver</h2>
       <h3>Objetivo</h3>
       <ul>
@@ -340,6 +349,11 @@ const store = {
 };
 const stage = $('stage'), cv = $('c');
 const COARSE = !!(window.matchMedia && matchMedia('(pointer:coarse)').matches);
+/* alguns celulares (ou o "modo computador" do navegador) não se anunciam como toque: detecta pelo próprio toque */
+let TOUCH = COARSE || ((navigator.maxTouchPoints || 0) > 0 && !(window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches));
+document.body.classList.toggle('touch', TOUCH);
+addEventListener('pointerdown', e => { if(e.pointerType === 'touch' && !TOUCH){ TOUCH = true; document.body.classList.add('touch'); const fb = document.getElementById('fsBtn'); if(fb) fb.hidden = false; setTimeout(() => dispatchEvent(new Event('resize')), 50); } }, true);
+addEventListener('touchstart', () => { if(!TOUCH){ TOUCH = true; document.body.classList.add('touch'); } }, {capture:true, passive:true});
 
 /* ---------- renderer / cena (mesma base do Turbo BR-316) ---------- */
 const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
@@ -370,26 +384,68 @@ const lamp = new THREE.SpotLight(0xfff1d0, 0, 42, 0.5, 0.55, 1.3); scene.add(lam
 const roadX = z => 16*Math.sin(z/95) + 6*Math.sin(z/41 + 1);
 const roadY = z => 1.2*Math.sin(z/80) + 0.6*Math.sin(z/33);
 const roadDX = z => (roadX(z + 1) - roadX(z - 1)) / 2;
-const ACUDE = {x:-92, z:-58, r:21, y:-0.75};
+/* açude: represa de verdade. Margem irregular, leito fundo em bacia, faixa de lama rachada que a seca deixou à mostra
+   e uma barragem de terra (com sangradouro) fechando o lado sudeste. phi = direção da barragem a partir do centro */
+const ACUDE = {x:-92, z:-58, r:27, y:-0.55, depth:4.4, phi:0.6};
+ACUDE.nx = Math.cos(ACUDE.phi); ACUDE.nz = Math.sin(ACUDE.phi); ACUDE.dd = ACUDE.r*0.8;
+const DAM = {crest:ACUDE.y + 2.1, top:1.7, up:.42, down:.5, uMin:-20, uMax:20, spill:15};
 const WORLD_R = 182, EDGE_R = 232;
+const shoreR = th => ACUDE.r*(1 + .15*Math.sin(2*th + 1.1) + .09*Math.sin(3*th + 2.3) + .05*Math.sin(5*th + .4) + .025*Math.sin(9*th + 1.7));
+/* e > 0: metros para dentro d'água a partir da margem; e < 0: metros terra adentro */
+function acudeE(x, z){
+  const dx = x - ACUDE.x, dz = z - ACUDE.z, eq = shoreR(Math.atan2(dz, dx)) - Math.hypot(dx, dz), es = ACUDE.dd - 6 - (dx*ACUDE.nx + dz*ACUDE.nz);
+  return eq < es ? eq : es;
+}
+const damS = (x, z) => (x - ACUDE.x)*ACUDE.nx + (z - ACUDE.z)*ACUDE.nz - ACUDE.dd;   // > 0: a jusante
+const damU = (x, z) => -(x - ACUDE.x)*ACUDE.nz + (z - ACUDE.z)*ACUDE.nx;
+function damH(s, u){
+  let h = s < -DAM.top ? DAM.crest - (-DAM.top - s)*DAM.up : s > DAM.top ? DAM.crest - (s - DAM.top)*DAM.down : DAM.crest;
+  if(u > DAM.uMax) h -= (u - DAM.uMax)*.55; else if(u < DAM.uMin) h -= (DAM.uMin - u)*.55;
+  const ds = Math.abs(u - DAM.spill); if(ds < 3.4) h = Math.min(h, lerp(ACUDE.y + .38, DAM.crest + .2, smooth(ds, 1.75, 3.4)));   // sangradouro
+  return h;
+}
+{ // comprimento da barragem: o bastante para fechar a garganta da bacia
+  const tx = -ACUDE.nz, tz = ACUDE.nx, bx = ACUDE.x + ACUDE.nx*(ACUDE.dd - 6), bz = ACUDE.z + ACUDE.nz*(ACUDE.dd - 6);
+  const eq = (x, z) => shoreR(Math.atan2(z - ACUDE.z, x - ACUDE.x)) - Math.hypot(x - ACUDE.x, z - ACUDE.z);
+  let u = 0; while(u < 80 && eq(bx + tx*u, bz + tz*u) > -5) u += .5; DAM.uMax = u + 3;
+  u = 0; while(u > -80 && eq(bx + tx*u, bz + tz*u) > -5) u -= .5; DAM.uMin = u - 3;
+  DAM.spill = DAM.uMax - 6;
+}
 function rawH(x, z){ return 2.6*Math.sin(x/38)*Math.cos(z/44) + 1.8*Math.sin((x + z)/27 + 1) + 0.9*Math.sin(x/13 + z/19) + 0.45*Math.cos(x/7.3 - z/9.1); }
 function H(x, z){
   let h = rawH(x, z);
   const r = Math.hypot(x, z); if(r > 188) h += Math.min(46, Math.pow((r - 188)/13, 2));
-  const da = Math.hypot(x - ACUDE.x, z - ACUDE.z); if(da < ACUDE.r + 16) h = lerp(-3.2, h, smooth(da, ACUDE.r*0.45, ACUDE.r + 16));
+  const dx = x - ACUDE.x, dz = z - ACUDE.z;
+  if(dx*dx + dz*dz < 11025){
+    const e = acudeE(x, z);
+    if(e > -48){
+      const land = lerp(Math.max(ACUDE.y + .7, .8 + .22*h), h, smooth(-e, 24, 48));
+      if(e > 0) h = ACUDE.y - ACUDE.depth*(1 - Math.exp(-e/8.5)) + .22*Math.sin(x*.21 + z*.17)*Math.min(1, e/4);
+      else if(e > -6) h = ACUDE.y - e*.085 + .03*Math.sin(x*1.3 + z*.9);
+      else h = lerp(ACUDE.y + .51, land, smooth(-e, 6, 18));
+    }
+    const s = damS(x, z); if(s > -24 && s < 12){ const u = damU(x, z); if(u > DAM.uMin - 9 && u < DAM.uMax + 9) h = Math.max(h, damH(s, u)); }
+  }
   const dr = Math.abs(x - roadX(z)); if(dr < 19) h = lerp(roadY(z) - 0.05, h, smooth(dr, 8, 19));
   return h;
 }
-const inWater = (x, z) => Math.hypot(x - ACUDE.x, z - ACUDE.z) < ACUDE.r + 1.5 && H(x, z) < ACUDE.y;
-const groundAt = (x, z) => inWater(x, z) ? Math.max(H(x, z), ACUDE.y - 0.85) : H(x, z);
+const inWater = (x, z) => { const dx = x - ACUDE.x, dz = z - ACUDE.z; return dx*dx + dz*dz < 3600 && acudeE(x, z) > -1.5 && H(x, z) < ACUDE.y; };
+const waterDepth = (x, z) => inWater(x, z) ? ACUDE.y - H(x, z) : 0;
+/* pisos das casas (alpendre, degrau): retângulos alinhados aos eixos, recriados a cada mundo */
+let platforms = [];
+function groundAt(x, z){ let h = H(x, z); for(const p of platforms) if(Math.abs(x - p.x) < p.hx && Math.abs(z - p.z) < p.hz && p.y > h) h = p.y; return h; }
 
 /* texturas */
 function canvasTex(w, h, draw){ const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return new THREE.CanvasTexture(c); }
 const groundTex = canvasTex(256, 256, (g) => {
-  g.fillStyle = '#b48c58'; g.fillRect(0, 0, 256, 256);
-  const P1 = ['#a37c4b','#c29a64','#8e8a4c','#7f8645'];
-  for(let i=0;i<70;i++){ g.fillStyle = P1[i%4]; g.beginPath(); g.ellipse(Math.random()*256, Math.random()*256, 6+Math.random()*22, 4+Math.random()*12, Math.random()*3, 0, 7); g.fill(); }
-  for(let i=0;i<1100;i++){ g.fillStyle = Math.random()<.5 ? '#9b7546' : '#c7a170'; g.fillRect(Math.random()*256, Math.random()*256, 2, 2); }
+  g.fillStyle = '#b08a58'; g.fillRect(0, 0, 256, 256);
+  // manchas suaves de terra e capim ralo, sem contorno duro
+  const blot = (x, y, r, col) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(x - r, y - r, r*2, r*2); };
+  for(let i=0;i<90;i++){ const x = Math.random()*256, y = Math.random()*256, r = 10 + Math.random()*30, c = ['rgba(150,112,70,.5)','rgba(196,160,108,.45)','rgba(132,128,78,.32)','rgba(118,124,74,.28)'][i%4];
+    for(const ox of [-256, 0, 256]) for(const oy of [-256, 0, 256]) blot(x + ox, y + oy, r, c); }
+  for(let i=0;i<2600;i++){ const v = Math.random(); g.fillStyle = v < .4 ? 'rgba(120,90,58,.5)' : v < .8 ? 'rgba(206,176,128,.5)' : 'rgba(90,80,62,.55)'; g.fillRect(Math.random()*256, Math.random()*256, 1 + Math.random()*2, 1 + Math.random()*2); }
+  g.strokeStyle = 'rgba(150,140,90,.35)'; g.lineWidth = 1;
+  for(let i=0;i<120;i++){ const x = Math.random()*256, y = Math.random()*256; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() - .5)*4, y - 3 - Math.random()*5); g.stroke(); }
 });
 groundTex.wrapS = groundTex.wrapT = THREE.RepeatWrapping; groundTex.repeat.set(70, 70);
 groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -406,23 +462,53 @@ const roadTex = canvasTex(256, 256, (g) => {
 });
 roadTex.wrapS = THREE.ClampToEdgeWrapping; roadTex.wrapT = THREE.RepeatWrapping; roadTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-/* terreno */
-const TER = 560, TSEG = COARSE ? 130 : 170;
-const terGeo = new THREE.PlaneGeometry(TER, TER, TSEG, TSEG); terGeo.rotateX(-Math.PI/2);
-{
-  const p = terGeo.attributes.position, col = new Float32Array(p.count*3), c = new THREE.Color(), wetC = new THREE.Color(0.66, 0.84, 0.52), hillC = new THREE.Color(0.86, 0.66, 0.54);
-  for(let i=0;i<p.count;i++){
-    const x = p.getX(i), z = p.getZ(i); p.setY(i, H(x, z));
-    const n = 0.06*Math.sin(x*.13 + z*.07)*Math.cos(z*.11 - x*.05) + 0.04*Math.sin(x*.6)*Math.sin(z*.53);
-    c.setRGB(1 + n, 1 + n, 1 + n);
-    c.lerp(wetC, 1 - smooth(Math.hypot(x - ACUDE.x, z - ACUDE.z), ACUDE.r, ACUDE.r + 34));
-    c.lerp(hillC, smooth(Math.hypot(x, z), 190, 240));
-    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+/* terreno: grade principal + remendo fino (≈1 m) em volta do açude, para a margem e a barragem ficarem bem desenhadas */
+const TER = 560, TSEG = COARSE ? 150 : 200, TSP = TER/TSEG;
+const C_SLOPE = new THREE.Color(.86, .7, .6), C_BED = new THREE.Color(.5, .46, .36), C_WET = new THREE.Color(.56, .46, .35),
+  C_MUD = new THREE.Color(1.16, 1.06, .9), C_GREEN = new THREE.Color(.74, .95, .55), C_PATH = new THREE.Color(1.1, .95, .76),
+  C_RIP = new THREE.Color(.82, .8, .76), C_HILL = new THREE.Color(.86, .66, .54);
+function terrainColor(x, z, h, ny, c){
+  const n = .07*Math.sin(x*.13 + z*.07)*Math.cos(z*.11 - x*.05) + .05*Math.sin(x*.6)*Math.sin(z*.53) + .05*Math.sin(x*.031 - z*.027);
+  c.setRGB(.93 + n, .9 + n*.92, .86 + n*.75);
+  const st = 1 - ny; if(st > .035) c.lerp(C_SLOPE, Math.min(.5, (st - .035)*5));
+  const dx = x - ACUDE.x, dz = z - ACUDE.z;
+  if(dx*dx + dz*dz < 10000){
+    const s = damS(x, z), u = damU(x, z), dH = (s > -24 && s < 12 && u > DAM.uMin - 9 && u < DAM.uMax + 9) ? damH(s, u) : -99, onDam = Math.abs(h - dH) < .02;
+    const d = ACUDE.y - h, e = acudeE(x, z);
+    if(d > 0){ c.lerp(C_BED, Math.min(1, .45 + d*.3)); c.multiplyScalar(1 - Math.min(.5, d*.12)); }
+    else if(d > -.16) c.lerp(C_WET, .85);
+    else if(onDam){ if(Math.abs(s) <= DAM.top + .2) c.lerp(C_PATH, .75); else if(s < 0) c.lerp(C_RIP, .7); else c.lerp(C_GREEN, .35); }
+    else if(e > -6.6) c.lerp(C_MUD, .82*(1 - smooth(-e, 5.6, 6.6)));
+    else if(e > -22) c.lerp(C_GREEN, .5*(1 - smooth(-e, 9, 22)));
   }
-  terGeo.setAttribute('color', new THREE.BufferAttribute(col, 3)); terGeo.computeVertexNormals();
+  c.lerp(C_HILL, smooth(Math.hypot(x, z), 190, 240));
+}
+function gridGeo(x0, z0, nx, nz, sp, skip, edgeY){
+  const V = (nx + 1)*(nz + 1), pos = new Float32Array(V*3), uv = new Float32Array(V*2), idx = [];
+  for(let j=0;j<=nz;j++) for(let i=0;i<=nx;i++){ const k = j*(nx + 1) + i, x = x0 + i*sp, z = z0 + j*sp;
+    pos[k*3] = x; pos[k*3+1] = edgeY ? edgeY(i, j, x, z) : H(x, z); pos[k*3+2] = z; uv[k*2] = x/8; uv[k*2+1] = -z/8; }
+  for(let j=0;j<nz;j++) for(let i=0;i<nx;i++){ if(skip && skip(i, j)) continue; const a = j*(nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1; idx.push(a, c, b, b, c, d); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const nrm = g.attributes.normal, col = new Float32Array(V*3), c = new THREE.Color();
+  for(let k=0;k<V;k++){ terrainColor(pos[k*3], pos[k*3+2], pos[k*3+1], nrm.getY(k), c); col[k*3] = c.r; col[k*3+1] = c.g; col[k*3+2] = c.b; }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  return g;
 }
 const groundMat = new THREE.MeshLambertMaterial({map:groundTex, vertexColors:true});
-const terrain = new THREE.Mesh(terGeo, groundMat); terrain.receiveShadow = true; scene.add(terrain);
+groundTex.repeat.set(1, 1);
+{
+  const ci0 = Math.floor((ACUDE.x - 78 + TER/2)/TSP), ci1 = Math.ceil((ACUDE.x + 78 + TER/2)/TSP), cj0 = Math.floor((ACUDE.z - 78 + TER/2)/TSP), cj1 = Math.ceil((ACUDE.z + 78 + TER/2)/TSP);
+  const main = new THREE.Mesh(gridGeo(-TER/2, -TER/2, TSEG, TSEG, TSP, (i, j) => i >= ci0 && i < ci1 && j >= cj0 && j < cj1), groundMat);
+  main.receiveShadow = true; scene.add(main);
+  const m = 3, nx = (ci1 - ci0)*m, nz = (cj1 - cj0)*m, x0 = -TER/2 + ci0*TSP, z0 = -TER/2 + cj0*TSP, sp = TSP/m;
+  // nas bordas do remendo a altura segue a interpolação da grade grossa, sem frestas entre as duas malhas
+  const edgeY = (i, j, x, z) => {
+    if((j === 0 || j === nz) && i % m){ const a = Math.floor(i/m)*m, f = (i - a)/m; return lerp(H(x0 + a*sp, z), H(x0 + (a + m)*sp, z), f); }
+    if((i === 0 || i === nx) && j % m){ const a = Math.floor(j/m)*m, f = (j - a)/m; return lerp(H(x, z0 + a*sp), H(x, z0 + (a + m)*sp), f); }
+    return H(x, z);
+  };
+  const patch = new THREE.Mesh(gridGeo(x0, z0, nx, nz, sp, null, edgeY), groundMat); patch.receiveShadow = true; scene.add(patch);
+}
 
 /* estrada (a BR-316 de sempre, agora deserta) */
 {
@@ -435,9 +521,63 @@ const terrain = new THREE.Mesh(terGeo, groundMat); terrain.receiveShadow = true;
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   const road = new THREE.Mesh(g, new THREE.MeshPhongMaterial({map:roadTex, shininess:6, specular:0x111111})); road.receiveShadow = true; scene.add(road);
 }
-/* açude */
-const waterMat = new THREE.MeshPhongMaterial({color:0x3a7f96, shininess:90, specular:0x9ab8c8, transparent:true, opacity:.86});
-const water = new THREE.Mesh(new THREE.CircleGeometry(ACUDE.r + 5, 48), waterMat); water.rotation.x = -Math.PI/2; water.position.set(ACUDE.x, ACUDE.y, ACUDE.z); scene.add(water);
+/* ---------- açude: lâmina d'água recortada pela margem real, reflexo do céu, ondinhas, espuma e lama rachada ---------- */
+const SKYENV = (() => {
+  const mk = (top, mid, low, ground) => { const faces = [];
+    for(let f=0; f<6; f++){ const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d');
+      if(f === 2){ g.fillStyle = top; g.fillRect(0,0,32,32); } else if(f === 3){ g.fillStyle = ground; g.fillRect(0,0,32,32); }
+      else { const gr = g.createLinearGradient(0,0,0,32); gr.addColorStop(0, top); gr.addColorStop(.42, mid); gr.addColorStop(.5, low); gr.addColorStop(.52, ground); gr.addColorStop(1, ground); g.fillStyle = gr; g.fillRect(0,0,32,32); }
+      faces.push(c); }
+    const t = new THREE.CubeTexture(faces); t.needsUpdate = true; return t; };
+  return {dia:mk('#4a8fe0','#9ccaef','#e6eef2','#5a5040'), tarde:mk('#3a5f8f','#e9a066','#f6d6a6','#4a3826'), noite:mk('#02050c','#0b1630','#1a2845','#06070a')};
+})();
+const waterNorm = (() => { const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), img = g.createImageData(N, N), hf = new Float32Array(N*N);
+  const waves = [[3,1,.5,0],[1,4,.42,1.3],[5,-2,.26,2.1],[-4,3,.22,.7],[7,5,.12,3],[2,-7,.11,1.9],[11,2,.06,.4],[-3,10,.05,2.6]];
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ let v = 0; for(const [a,b,amp,ph] of waves) v += amp*Math.sin((a*x + b*y)/N*Math.PI*2 + ph); hf[y*N + x] = v; }
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){
+    const l = hf[y*N + (x + N - 1)%N], r = hf[y*N + (x + 1)%N], u = hf[((y + N - 1)%N)*N + x], d = hf[((y + 1)%N)*N + x];
+    const nx = (l - r)*2.4, ny = (u - d)*2.4, L = Math.hypot(nx, ny, 1), i = (y*N + x)*4;
+    img.data[i] = (nx/L*.5 + .5)*255; img.data[i+1] = (ny/L*.5 + .5)*255; img.data[i+2] = (1/L*.5 + .5)*255; img.data[i+3] = 255; }
+  g.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
+const waterMat = new THREE.MeshPhongMaterial({color:0x44807a, specular:0xd8e8ee, shininess:110, transparent:true, opacity:.8, depthWrite:false,
+  normalMap:waterNorm, normalScale:new THREE.Vector2(.32, .32), envMap:SKYENV.dia, combine:THREE.MixOperation, reflectivity:.3});
+/* distância ao longo do raio θ, a partir do centro, até a curva de nível e = eT */
+function shoreT(th, eT){ const cx = Math.cos(th), cz = Math.sin(th); let lo = 0, hi = 95;
+  for(let k=0;k<24;k++){ const m = (lo + hi)/2; if(acudeE(ACUDE.x + cx*m, ACUDE.z + cz*m) > eT) lo = m; else hi = m; } return lo; }
+const SH_N = 220, shoreTh = Array.from({length:SH_N + 1}, (_, i) => i/SH_N*Math.PI*2);
+const onDamSide = shoreTh.map(th => { const t = shoreT(th, 0), dx = Math.cos(th)*t, dz = Math.sin(th)*t;
+  return ACUDE.dd - 6 - (dx*ACUDE.nx + dz*ACUDE.nz) < shoreR(Math.atan2(dz, dx)) - t - .3; });
+function ribbon(rows, yOff, uRep, skipDam, yFix){
+  const pos = [], uv = [], idx = [], R = rows.length;
+  for(let i=0;i<=SH_N;i++){ const th = shoreTh[i], c = Math.cos(th), s = Math.sin(th);
+    for(const [e, v] of rows){ const t = shoreT(th, e), x = ACUDE.x + c*t, z = ACUDE.z + s*t; pos.push(x, yFix !== undefined ? yFix : H(x, z) + yOff, z); uv.push(i/SH_N*uRep, v); } }
+  for(let i=0;i<SH_N;i++){ if(skipDam && (onDamSide[i] || onDamSide[i + 1])) continue; for(let r=0;r<R-1;r++){ const a = i*R + r, b = a + R; idx.push(a, b, a + 1, a + 1, b, b + 1); } }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+const water = (() => { const pos = [ACUDE.x, 0, ACUDE.z], uv = [ACUDE.x/7, -ACUDE.z/7], idx = [];
+  for(let i=0;i<SH_N;i++){ const th = shoreTh[i], t = shoreT(th, -1.6), x = ACUDE.x + Math.cos(th)*t, z = ACUDE.z + Math.sin(th)*t; pos.push(x, 0, z); uv.push(x/7, -z/7); }
+  for(let i=0;i<SH_N;i++) idx.push(0, 1 + (i + 1)%SH_N, 1 + i);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, waterMat); m.position.y = ACUDE.y; m.receiveShadow = true; m.renderOrder = 1; scene.add(m); return m; })();
+/* leito exposto: placas de barro seco rachado, esmaecendo nas duas bordas */
+const crackTex = (() => { const W = 512, Hh = 128, c = document.createElement('canvas'); c.width = W; c.height = Hh; const g = c.getContext('2d'), img = g.createImageData(W, Hh);
+  const pts = Array.from({length:110}, () => [Math.random()*W, Math.random()*Hh, .9 + Math.random()*.2]);
+  for(let y=0;y<Hh;y++) for(let x=0;x<W;x++){
+    let d1 = 1e9, d2 = 1e9, sh = 1;
+    for(const [px, py, s] of pts){ let dx = Math.abs(x - px); if(dx > W/2) dx = W - dx; const d = dx*dx + (y - py)**2; if(d < d1){ d2 = d1; d1 = d; sh = s; } else if(d < d2) d2 = d; }
+    const edge = Math.sqrt(d2) - Math.sqrt(d1), crack = edge < 1.4 ? 1 : edge < 2.6 ? .45 : 0, v = 1 - y/Hh;
+    const a = smooth(v, 0, .2)*(1 - smooth(v, .72, 1)), i = (y*W + x)*4, k = (1 - crack*.62)*sh*(.94 + Math.random()*.08);
+    img.data[i] = 204*k; img.data[i+1] = 180*k; img.data[i+2] = 140*k; img.data[i+3] = 255*a*(.78 + crack*.22); }
+  g.putImageData(img, 0, 0); const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.ClampToEdgeWrapping; t.anisotropy = 4; return t; })();
+const mudDecal = new THREE.Mesh(ribbon([[.3,0],[-.5,.11],[-1.6,.27],[-3,.47],[-4.4,.67],[-5.8,.87],[-6.8,1]], .035, 26, true),
+  new THREE.MeshLambertMaterial({map:crackTex, transparent:true, depthWrite:false, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2}));
+mudDecal.receiveShadow = true; scene.add(mudDecal);
+/* espuma batendo na margem */
+const foamTex = canvasTex(256, 32, (g, w, h) => { g.clearRect(0, 0, w, h);
+  for(let i=0;i<260;i++){ const y = Math.pow(Math.random(), .6)*h, a = (y/h)*.8; g.fillStyle = 'rgba(255,255,255,' + a.toFixed(2) + ')'; g.fillRect(Math.random()*w, h - y, 4 + Math.random()*16, 1 + Math.random()*1.5); } });
+foamTex.wrapS = THREE.RepeatWrapping;
+const foamMat = new THREE.MeshBasicMaterial({map:foamTex, transparent:true, depthWrite:false, opacity:.6});
+const foam = new THREE.Mesh(ribbon([[1.5, 0],[.45, .55],[-.3, 1]], 0, 40, false, ACUDE.y + .014), foamMat); foam.renderOrder = 2; scene.add(foam);
 
 /* serra distante, sol/lua, estrelas */
 const hillMat = new THREE.MeshBasicMaterial({color:0xb7835f, fog:false}), hillMat2 = new THREE.MeshBasicMaterial({color:0xcf9a70, fog:false});
@@ -523,21 +663,222 @@ function sucata(){
   const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.2, 6), rust2); pipe.rotation.set(0.3, 0, 1.2); pipe.position.set(0, 0.9, 0.5); g.add(pipe);
   return g;
 }
-function casa(){
-  const g = new THREE.Group(), wall = M(pick([0xd8c9a5, 0xc99a66, 0x97b2b6, 0xd6a796])), dark = M(0x2a2420);
-  const b = box(g, 6, 3, 5, wall, 0, 1.5, 0); b.receiveShadow = true;
-  const roof = new THREE.Mesh(new THREE.ConeGeometry(4.6, 1.8, 4), M(0x8a3e28)); roof.rotation.y = Math.PI/4; roof.position.y = 3.9; roof.scale.z = 0.85; roof.castShadow = true; g.add(roof);
-  box(g, 1.2, 0.9, 0.3, dark, 1.6, 4.0, -0.6, false);   // telhas faltando
-  box(g, 1.15, 2.0, 0.04, dark, 0, 1.0, 2.505, false);   // vão da porta
-  const door = new THREE.Group(); door.position.set(-0.55, 0, 2.53); g.add(door);
-  box(door, 1.05, 1.95, 0.06, M(0x5a3a22), 0.52, 0.98, 0); g.userData.door = door;
-  for(const x of [-1.95, 1.95]){ box(g, 0.9, 0.8, 0.05, dark, x, 1.7, 2.53, false); box(g, 0.9, 0.08, 0.08, M(0x5a3a22), x, 1.28, 2.56, false); }
-  const fence = M(0x6b4f33);
-  for(let i=0;i<6;i++) box(g, 0.1, 0.9, 0.1, fence, -3.6 + i*1.4, 0.45, 4.6);
-  box(g, 7.2, 0.07, 0.05, fence, -0.1, 0.7, 4.6, false); box(g, 7.2, 0.07, 0.05, fence, -0.1, 0.35, 4.6, false);
-  const loot = new THREE.Mesh(new THREE.OctahedronGeometry(0.22), new THREE.MeshBasicMaterial({color:0xf2b632, fog:false})); loot.position.set(0, 2.6, 3.0); g.add(loot); g.userData.mark = loot;
+/* =====================================================================
+   CASA SERTANEJA — alvenaria rebocada e caiada com barrado, telhado colonial de duas águas,
+   oitões, alpendre com esteios, janelas de madeira, alicerce de pedra, cisterna de placa e cerca de varas.
+   Convenção: x = largura, z = fundo, frente da casa = +z
+   ===================================================================== */
+const HW = 6.4, HD = 5.2, WH = 2.85, RH = 1.4, EAVE = .6, SIDE = .45, RW = HW + 2*SIDE;
+const ROOF_A = Math.atan2(RH, HD/2), RIDGE_Y = WH + RH + .07, ROOF_L = (HD/2 + EAVE)/Math.cos(ROOF_A);
+const HOUSE_PAL = [
+  {wall:'#ece4d2', bar:'#5f7f92', trim:0x2f5e74, wood:'#3f6f8a'},   // caiada, barrado azul
+  {wall:'#e8c879', bar:'#8a4b32', trim:0x7a3e28, wood:'#2e6a54'},   // amarela, barrado telha
+  {wall:'#a9cfd2', bar:'#3d6b6e', trim:0xe9e2cf, wood:'#7a4a2a'},   // azul-piscina
+  {wall:'#e7b2a2', bar:'#6e4a3a', trim:0xf1ece0, wood:'#3a5f7a'},   // rosa queimado
+  {wall:'#dcd6c3', bar:'#7a7a3e', trim:0x55603a, wood:'#8a3a2a'},   // cal envelhecida, barrado oliva
+];
+const texCache = {};
+const cached = (k, f) => texCache[k] || (texCache[k] = f());
+function wallTex(i){ return cached('w' + i, () => { const p = HOUSE_PAL[i];
+  const t = canvasTex(512, 256, (g, w, h) => {
+    g.fillStyle = p.wall; g.fillRect(0, 0, w, h);
+    for(let k=0;k<2800;k++){ g.fillStyle = Math.random() < .5 ? 'rgba(0,0,0,.035)' : 'rgba(255,255,255,.06)'; g.fillRect(Math.random()*w, Math.random()*h, 2 + Math.random()*3, 2 + Math.random()*3); }
+    for(let k=0;k<6;k++){ const x = Math.random()*w, y = h*(.25 + Math.random()*.4), r = 40 + Math.random()*55, gr = g.createRadialGradient(x, y, 2, x, y, r);
+      gr.addColorStop(0, 'rgba(95,72,40,.13)'); gr.addColorStop(1, 'rgba(95,72,40,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+    for(let k=0;k<46;k++){ const x = Math.random()*w, len = 20 + Math.random()*95, gr = g.createLinearGradient(0, 0, 0, len);
+      gr.addColorStop(0, 'rgba(60,50,35,.24)'); gr.addColorStop(1, 'rgba(60,50,35,0)'); g.fillStyle = gr; g.fillRect(x, 0, 1.5 + Math.random()*3, len); }
+    const by = h*.72;
+    g.fillStyle = p.bar; g.fillRect(0, by, w, h - by);
+    g.fillStyle = 'rgba(255,255,255,.45)'; g.fillRect(0, by - 3, w, 3);
+    for(let k=0;k<1100;k++){ g.fillStyle = Math.random() < .6 ? 'rgba(0,0,0,.07)' : 'rgba(255,255,255,.05)'; g.fillRect(Math.random()*w, by + Math.random()*(h - by), 2, 2); }
+    // reboco caído mostrando o tijolo
+    for(let k=0;k<3;k++){ const cx = 40 + Math.random()*(w - 80), cy = 26 + Math.random()*h*.62, rw = 26 + Math.random()*50, rh = 16 + Math.random()*26;
+      g.save(); g.beginPath(); for(let a=0;a<14;a++){ const an = a/14*Math.PI*2, rr = .7 + Math.random()*.4; g.lineTo(cx + Math.cos(an)*rw*rr, cy + Math.sin(an)*rh*rr); } g.closePath();
+      g.fillStyle = 'rgba(70,55,40,.5)'; g.fill(); g.clip();
+      g.fillStyle = '#8f7f68'; g.fillRect(cx - rw*1.3, cy - rh*1.3, rw*2.6, rh*2.6);
+      for(let yy = cy - rh*1.3, row = 0; yy < cy + rh*1.3; yy += 9, row++) for(let xx = cx - rw*1.3 - (row%2)*9; xx < cx + rw*1.3; xx += 18){
+        g.fillStyle = ['#b0623e','#a3573a','#bd6e47','#9a5236'][Math.floor(Math.random()*4)]; g.fillRect(xx + 1, yy + 1, 16, 7); }
+      g.restore(); }
+    // terra respingada no pé da parede
+    const gr = g.createLinearGradient(0, h*.84, 0, h); gr.addColorStop(0, 'rgba(120,85,50,0)'); gr.addColorStop(1, 'rgba(120,85,50,.6)'); g.fillStyle = gr; g.fillRect(0, h*.84, w, h*.16);
+    g.strokeStyle = 'rgba(70,55,40,.5)'; g.lineWidth = 1.2;
+    for(let k=0;k<5;k++){ let x = Math.random()*w, y = Math.random()*h*.3; g.beginPath(); g.moveTo(x, y); for(let s=0;s<9;s++){ x += (Math.random() - .5)*14; y += 5 + Math.random()*8; g.lineTo(x, y); } g.stroke(); }
+  });
+  t.anisotropy = 4; return t; }); }
+function plankTex(col){ return cached('p' + col, () => canvasTex(128, 256, (g, w, h) => {
+  g.fillStyle = '#8a7c66'; g.fillRect(0, 0, w, h);
+  for(let k=0;k<70;k++){ g.strokeStyle = 'rgba(60,50,38,.35)'; g.lineWidth = 1; const x = Math.random()*w; g.beginPath(); g.moveTo(x, 0); g.bezierCurveTo(x + 4, h*.3, x - 4, h*.6, x + 2, h); g.stroke(); }
+  g.save(); g.fillStyle = col; g.beginPath(); g.rect(0, 0, w, h);
+  for(let k=0;k<9;k++){ const cx = Math.random()*w, cy = Math.random()*h, r = 6 + Math.random()*18; g.moveTo(cx + r, cy); for(let a=1;a<=12;a++){ const an = -a/12*Math.PI*2, rr = r*(.6 + Math.random()*.5); g.lineTo(cx + Math.cos(an)*rr, cy + Math.sin(an)*rr*1.7); } g.closePath(); }
+  g.fill('evenodd'); g.restore();
+  for(let k=0;k<600;k++){ g.fillStyle = 'rgba(0,0,0,.06)'; g.fillRect(Math.random()*w, Math.random()*h, 1, 4); }
+  for(let x=0;x<=w;x+=32){ g.fillStyle = 'rgba(20,14,8,.65)'; g.fillRect(x - 1.5, 0, 3, h); }
+  g.fillStyle = 'rgba(20,14,8,.45)'; g.fillRect(0, h*.22, w, 6); g.fillRect(0, h*.74, w, 6);
+})); }
+const tileTex = cached('tile', () => { const t = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#6a2e1c'; g.fillRect(0, 0, w, h);
+  const cols = 8, cw = w/cols, rows = 6, rh = h/rows, base = ['#b25a34','#a44e2e','#bf6a3e','#9a4a2c','#b8613a','#8e4428','#c4744a'];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const canal = c % 2 === 1, x = c*cw + (canal ? 2 : -2), ww = canal ? cw - 4 : cw + 4, y = r*rh;
+    g.fillStyle = base[Math.floor(Math.random()*base.length)]; g.fillRect(x, y, ww, rh + 3);
+    const gr = g.createLinearGradient(x, 0, x + ww, 0);
+    if(canal){ gr.addColorStop(0, 'rgba(0,0,0,.25)'); gr.addColorStop(.5, 'rgba(0,0,0,.45)'); gr.addColorStop(1, 'rgba(0,0,0,.25)'); }
+    else { gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(.3, 'rgba(255,220,190,.05)'); gr.addColorStop(.55, 'rgba(255,225,195,.28)'); gr.addColorStop(.85, 'rgba(0,0,0,.08)'); gr.addColorStop(1, 'rgba(0,0,0,.55)'); }
+    g.fillStyle = gr; g.fillRect(x, y, ww, rh + 3);
+    const sh = g.createLinearGradient(0, y, 0, y + 9); sh.addColorStop(0, 'rgba(0,0,0,.5)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(x, y, ww, 9);
+  }
+  for(let k=0;k<55;k++){ g.fillStyle = Math.random() < .6 ? 'rgba(35,32,22,.22)' : 'rgba(215,200,165,.22)'; g.beginPath(); g.ellipse(Math.random()*w, Math.random()*h, 3 + Math.random()*12, 2 + Math.random()*7, 0, 0, 7); g.fill(); }
+}); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5, 1.7); t.anisotropy = 4; return t; });
+const tileTex2 = cached('tile2', () => { const t = tileTex.clone(); t.needsUpdate = true; t.repeat.set(5, 1.2); return t; });
+const stoneTex = cached('stone', () => canvasTex(256, 128, (g, w, h) => {
+  g.fillStyle = '#5f5a52'; g.fillRect(0, 0, w, h);
+  for(let k=0;k<70;k++){ const x = Math.random()*w, y = Math.random()*h, rx = 10 + Math.random()*16, ry = 7 + Math.random()*10, v = 110 + Math.random()*60;
+    g.fillStyle = 'rgb(' + (v + 10|0) + ',' + (v|0) + ',' + (v - 12|0) + ')'; g.beginPath(); g.ellipse(x, y, rx, ry, Math.random(), 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.ellipse(x - rx*.25, y - ry*.3, rx*.5, ry*.35, 0, 0, 7); g.fill(); }
+}));
+const cementTex = cached('cem', () => canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#b9b3a6'; g.fillRect(0, 0, w, h);
+  for(let k=0;k<3000;k++){ g.fillStyle = Math.random() < .5 ? 'rgba(0,0,0,.06)' : 'rgba(255,255,255,.06)'; g.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+  for(let k=0;k<8;k++){ const x = Math.random()*w, y = Math.random()*h, r = 20 + Math.random()*40, gr = g.createRadialGradient(x, y, 1, x, y, r); gr.addColorStop(0, 'rgba(110,90,60,.18)'); gr.addColorStop(1, 'rgba(110,90,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+  g.strokeStyle = 'rgba(60,55,45,.45)'; g.lineWidth = 1;
+  for(let k=0;k<5;k++){ let x = Math.random()*w, y = Math.random()*h; g.beginPath(); g.moveTo(x, y); for(let s=0;s<10;s++){ x += (Math.random() - .5)*28; y += (Math.random() - .5)*28; g.lineTo(x, y); } g.stroke(); }
+}));
+const cistTex = cached('cist', () => canvasTex(256, 64, (g, w, h) => {
+  g.fillStyle = '#dad6cb'; g.fillRect(0, 0, w, h);
+  for(let k=0;k<1400;k++){ g.fillStyle = Math.random() < .5 ? 'rgba(0,0,0,.05)' : 'rgba(255,255,255,.08)'; g.fillRect(Math.random()*w, Math.random()*h, 2, 2); }
+  g.fillStyle = 'rgba(80,75,65,.35)'; for(let r=1;r<3;r++) g.fillRect(0, r*h/3 - 1, w, 2);
+  for(let r=0;r<3;r++) for(let x = (r%2)*16; x < w; x += 32) g.fillRect(x, r*h/3, 2, h/3);
+  const gr = g.createLinearGradient(0, h*.7, 0, h); gr.addColorStop(0, 'rgba(110,80,45,0)'); gr.addColorStop(1, 'rgba(110,80,45,.45)'); g.fillStyle = gr; g.fillRect(0, h*.7, w, h*.3);
+}));
+const vaoTex = cached('vao', () => canvasTex(32, 64, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#060504'); gr.addColorStop(.7, '#120e0b'); gr.addColorStop(1, '#2a2119'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }));
+const roofM = new THREE.MeshLambertMaterial({map:tileTex}), porchRoofM = new THREE.MeshLambertMaterial({map:tileTex2});
+const stoneM = new THREE.MeshLambertMaterial({map:stoneTex}), cementM = new THREE.MeshLambertMaterial({map:cementTex});
+const vaoM = new THREE.MeshBasicMaterial({map:vaoTex}), cistM = new THREE.MeshLambertMaterial({map:cistTex});
+const postM = M(0x6b4f35), rafterM = M(0x5a4430), pipeM = new THREE.MeshPhongMaterial({color:0xd9dcd6, shininess:40}), jarM = M(0xa5583a), ridgeM = M(0x9a4a2c), fenceM = M(0x7d6c58);
+const interiorM = new THREE.MeshBasicMaterial({color:0x0c0907, side:THREE.BackSide});
+const UP = new THREE.Vector3(0, 1, 0);
+function tube(parent, a, b, r, mat, seg = 6){
+  const d = new THREE.Vector3().subVectors(b, a), L = d.length(), m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, L, seg), mat);
+  m.position.copy(a).addScaledVector(d, .5); m.quaternion.setFromUnitVectors(UP, d.normalize()); m.castShadow = true; parent.add(m); return m;
+}
+const jarGeo = new THREE.LatheGeometry([[0,0],[.13,.015],[.2,.12],[.23,.27],[.2,.42],[.12,.5],[.1,.56],[.13,.6],[.12,.62]].map(p => new THREE.Vector2(p[0], p[1])), 14);
+const gableGeo = (() => { const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([0, WH, HD/2, 0, WH, -HD/2, 0, WH + RH, 0], 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([0, .75, 1, .75, .5, 1], 2)); g.computeVertexNormals(); return g; })();
+/* porta ou janela numa das paredes: vão escuro, guarnição, peitoril, folhas de madeira com dobradiça */
+function opening(parent, side, pos, w, h, y0, kind, trimM, woodM, rng){
+  const og = new THREE.Group(); parent.add(og);
+  if(side === 'front') og.position.set(pos, 0, HD/2);
+  else if(side === 'back'){ og.position.set(pos, 0, -HD/2); og.rotation.y = Math.PI; }
+  else if(side === 'right'){ og.position.set(HW/2, 0, pos); og.rotation.y = Math.PI/2; }
+  else { og.position.set(-HW/2, 0, pos); og.rotation.y = -Math.PI/2; }
+  const v = new THREE.Mesh(new THREE.PlaneGeometry(w, h), vaoM); v.position.set(0, y0 + h/2, .006); og.add(v);
+  box(og, .1, h + .1, .09, trimM, -w/2 - .05, y0 + h/2, .035); box(og, .1, h + .1, .09, trimM, w/2 + .05, y0 + h/2, .035);
+  box(og, w + .3, .12, .12, trimM, 0, y0 + h + .06, .05);
+  if(kind === 'win'){
+    box(og, w + .34, .07, .24, cementM, 0, y0 - .035, .1);
+    box(og, w, .04, .04, M(0x2a221a), 0, y0 + h*.5, .02, false);   // travessa
+    for(const sd of [-1, 1]){
+      const pv = new THREE.Group(); pv.position.set(sd*w/2, y0 + .02, .07); og.add(pv);
+      box(pv, w/2 - .02, h - .04, .045, woodM, -sd*w/4, h/2 - .02, 0);
+      const r = rng(); pv.rotation.y = r < .28 ? 0 : r < .78 ? sd*(1.6 + rng()*1.1) : sd*(.35 + rng()*.6);
+      if(rng() < .14){ pv.rotation.z = sd*.22; pv.position.y -= .07; }   // folha caída na dobradiça
+    }
+    return og;
+  }
+  const pv = new THREE.Group(); pv.position.set(-w/2, y0, .05); og.add(pv);
+  box(pv, w - .02, h - .02, .055, woodM, w/2, h/2, 0);
+  box(pv, .05, .05, .08, M(0x1a1a1a), w - .14, h*.48, .05, false);   // tramela
+  return pv;
+}
+function casa(rng){
+  const R = (a, b) => a + rng()*(b - a);
+  const pi = Math.floor(rng()*HOUSE_PAL.length), pal = HOUSE_PAL[pi];
+  const g = new THREE.Group();
+  const wallM = new THREE.MeshLambertMaterial({map:wallTex(pi)}), gableM = new THREE.MeshLambertMaterial({map:wallTex(pi), side:THREE.DoubleSide});
+  const trimM = M(pal.trim), woodM = new THREE.MeshLambertMaterial({map:plankTex(pal.wood)});
+  const porch = rng() < .7, cist = rng() < .6, broken = rng() < .42, centered = rng() < .45, chimney = rng() < .45, fenced = rng() < .65;
+  const cols = [], plats = [];
+  // alicerce de pedra, paredes, cornija, oitões, interior escuro (visto pelas portas e pelo telhado furado)
+  const fnd = box(g, HW + .16, 1.0, HD + .16, stoneM, 0, -.42, 0); fnd.receiveShadow = true;
+  const walls = box(g, HW, WH, HD, wallM, 0, WH/2, 0); walls.receiveShadow = true;
+  const inner = new THREE.Mesh(new THREE.BoxGeometry(HW - .12, WH - .12, HD - .12), interiorM); inner.position.y = WH/2; g.add(inner);
+  box(g, HW + .08, .1, HD + .08, trimM, 0, WH - .06, 0, false);
+  for(const sx of [-1, 1]){ const gm = new THREE.Mesh(gableGeo, gableM); gm.position.x = sx*(HW/2 + .002); gm.castShadow = true; g.add(gm); }
+  // telhado colonial em duas águas
+  const slab = (sign, len, x0, x1, start = 0, mat = roofM, th = .1) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, th, len), mat), mid = start + len/2;
+    m.rotation.x = sign*ROOF_A; m.position.set((x0 + x1)/2, RIDGE_Y - Math.sin(ROOF_A)*mid, sign*Math.cos(ROOF_A)*mid);
+    m.castShadow = true; m.receiveShadow = true; g.add(m); return m; };
+  slab(1, ROOF_L, -RW/2, RW/2);
+  if(broken){
+    const gx0 = R(-2.4, .4), gx1 = gx0 + R(1.3, 2.1), keep = ROOF_L*R(.3, .45);
+    slab(-1, ROOF_L, -RW/2, gx0); slab(-1, ROOF_L, gx1, RW/2); slab(-1, keep, gx0, gx1);
+    for(let x = gx0 + .25; x < gx1 - .1; x += .55) slab(-1, ROOF_L - keep, x - .035, x + .035, keep, rafterM, .09);   // caibros
+    for(let d = keep + .3; d < ROOF_L - .1; d += .38) slab(-1, .05, gx0, gx1, d, rafterM, .04);                       // ripas
+    for(let k=0;k<5;k++){ const t = new THREE.Mesh(new THREE.BoxGeometry(.2, .05, .42), roofM); t.position.set(R(gx0, gx1), .03, -HD/2 - R(.6, 1.8)); t.rotation.set(R(-.3, .3), R(0, 3), R(-.2, .2)); g.add(t); }   // telhas caídas
+  } else slab(-1, ROOF_L, -RW/2, RW/2);
+  const ridge = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, RW + .04, 8), ridgeM); ridge.rotation.z = Math.PI/2; ridge.position.y = RIDGE_Y + .03; ridge.castShadow = true; g.add(ridge);
+  for(const sign of [-1, 1]){ const e = new THREE.Mesh(new THREE.BoxGeometry(RW, .08, .08), ridgeM); e.position.set(0, RIDGE_Y - Math.sin(ROOF_A)*ROOF_L - .02, sign*Math.cos(ROOF_A)*ROOF_L); g.add(e); }   // bica das telhas
+  if(chimney){ const cx = R(-1.8, 1.8), cz = -R(.8, 1.6), top = RIDGE_Y + .35; box(g, .55, top - WH + .2, .55, wallM, cx, (top + WH - .2)/2, cz); box(g, .7, .1, .7, M(0x2a2622), cx, top + .05, cz); }
+  // aberturas
+  const fy = porch ? .2 : .06, doorX = centered ? 0 : -1.4;
+  const door = opening(g, 'front', doorX, 1.0, 2.05, fy, 'door', trimM, woodM, rng);
+  for(const x of centered ? [-2.05, 2.05] : [1.35]) opening(g, 'front', x, .95, 1.05, 1.0, 'win', trimM, woodM, rng);
+  opening(g, 'right', -.3, .95, 1.05, 1.0, 'win', trimM, woodM, rng);
+  opening(g, 'left', .4, .95, 1.05, 1.0, 'win', trimM, woodM, rng);
+  if(rng() < .6) opening(g, 'back', 1.4, .7, .7, 1.35, 'win', trimM, woodM, rng);
+  // alpendre: piso de cimento, degrau, telhado mais baixo sobre esteios de madeira
+  if(porch){
+    const PD = 2.35, PY = .2, a2 = .16, L2 = (PD + .4)/Math.cos(a2), y0 = 2.47;
+    const fl = box(g, HW + .5, 1.0, PD, cementM, 0, PY - .5, HD/2 + PD/2, false); fl.receiveShadow = true;
+    const st = box(g, 1.3, .6, .4, cementM, doorX, .1 - .3, HD/2 + PD + .2, false); st.receiveShadow = true;
+    const pr = new THREE.Mesh(new THREE.BoxGeometry(RW, .08, L2), porchRoofM); pr.rotation.x = a2;
+    pr.position.set(0, y0 - Math.sin(a2)*L2/2, HD/2 + Math.cos(a2)*L2/2); pr.castShadow = true; pr.receiveShadow = true; g.add(pr);
+    const postZ = HD/2 + PD - .22, topY = y0 - Math.tan(a2)*(PD - .22) - .08;
+    for(const x of centered ? [-HW/2 + .22, -1.05, 1.05, HW/2 - .22] : [-HW/2 + .22, .3, HW/2 - .22]){
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(.075, .095, topY - PY, 7), postM); p.position.set(x + R(-.03, .03), PY + (topY - PY)/2, postZ); p.rotation.z = R(-.025, .025); p.castShadow = true; g.add(p);
+      box(g, .26, .06, .26, cementM, x, PY + .03, postZ, false); cols.push([x, postZ, .14]); }
+    box(g, HW + .3, .15, .15, postM, 0, topY + .04, postZ);
+    // banco e pote de barro
+    const bx = centered ? 2.3 : 1.6; box(g, 1.4, .07, .36, postM, bx, .62, HD/2 + .38); for(const dx of [-.6, .6]) box(g, .07, .42, .3, postM, bx + dx, .41, HD/2 + .38, false);
+    const jar = new THREE.Mesh(jarGeo, jarM); jar.position.set(doorX + (centered ? -1.0 : .95), PY, HD/2 + .35); jar.castShadow = true; g.add(jar);
+    plats.push([-HW/2 - .25, HW/2 + .25, HD/2, HD/2 + PD, PY], [doorX - .65, doorX + .65, HD/2 + PD, HD/2 + PD + .4, .1]);
+  } else {
+    box(g, 1.3, .7, .45, cementM, doorX, .06 - .35, HD/2 + .22, false);   // soleira
+    plats.push([doorX - .65, doorX + .65, HD/2, HD/2 + .45, .06]);
+    const fr = new THREE.Mesh(new THREE.BoxGeometry(RW, .06, 1), roofM); fr.position.set(0, 2.42, HD/2 + .45); fr.rotation.x = .2; g.add(fr);   // marquise
+  }
+  // cisterna de placa com calha e cano descendo do telhado
+  if(cist){
+    const cx = HW/2 + 2.0, cz = -.5, ch = 1.55;
+    const c = new THREE.Mesh(new THREE.CylinderGeometry(1.32, 1.4, ch + .7, 24, 1, true), cistM); c.position.set(cx, ch/2 - .35, cz); c.castShadow = true; c.receiveShadow = true; g.add(c);
+    const lid = new THREE.Mesh(new THREE.SphereGeometry(1.36, 20, 6, 0, Math.PI*2, 0, Math.PI/2), cistM); lid.scale.y = .32; lid.position.set(cx, ch, cz); lid.castShadow = true; g.add(lid);
+    box(g, .5, .1, .5, M(0x6a6e72), cx + .35, ch + .4, cz + .2);
+    const gy = RIDGE_Y - Math.sin(ROOF_A)*ROOF_L - .1, gz = -Math.cos(ROOF_A)*ROOF_L + .05;
+    const gut = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, RW*.55, 8, 1, true, 0, Math.PI), pipeM); gut.rotation.set(0, 0, Math.PI/2); gut.position.set(RW*.22, gy, gz); g.add(gut);
+    const a = new THREE.Vector3(RW/2 - .1, gy, gz), b = new THREE.Vector3(RW/2 - .1, 1.95, gz), cc = new THREE.Vector3(cx - .55, ch + .28, cz - .25);
+    tube(g, a, b, .045, pipeM); tube(g, b, cc, .045, pipeM);
+    cols.push([cx, cz, 1.45]);
+  }
+  // cerca de varas no quintal, com trechos caídos
+  if(fenced){
+    const z0 = -HD/2 - .8, z1 = -HD/2 - R(5.5, 7.5), xL = -HW/2 - 1.1, xR = HW/2 + (cist ? 3.9 : 1.2);
+    const path = [[xL, z0], [xL, z1], [xR, z1], [xR, z0]]; let prev = null;
+    for(let s=0;s<3;s++){ const [ax, az] = path[s], [bx, bz] = path[s + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(2, Math.round(L/1.35));
+      for(let k=(s ? 1 : 0);k<=n;k++){ const t = k/n, x = ax + (bx - ax)*t + R(-.08, .08), z = az + (bz - az)*t + R(-.08, .08), h = R(.95, 1.35);
+        const p = new THREE.Mesh(new THREE.CylinderGeometry(.045, .06, h + .5, 5), fenceM); p.position.set(x, h/2 - .25, z); p.rotation.set(R(-.08, .08), 0, R(-.1, .1)); p.castShadow = true; g.add(p);
+        if(prev && rng() < .78) for(const yy of [.42, .85]) if(rng() < .9) tube(g, new THREE.Vector3(prev[0], yy + R(-.05, .05), prev[1]), new THREE.Vector3(x, yy + R(-.05, .05), z), .028, fenceM, 4);
+        prev = [x, z]; } }
+  }
+  // marca dourada do saque, na porta
+  const mark = new THREE.Mesh(new THREE.OctahedronGeometry(.15), new THREE.MeshBasicMaterial({color:0xf2b632, fog:false}));
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color:0xffc040, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false})); halo.scale.setScalar(1.1); mark.add(halo);
+  mark.position.set(doorX, 2.25, HD/2 + .7); mark.userData.y0 = 2.25; g.add(mark);
+  g.userData = {door, mark, cols, plats};
   return g;
 }
+
 function fogueira(){
   const g = new THREE.Group(), stone = M(0x7a746a), wood = M(0x5a3d24);
   for(let i=0;i<9;i++){ const a = i/9*Math.PI*2, s = new THREE.Mesh(new THREE.DodecahedronGeometry(0.18, 0), stone); s.position.set(Math.cos(a)*0.62, 0.1, Math.sin(a)*0.62); s.castShadow = true; g.add(s); }
@@ -560,6 +901,98 @@ function abrigo(){
   return g;
 }
 const glowTex = canvasTex(128, 128, (g) => { const gr = g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,255,255,.9)'); gr.addColorStop(.45,'rgba(255,255,255,.3)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0,0,128,128); });
+
+/* ---------- detalhes do açude ---------- */
+const acudeProps = new THREE.Group(); scene.add(acudeProps);
+const acudeAt = (th, e) => { const t = shoreT(th, e); return [ACUDE.x + Math.cos(th)*t, ACUDE.z + Math.sin(th)*t]; };
+const freeTh = () => { for(let k=0;k<60;k++){ const i = Math.floor(Math.random()*SH_N); if(!onDamSide[i] && !onDamSide[(i + 4)%SH_N] && !onDamSide[(i + SH_N - 4)%SH_N]) return shoreTh[i] + Math.random()*.02; } return Math.PI; };
+const damPt = (s, u) => [ACUDE.x + ACUDE.nx*(ACUDE.dd + s) - ACUDE.nz*u, ACUDE.z + ACUDE.nz*(ACUDE.dd + s) + ACUDE.nx*u];
+const DAM_ROT = Math.atan2(ACUDE.nx, ACUDE.nz);
+const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _c = new THREE.Color(), _e = new THREE.Euler();
+// galhos secos de árvores que morreram quando o açude encheu
+for(let i=0;i<9;i++){
+  const [x, z] = acudeAt(freeTh(), 2 + Math.random()*10), y0 = H(x, z), hgt = ACUDE.y + 1.3 + Math.random()*2.8 - y0;
+  const gT = new THREE.Group(); gT.position.set(x, y0, z); gT.rotation.set((Math.random() - .5)*.2, Math.random()*6, (Math.random() - .5)*.3);
+  const wood = M(0x958c7c), tr = new THREE.Mesh(new THREE.CylinderGeometry(.06, .2, hgt, 6), wood); tr.position.y = hgt/2; tr.castShadow = true; gT.add(tr);
+  for(let k=0;k<3;k++){ const bl = .6 + Math.random()*1.3, br = new THREE.Mesh(new THREE.CylinderGeometry(.02, .06, bl, 5), wood); br.geometry.translate(0, bl/2, 0);
+    br.position.y = hgt*(.5 + k*.16); br.rotation.set(0, Math.random()*6, .55 + Math.random()*.6); br.castShadow = true; gT.add(br); }
+  acudeProps.add(gT);
+}
+// aguapé boiando em manchas perto da margem
+{ const N = 190, geo = new THREE.CircleGeometry(.3, 7); geo.rotateX(-Math.PI/2);
+  const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({color:0xffffff}), N); let n = 0;
+  for(let p=0;p<7;p++){ const th = freeTh(); for(let k=0;k<27 && n<N;k++, n++){ const [x, z] = acudeAt(th + (Math.random() - .5)*.13, .3 + Math.random()*3.4);
+    _p.set(x, ACUDE.y + .02 + Math.random()*.008, z); _q.setFromAxisAngle(UP, Math.random()*6); const s = .6 + Math.random()*.95; _s.set(s, 1, s); _m4.compose(_p, _q, _s); im.setMatrixAt(n, _m4);
+    im.setColorAt(n, _c.setHSL(.23 + Math.random()*.07, .45, .26 + Math.random()*.12)); } }
+  im.count = n; im.frustumCulled = false; im.receiveShadow = true; acudeProps.add(im); }
+// juncos na beira
+{ const N = 560, geo = new THREE.ConeGeometry(.04, 1.35, 4); geo.translate(0, .62, 0);
+  const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({color:0xffffff}), N); let n = 0;
+  while(n < N){ const th = freeTh(), [cx, cz] = acudeAt(th, -1 + Math.random()*2.6); for(let k=0;k<14 && n<N;k++, n++){
+    const x = cx + (Math.random() - .5)*1.6, z = cz + (Math.random() - .5)*1.6; _p.set(x, H(x, z) - .05, z);
+    _q.setFromEuler(_e.set((Math.random() - .5)*.35, Math.random()*6, (Math.random() - .5)*.35)); const s = .6 + Math.random()*.8; _s.set(1, s, 1); _m4.compose(_p, _q, _s); im.setMatrixAt(n, _m4);
+    im.setColorAt(n, _c.setHSL(.15 + Math.random()*.08, .42, .3 + Math.random()*.16)); } }
+  im.frustumCulled = false; im.castShadow = true; acudeProps.add(im); }
+// enrocamento de pedras na face molhada da barragem
+{ const N = 300, im = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(.42, 0), new THREE.MeshLambertMaterial({color:0xffffff}), N); let n = 0;
+  for(let k=0;k<1200 && n<N;k++){ const s = -7.2 + Math.random()*5.4, u = DAM.uMin + 3 + Math.random()*(DAM.uMax - DAM.uMin - 6); if(Math.abs(u - DAM.spill) < 3.8) continue;
+    const [x, z] = damPt(s, u); _p.set(x, H(x, z) - .1, z); _q.setFromEuler(_e.set(Math.random()*3, Math.random()*6, Math.random()*3)); const sc = .6 + Math.random()*.75; _s.set(sc*(1 + Math.random()*.4), sc*.6, sc);
+    _m4.compose(_p, _q, _s); im.setMatrixAt(n, _m4); const v = .5 + Math.random()*.22; im.setColorAt(n, _c.setRGB(v + .03, v, v - .04)); n++; }
+  im.count = n; im.frustumCulled = false; im.castShadow = true; im.receiveShadow = true; acudeProps.add(im); }
+// sangradouro: canal de concreto cortando a barragem
+{ const gS = new THREE.Group(), [x, z] = damPt(0, DAM.spill), fy = ACUDE.y + .38; gS.position.set(x, fy, z); gS.rotation.y = DAM_ROT; acudeProps.add(gS);
+  const fl = box(gS, 3.4, .3, 16, cementM, 0, -.15, 1, false); fl.receiveShadow = true;
+  for(const sd of [-1, 1]){ const w = box(gS, .32, 2.3, 16, cementM, sd*1.86, .9, 1); w.receiveShadow = true; }
+  for(let k=0;k<3;k++) box(gS, 3.4, .14, .25, cementM, 0, .05, -3 + k*4, false);   // degraus de dissipação
+  // placa do açude na crista
+  const tex = canvasTex(512, 160, (g, w, h) => { g.fillStyle = '#f1efe6'; g.fillRect(0, 0, w, h); g.fillStyle = '#1d4e89'; g.fillRect(0, 0, w, 14); g.fillRect(0, h - 14, w, 14);
+    g.font = 'bold 54px "Chakra Petch", sans-serif'; g.textAlign = 'center'; g.fillText('AÇUDE SANTA RITA', w/2, 78); g.font = 'bold 30px "Chakra Petch", sans-serif'; g.fillText('CAPACIDADE 1,2 MILHÃO m³', w/2, 124);
+    for(let i=0;i<500;i++){ g.fillStyle = 'rgba(120,90,50,.08)'; g.fillRect(Math.random()*w, Math.random()*h, 3, 3); } });
+  const sg = new THREE.Group(), [sx, sz] = damPt(.4, DAM.spill - 5.5); sg.position.set(sx, H(sx, sz), sz); sg.rotation.y = DAM_ROT + Math.PI; acudeProps.add(sg);
+  for(const px of [-1.1, 1.1]) box(sg, .1, 2.2, .1, M(0x8d8f95), px, 1.1, 0);
+  const b = new THREE.Mesh(new THREE.BoxGeometry(2.6, .82, .06), [M(0xdedbd0), M(0xdedbd0), M(0xdedbd0), M(0xdedbd0), new THREE.MeshLambertMaterial({map:tex}), M(0xdedbd0)]); b.position.y = 1.85; b.castShadow = true; sg.add(b); }
+// canoa velha encalhada na lama
+{ const gC = new THREE.Group(), th = freeTh(), [x, z] = acudeAt(th, -2.6);
+  gC.position.set(x, H(x, z) + .16, z); gC.rotation.set(.04, th + Math.PI/2, .1); acudeProps.add(gC);
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI*2, Math.PI/2, Math.PI/2), new THREE.MeshLambertMaterial({color:0x4f6f86, side:THREE.DoubleSide}));
+  hull.scale.set(1.7, .42, .48); hull.castShadow = true; gC.add(hull);
+  const rimC = new THREE.Mesh(new THREE.TorusGeometry(1, .035, 5, 28), M(0x6b4f35)); rimC.rotation.x = Math.PI/2; rimC.scale.set(1.7, .48, 1); gC.add(rimC);
+  for(const dx of [-.7, .5]) box(gC, .2, .04, .86, M(0x7a5a3a), dx, -.06, 0, false);
+  const oar = new THREE.Group(); oar.position.set(.6, -.02, .9); oar.rotation.set(0, .5, .05); gC.add(oar); box(oar, 1.9, .04, .05, M(0x8a6a44), 0, 0, 0, false); box(oar, .45, .02, .2, M(0x8a6a44), 1.05, 0, 0, false); }
+
+/* ---------- vegetação rasteira: capim seco e pedrinhas, escondidos onde houver casa ---------- */
+const tuftTex = canvasTex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.lineCap = 'round';
+  for(let i=0;i<34;i++){ const x0 = w/2 + (Math.random() - .5)*60, lean = (Math.random() - .5)*70, top = 8 + Math.random()*60;
+    g.strokeStyle = ['#c9b06a','#b39a52','#9a8a4a','#d8c486','#8a7a40'][Math.floor(Math.random()*5)]; g.lineWidth = 2 + Math.random()*2.2;
+    g.beginPath(); g.moveTo(x0, h); g.quadraticCurveTo(x0 + lean*.3, h*.55, x0 + lean, top); g.stroke(); } });
+const tuftGeo = (() => { const P = [], U = [], N = [], I = [], w = .5, hh = .62;
+  for(let k=0;k<3;k++){ const a = k*Math.PI/3, c = Math.cos(a)*w, s = Math.sin(a)*w, o = P.length/3;
+    P.push(-c, 0, -s, c, 0, s, c, hh, s, -c, hh, -s); U.push(0, 0, 1, 0, 1, 1, 0, 1); N.push(0,1,0, 0,1,0, 0,1,0, 0,1,0); I.push(o, o + 1, o + 2, o, o + 2, o + 3, o, o + 2, o + 1, o, o + 3, o + 2); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setIndex(I); return g; })();
+const DRESS = [];
+function dressing(geo, mat, N, pickC, sizeF, sink){
+  const im = new THREE.InstancedMesh(geo, mat, N), base = [];
+  for(let n=0, k=0; n<N && k<N*6; k++){
+    const a = Math.random()*Math.PI*2, r = Math.sqrt(Math.random())*178, x = Math.cos(a)*r, z = Math.sin(a)*r;
+    if(Math.abs(x - roadX(z)) < ROAD_HW + 1.5 || Math.hypot(x - CAR_X0, z - 6) < 5) continue;
+    const e = acudeE(x, z); if(e > -6.4) continue;
+    const s = damS(x, z), u = damU(x, z); if(s > -8 && s < 5 && u > DAM.uMin - 4 && u < DAM.uMax + 4) continue;
+    const near = e > -20, sc = sizeF(near);
+    base.push([x, H(x, z) - sink, z, Math.random()*6, sc]); im.setColorAt(n, pickC(near, _c)); n++;
+  }
+  im.count = base.length; im.frustumCulled = false; im.userData.base = base; DRESS.push(im); scene.add(im); layDressing(im, []);
+  return im;
+}
+function layDressing(im, hs){
+  im.userData.base.forEach((b, i) => { let hide = false; for(const h of hs){ if((b[0] - h.x)**2 + (b[2] - h.z)**2 < 90){ hide = true; break; } }
+    _p.set(b[0], b[1], b[2]); _q.setFromAxisAngle(UP, b[3]); _s.setScalar(hide ? 0 : b[4]); _m4.compose(_p, _q, _s); im.setMatrixAt(i, _m4); });
+  im.instanceMatrix.needsUpdate = true;
+}
+const CAR_X0 = roadX(6) + 2.7;
+dressing(tuftGeo, new THREE.MeshLambertMaterial({map:tuftTex, alphaTest:.42}), COARSE ? 1500 : 2800,
+  (near, c) => near ? c.setHSL(.17 + Math.random()*.06, .4, .62 + Math.random()*.2) : c.setHSL(.1 + Math.random()*.04, .3, .72 + Math.random()*.2), near => (.7 + Math.random()*.8)*(near ? 1.3 : 1), .03);
+dressing(new THREE.DodecahedronGeometry(.13, 0), new THREE.MeshLambertMaterial({color:0xffffff}), COARSE ? 600 : 1100,
+  (near, c) => { const v = .55 + Math.random()*.25; return c.setRGB(v + .08, v, v - .08); }, () => .5 + Math.random()*1.4, .04);
 
 /* o carro do Turbo BR-316, parado com o capô aberto */
 function carroQuebrado(){
@@ -708,7 +1141,7 @@ const take = (k, n = 1) => { inv[k] = (inv[k] || 0) - n; if(inv[k] <= 0) delete 
 /* ---------- geração do mundo a partir de uma semente ---------- */
 function clearWorld(){
   while(worldG.children.length) worldG.remove(worldG.children[0]);
-  nodes = []; houses = []; colliders = [carCollider]; fires = []; shelters = []; goats = []; dogs = [];
+  nodes = []; houses = []; platforms = []; colliders = [carCollider]; fires = []; shelters = []; goats = []; dogs = [];
 }
 const NODE = {
   carnauba:{make:carnauba, r:.45, hp:4, regrow:72, label:'Cortar carnaúba', give:{madeira:2, palha:2}},
@@ -724,7 +1157,8 @@ function genWorld(sd){
   const ok = (x, z, clear) => {
     if(Math.hypot(x, z) > WORLD_R - 4) return false;
     if(Math.abs(x - roadX(z)) < ROAD_HW + 2.5 + clear) return false;
-    if(Math.hypot(x - ACUDE.x, z - ACUDE.z) < ACUDE.r + 3 + clear) return false;
+    if(acudeE(x, z) > -7.5 - clear) return false;
+    { const s = damS(x, z), u = damU(x, z); if(s > -9 - clear && s < 6 + clear && u > DAM.uMin - 6 - clear && u < DAM.uMax + 6 + clear) return false; }
     if(Math.hypot(x - CAR.x, z - CAR.z) < 10 + clear) return false;
     for(const p of pts) if((p.x - x)**2 + (p.z - z)**2 < (p.r + clear)**2) return false;
     return true;
@@ -739,26 +1173,41 @@ function genWorld(sd){
   for(let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rng()*(i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const NH = 8;
   for(let i=0;i<NH;i++){
-    const a0 = i/NH*Math.PI*2 + R(-.3, .3), p = spot(7.5, Math.cos(a0)*R(55, 150), Math.sin(a0)*R(55, 150), 0, 24) || spot(7.5, 0, 0, 40, 170); if(!p) continue;
-    const o = casa(), rot = Math.floor(rng()*4)*Math.PI/2; o.position.set(p.x, H(p.x, p.z) - 0.1, p.z); o.rotation.y = rot; worldG.add(o);
+    const rot = Math.floor(rng()*4)*Math.PI/2, c = Math.cos(rot), s = Math.sin(rot);
+    const toW = (lx, lz, ox, oz) => [ox + lx*c + lz*s, oz - lx*s + lz*c];
+    const foot = [[-3.4, -2.7], [3.4, -2.7], [-3.4, 2.7], [3.4, 2.7], [-3.4, 5.2], [3.4, 5.2], [5.3, -.5], [0, 0]];
+    let p = null, by = 0;
+    for(let k=0;k<10 && !p;k++){
+      const a0 = i/NH*Math.PI*2 + R(-.3, .3), q = k < 6 ? spot(10.5, Math.cos(a0)*R(55, 150), Math.sin(a0)*R(55, 150), 0, 26) : spot(10.5, 0, 0, 40, 170);
+      if(!q) continue;
+      const hs = foot.map(([lx, lz]) => H(...toW(lx, lz, q.x, q.z)));
+      if(Math.max(...hs) - Math.min(...hs) > .9){ pts.pop(); continue; }
+      p = q; by = Math.max(...hs.slice(0, 6)) - .12;
+    }
+    if(!p) continue;
+    const o = casa(mulberry32((sd ^ 0x5bd1e995) + i*7919)); o.position.set(p.x, by, p.z); o.rotation.y = rot; worldG.add(o);
     const odd = Math.round(rot/(Math.PI/2)) % 2 === 1;
-    const col = {box:true, x:p.x, z:p.z, hx:odd ? 2.6 : 3.1, hz:odd ? 3.1 : 2.6};
+    const col = {box:true, x:p.x, z:p.z, hx:(odd ? HD : HW)/2 + .08, hz:(odd ? HW : HD)/2 + .08};
     colliders.push(col);
+    for(const [lx, lz, r] of o.userData.cols){ const [x, z] = toW(lx, lz, p.x, p.z); colliders.push({x, z, r}); }
+    for(const [x0, x1, z0, z1, py] of o.userData.plats){ const [ax, az] = toW(x0, z0, p.x, p.z), [bx, bz] = toW(x1, z1, p.x, p.z);
+      platforms.push({x:(ax + bx)/2, z:(az + bz)/2, hx:Math.abs(bx - ax)/2, hz:Math.abs(bz - az)/2, y:by + py}); }
     houses.push({obj:o, x:p.x, z:p.z, rot, col, loot:[], looted:false});
   }
+  DRESS.forEach(im => layDressing(im, houses));
   pool.forEach((it, i) => houses[i % houses.length].loot.push(it));
   // ferros-velhos (duas guardam peças a mais)
   const piles = [];
   for(let i=0;i<14;i++){ const p = spot(2.6, 0, 0, 20, WORLD_R - 6); if(p) piles.push(addNode('sucata', p.x, p.z)); }
   if(piles[3]) piles[3].bonus = 'peca'; if(piles[9]) piles[9].bonus = 'galao';
   // vegetação: carnaúbas se juntam perto do açude
-  for(let i=0;i<34;i++){ const p = spot(1.8, ACUDE.x, ACUDE.z, ACUDE.r + 4, ACUDE.r + 50); if(p) addNode('carnauba', p.x, p.z); }
+  for(let i=0;i<34;i++){ const p = spot(1.8, ACUDE.x, ACUDE.z, ACUDE.r + 8, ACUDE.r + 55); if(p) addNode('carnauba', p.x, p.z); }
   const plan = [['carnauba', 46], ['arvore', 48], ['mandacaru', 54], ['moita', 64], ['rocha', 60]];
   for(const [t, n] of plan) for(let i=0;i<n;i++){ const p = spot(t === 'rocha' ? 2.2 : 1.8); if(p) addNode(t, p.x, p.z); }
   for(let i=0;i<3;i++) spawnHerd(rng);
 }
 function addNode(type, x, z){
-  const T = NODE[type], o = T.make(); o.position.set(x, H(x, z), z); o.rotation.y = Math.random()*6; worldG.add(o);
+  const T = NODE[type], o = T.make(); o.position.set(x, H(x, z) - .05, z); o.rotation.y = Math.random()*6; worldG.add(o);
   const n = {id:nodes.length, type, x, z, obj:o, hp:T.hp, regrow:0, alive:true, r:T.r};
   nodes.push(n); if(T.r > 0) colliders.push(n); return n;
 }
@@ -803,10 +1252,10 @@ const boxDist = (c, x, z) => Math.hypot(Math.max(0, Math.abs(x - c.x) - c.hx), M
 
 /* ---------- ciclo do dia ---------- */
 const PAL = {
-  noite: {fog:0x131f39, hs:0x5a70a8, hg:0x1a140f, hi:.34, sc:0x9fb5e0, si:.26, sky:['#03060f','#0b1630','#16233f'], near:14, far:120, hills:[0x0e1730, 0x13203d], stars:1, water:0x0c2238},
-  aurora:{fog:0xe7a27a, hs:0xffc9a0, hg:0x5a3e2a, hi:.62, sc:0xffb27a, si:.75, sky:['#34518a','#e98f66','#f3c08c'], near:45, far:240, hills:[0x9a6a5a, 0xb07a66], stars:.15, water:0x4a6f86},
-  dia:   {fog:0xe3d7bd, hs:0xffffff, hg:0x8a6a44, hi:.95, sc:0xfff4e0, si:1.15, sky:['#3f86d6','#9ccaef','#e6e0cc'], near:70, far:300, hills:[0x9a9a96, 0xb1aea2], stars:0, water:0x3a7f96},
-  tarde: {fog:0xf3c58c, hs:0xffe2b8, hg:0x6b4a2a, hi:.75, sc:0xffd29a, si:1.05, sky:['#3a5f8f','#e9a066','#f3c58c'], near:55, far:270, hills:[0xb7835f, 0xcf9a70], stars:0, water:0x3a7090},
+  noite: {fog:0x131f39, hs:0x5a70a8, hg:0x1a140f, hi:.34, sc:0x9fb5e0, si:.26, sky:['#03060f','#0b1630','#16233f'], near:14, far:120, hills:[0x0e1730, 0x13203d], stars:1, water:0x0b2026},
+  aurora:{fog:0xe7a27a, hs:0xffc9a0, hg:0x5a3e2a, hi:.62, sc:0xffb27a, si:.75, sky:['#34518a','#e98f66','#f3c08c'], near:45, far:240, hills:[0x9a6a5a, 0xb07a66], stars:.15, water:0x4d6d72},
+  dia:   {fog:0xe3d7bd, hs:0xf4f6ff, hg:0x7a5e40, hi:.78, sc:0xfff1dc, si:1.0, sky:['#3f86d6','#9ccaef','#e6e0cc'], near:70, far:300, hills:[0x9a9a96, 0xb1aea2], stars:0, water:0x3f7a72},
+  tarde: {fog:0xf3c58c, hs:0xffe2b8, hg:0x6b4a2a, hi:.75, sc:0xffd29a, si:1.05, sky:['#3a5f8f','#e9a066','#f3c58c'], near:55, far:270, hills:[0xb7835f, 0xcf9a70], stars:0, water:0x46706e},
 };
 const KEYS = [[0,'noite'],[4.6,'noite'],[6,'aurora'],[8,'dia'],[15.5,'dia'],[17.4,'tarde'],[18.9,'noite'],[24,'noite']];
 const cA = new THREE.Color(), cB = new THREE.Color();
@@ -829,6 +1278,7 @@ function applySky(dt, force){
   hillMat.color.setHex(mixHex(mixHex(A.hills[0], B.hills[0], t), 0x5a6270, w*.5)); hillMat2.color.setHex(mixHex(mixHex(A.hills[1], B.hills[1], t), 0x646c78, w*.5));
   stars.material.opacity = lerp(A.stars, B.stars, t) * (1 - w); stars.visible = stars.material.opacity > .02;
   waterMat.color.setHex(mixHex(A.water, B.water, t));
+  { const hh = clock % 24, env = isNight(hh) ? SKYENV.noite : (hh < 7.6 || hh > 16.4) ? SKYENV.tarde : SKYENV.dia; if(waterMat.envMap !== env) waterMat.envMap = env; waterMat.reflectivity = isNight(hh) ? .18 : .32; }
   skyT -= dt || 1;
   if(skyT <= 0 || force){ skyT = .25;
     const s = stage.style, gray = ['#4c5666','#6d7684','#8a929c'];
@@ -1035,7 +1485,7 @@ function updateCamera(dt, t){
   } else {
     const cp = Math.cos(cam.pitch);
     let x = camT.x + Math.sin(cam.yaw)*cp*C.d, y = camT.y + Math.sin(cam.pitch)*C.d, z = camT.z + Math.cos(cam.yaw)*cp*C.d;
-    y = Math.max(y, groundAt(x, z) + .45);
+    y = Math.max(y, groundAt(x, z) + .45); if(inWater(x, z)) y = Math.max(y, ACUDE.y + .4);
     camera.position.set(x, y, z); camera.lookAt(camT.x, camT.y + .2, camT.z);
   }
   player.userData.body.forEach(m => m.visible = C.d !== 0);
@@ -1112,20 +1562,22 @@ cv.addEventListener('pointermove', e => {
 });
 const endTouch = e => { if(e.pointerId === joy.id){ joy.id = null; joy.x = joy.y = 0; $('joy').hidden = true; } if(e.pointerId === look.id) look.id = null; };
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => cv.addEventListener(t, endTouch));
-function bindPad(id, down, up){
-  const el = $(id);
-  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture?.(e.pointerId); el.classList.add('on'); down(); });
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(t => el.addEventListener(t, () => { el.classList.remove('on'); up && up(); }));
+function onTap(el, fn){
+  let last = -1e9; const fire = e => { const now = performance.now(); if(now - last < 380) return; last = now; fn(e); };
+  const flash = () => { el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('on'), 140); };
+  el.addEventListener('pointerdown', e => { if(e.pointerType === 'mouse' && e.button !== 0) return; e.preventDefault(); e.stopPropagation(); flash(); fire(e); });
+  el.addEventListener('touchstart', e => { if(e.cancelable) e.preventDefault(); e.stopPropagation(); flash(); fire(e); }, {passive:false});
+  el.addEventListener('click', e => { e.preventDefault(); fire(e); });
 }
-bindPad('padAct', () => doAction());
-bindPad('padJump', () => input.jump = true);
-$('padRun').addEventListener('pointerdown', e => { e.preventDefault(); runToggle = !runToggle; $('padRun').classList.toggle('on', runToggle); });
-$('padRun').addEventListener('pointerup', e => { $('padRun').classList.toggle('on', runToggle); });
+onTap($('padAct'), () => doAction());
+onTap($('tip'), () => doAction());
+onTap($('padJump'), () => input.jump = true);
+onTap($('padRun'), () => { runToggle = !runToggle; setTimeout(() => $('padRun').classList.toggle('on', runToggle), 150); });
 
 /* gamepad (padrão Xbox / PlayStation) */
 const pad = {mx:0, my:0, lx:0, ly:0, run:false, prev:[]};
 addEventListener('gamepadconnected', () => toast('🎮 Controle conectado'));
-function rumble(ms, strong){ try{ const g = [...navigator.getGamepads()].find(Boolean); g?.vibrationActuator?.playEffect('dual-rumble', {duration:ms, strongMagnitude:strong, weakMagnitude:strong*.6}); }catch(e){} if(COARSE && navigator.vibrate) try{ navigator.vibrate(Math.min(ms, 120)); }catch(e){} }
+function rumble(ms, strong){ try{ const g = [...navigator.getGamepads()].find(Boolean); g?.vibrationActuator?.playEffect('dual-rumble', {duration:ms, strongMagnitude:strong, weakMagnitude:strong*.6}); }catch(e){} if(TOUCH && navigator.vibrate) try{ navigator.vibrate(Math.min(ms, 120)); }catch(e){} }
 function pollPad(dt){
   let g = null; try{ g = [...(navigator.getGamepads?.() || [])].find(Boolean) || null; }catch(e){ return; }
   if(!g){ pad.mx = pad.my = pad.lx = pad.ly = 0; pad.run = false; return; }
@@ -1147,12 +1599,19 @@ function pollPad(dt){
 
 /* ---------- ações ---------- */
 let target = null;
+function nearWater(x, z, fx, fz){
+  const dx = x - ACUDE.x, dz = z - ACUDE.z; if(dx*dx + dz*dz > 4900) return null;
+  if(inWater(x, z)) return {d:0, x:x + fx, z:z + fz};
+  for(const r of [.8, 1.6, 2.4]) if(inWater(x + fx*r, z + fz*r)) return {d:r - .5, x:x + fx*r, z:z + fz*r};
+  for(let k=0;k<10;k++){ const a = k/10*Math.PI*2, px = x + Math.cos(a)*1.9, pz = z + Math.sin(a)*1.9; if(inWater(px, pz)) return {d:1.6, x:px, z:pz}; }
+  return null;
+}
 function findTarget(){
   const fx = -Math.sin(P.rot), fz = -Math.cos(P.rot);
   let best = null, bs = 1e9;
   const consider = (t, d, x, z, reach) => {
     if(d > reach) return; const dx = x - P.x, dz = z - P.z, l = Math.hypot(dx, dz) || 1, dot = (dx*fx + dz*fz)/l;
-    const sc = d - dot*.9 + (t.kind === 'dog' ? -2 : t.kind === 'goat' ? -1 : 0); if(sc < bs){ bs = sc; best = t; }
+    const sc = d - dot*.9 + (t.kind === 'dog' ? -2 : t.kind === 'goat' ? -1 : t.kind === 'water' ? -1.6 : 0); if(sc < bs){ bs = sc; best = t; }
   };
   for(const d of dogs){ if(d.leaving) continue; const dd = Math.hypot(d.x - P.x, d.z - P.z); consider({kind:'dog', ref:d, label:'Atacar cão'}, dd, d.x, d.z, 2.5); }
   for(const g of goats){ const dd = Math.hypot(g.x - P.x, g.z - P.z); consider({kind:'goat', ref:g, label:'Abater bode'}, dd, g.x, g.z, 2.2); }
@@ -1167,7 +1626,7 @@ function findTarget(){
   for(const f of fires){ const d = Math.hypot(f.x - P.x, f.z - P.z) - .6; const lit = clock < f.until;
     consider({kind:'fire', ref:f, label: has('carne') && lit ? 'Assar carne (' + inv.carne + ')' : has('madeira') ? (lit ? 'Pôr lenha na fogueira' : 'Reacender a fogueira') : lit ? 'Fogueira acesa · ' + Math.max(0, Math.round(f.until - clock)) + ' h' : 'Fogueira apagada (precisa de madeira)'}, d, f.x, f.z, 1.6); }
   for(const s of shelters){ const d = Math.hypot(s.x - P.x, s.z - P.z) - 1.4; consider({kind:'shelter', ref:s, label: isNight() ? 'Dormir no abrigo' : 'Abrigo (só se dorme à noite)'}, d, s.x, s.z, 1.6); }
-  if(!best && Math.hypot(P.x - ACUDE.x, P.z - ACUDE.z) < ACUDE.r + 3) best = {kind:'water', label:'Beber água do açude'};
+  { const w = nearWater(P.x, P.z, fx, fz); if(w) consider({kind:'water', label:'Beber água do açude'}, w.d, w.x, w.z, 2.8); }
   return best;
 }
 function swingAnim(){ P.swing = .32; sfx('swing', .6); }
@@ -1236,7 +1695,11 @@ function consume(k){
   toast(it.e + ' ' + it.n); return true;
 }
 function quickEat(){ const k = FOODS.find(f => has(f)); if(!k){ toast('Sem comida na mochila', true); sfx('deny'); return; } consume(k); }
-function quickDrink(){ const k = DRINKS.find(f => has(f)); if(!k){ toast('Sem água na mochila', true); sfx('deny'); return; } consume(k); }
+function quickDrink(){
+  const k = DRINKS.find(f => has(f));
+  if(!k){ if(nearWater(P.x, P.z, -Math.sin(P.rot), -Math.cos(P.rot))){ P.water = Math.min(100, P.water + 30); sfx('drink'); sfx('splash', .5); toast('+30 💧 água do açude'); return; }
+    toast('Sem água na mochila', true); sfx('deny'); return; }
+  consume(k); }
 function quickHeal(){ if(!consume('atadura')){ toast(has('palha', 3) ? 'Faça uma atadura com 3 palhas (mochila)' : 'Sem ataduras', true); sfx('deny'); } }
 function toggleLamp(){ P.lamp = !P.lamp; $('hbLamp').setAttribute('aria-pressed', P.lamp); sfx('click'); }
 
@@ -1307,18 +1770,17 @@ function renderInv(){
 }
 function openInv(){ if(state !== 'play') return; state = 'inv'; renderInv(); $('inv').hidden = false; if(locked) document.exitPointerLock?.(); $('invClose').focus({preventScroll:true}); }
 function closeInv(){ $('inv').hidden = true; if(state === 'inv') state = 'play'; }
-$('invClose').onclick = closeInv; $('hbBag').onclick = openInv;
-$('hbFood').onclick = quickEat; $('hbWater').onclick = quickDrink; $('hbHeal').onclick = quickHeal; $('hbLamp').onclick = toggleLamp;
-['hbFood','hbWater','hbHeal','hbLamp','hbBag'].forEach(id => $(id).addEventListener('pointerdown', e => e.stopPropagation()));
+$('invClose').onclick = closeInv; onTap($('hbBag'), openInv);
+onTap($('hbFood'), quickEat); onTap($('hbWater'), quickDrink); onTap($('hbHeal'), quickHeal); onTap($('hbLamp'), toggleLamp);
 
 /* ---------- salvar / carregar ---------- */
 function saveGame(){
   if(!(state === 'play' || state === 'pause' || state === 'inv' || state === 'sleep')) return;
-  store.set('Save', {v:1, seed, clock, curDay, rainDay, stats, P:{x:+P.x.toFixed(2), z:+P.z.toFixed(2), rot:+P.rot.toFixed(2), hp:P.hp, food:P.food, water:P.water, stam:P.stam, lamp:P.lamp}, inv, car:carP,
+  store.set('Save', {v:2, seed, clock, curDay, rainDay, stats, P:{x:+P.x.toFixed(2), z:+P.z.toFixed(2), rot:+P.rot.toFixed(2), hp:P.hp, food:P.food, water:P.water, stam:P.stam, lamp:P.lamp}, inv, car:carP,
     nodes:nodes.map(n => [n.alive ? 1 : 0, n.alive ? n.hp : +n.regrow.toFixed(2), n.bonus || 0]), houses:houses.map(h => h.looted ? 1 : 0),
     fires:fires.map(f => [+f.x.toFixed(2), +f.z.toFixed(2), +f.until.toFixed(2)]), shelters:shelters.map(s => [+s.x.toFixed(2), +s.z.toFixed(2), +s.rot.toFixed(2)]), goats:goats.length});
 }
-function loadSave(){ const s = store.get('Save', null); return s && s.v === 1 && isFinite(s.seed) ? s : null; }
+function loadSave(){ const s = store.get('Save', null); return s && s.v === 2 && isFinite(s.seed) ? s : null; }
 function applySave(s){
   genWorld(s.seed);
   clock = s.clock; curDay = s.curDay; rainDay = s.rainDay; stats = s.stats || {kills:0, goats:0};
@@ -1362,7 +1824,7 @@ function startGame(cont){
   ['vitals','hotbar','compass','clock'].forEach(id => $(id).hidden = false);
   updateNodes(); applySky(1, true);
   if(!s){ banner('PANE SECA', 'O tanque secou na BR-316. Ache peças e gasolina nas casas.', 4200);
-    if(!store.get('Tut', false)){ setTimeout(() => state === 'play' && banner('DICA', COARSE ? 'Arraste à esquerda para andar · AÇÃO coleta e ataca' : 'WASD anda · clique ou E coleta e ataca · Tab abre a mochila', 4200), 4600); store.set('Tut', true); } }
+    if(!store.get('Tut', false)){ setTimeout(() => state === 'play' && banner('DICA', TOUCH ? 'Arraste à esquerda para andar · AÇÃO coleta e ataca' : 'WASD anda · clique ou E coleta e ataca · Tab abre a mochila', 4200), 4600); store.set('Tut', true); } }
   else banner('DIA ' + curDay, 'De volta ao sertão');
   saveGame();
 }
@@ -1405,7 +1867,7 @@ $('muteBtn').onclick = toggleMute; $('muteBtn').textContent = AUD.mute ? '🔇' 
 function openHow(){ $('how').hidden = false; $('how').firstElementChild.scrollTop = 0; $('howClose').focus({preventScroll:true}); }
 function closeHow(){ $('how').hidden = true; }
 $('howBtn').onclick = openHow; $('pauseHow').onclick = openHow; $('howClose').onclick = closeHow;
-$('fsBtn').hidden = !COARSE;
+$('fsBtn').hidden = !TOUCH;
 $('fsBtn').onclick = async () => { try{ await document.documentElement.requestFullscreen(); }catch(e){ toast('Tela cheia indisponível aqui'); return; } try{ await screen.orientation.lock('landscape'); }catch(e){} setTimeout(resize, 300); };
 function syncOpts(){ $('optMusic').value = Math.round(AUD.vol.music*100); $('optSfx').value = Math.round(AUD.vol.sfx*100); $('optSens').value = Math.round(sens*100); $('optQ').value = quality; }
 $('optMusic').oninput = e => setVol('music', e.target.value/100);
@@ -1464,7 +1926,7 @@ function updateDogs(dt, night){
     } else { d.wa += (Math.random() - .5)*dt*2; tx = Math.sin(d.wa); tz = Math.cos(d.wa); sp = 1.6; }
     d.sp = damp(d.sp, sp, 6, dt);
     if(d.hit > 0) d.hit -= dt;
-    d.x += tx*d.sp*dt; d.z += tz*d.sp*dt;
+    { const ox = d.x, oz = d.z; d.x += tx*d.sp*dt; d.z += tz*d.sp*dt; if(waterDepth(d.x, d.z) > .55){ d.x = ox; d.z = oz; } }
     const r = Math.hypot(d.x, d.z); if(r > EDGE_R){ d.x *= EDGE_R/r; d.z *= EDGE_R/r; }
     if(tx || tz) d.rot = lerpAng(d.rot, Math.atan2(-tx, -tz), 1 - Math.exp(-8*dt));
     o.position.set(d.x, groundAt(d.x, d.z), d.z); o.rotation.y = d.rot;
@@ -1502,7 +1964,7 @@ function update(dt){
   checkDay(true);
   const h = clock % 24, night = isNight(h);
   if(lastNight !== null && night !== lastNight){
-    if(night){ sfx('dusk'); banner('NOITE ' + curDay, fires.some(f => clock < f.until) ? 'Fique perto do fogo' : 'Os cães saem do mato. Acenda uma fogueira!'); if(!P.lamp && !COARSE) toast('L liga a lanterna'); }
+    if(night){ sfx('dusk'); banner('NOITE ' + curDay, fires.some(f => clock < f.until) ? 'Fique perto do fogo' : 'Os cães saem do mato. Acenda uma fogueira!'); if(!P.lamp && !TOUCH) toast('L liga a lanterna'); }
     else { banner('DIA ' + curDay, 'Você sobreviveu à noite'); saveGame(); }
   }
   lastNight = night;
@@ -1519,7 +1981,8 @@ function update(dt){
   const top = (running ? 7.2 : 4.2) * (wet ? .5 : 1) * (P.hp < 20 ? .85 : 1);
   const tvx = amt > .02 ? wx/amt*top*amt : 0, tvz = amt > .02 ? wz/amt*top*amt : 0;
   P.vx = damp(P.vx, tvx, P.ground ? 12 : 2, dt); P.vz = damp(P.vz, tvz, P.ground ? 12 : 2, dt);
-  [P.x, P.z] = collide(P.x + P.vx*dt, P.z + P.vz*dt, .38);
+  { const ox = P.x, oz = P.z; [P.x, P.z] = collide(P.x + P.vx*dt, P.z + P.vz*dt, .38);
+    if(waterDepth(P.x, P.z) > 1.05){ P.x = ox; P.z = oz; P.vx *= .3; P.vz *= .3; if(!P.deepT || performance.now() - P.deepT > 4000){ P.deepT = performance.now(); toast('Água funda: não dá pé'); } } }
   P.spd = Math.hypot(P.vx, P.vz);
   if(amt > .05){ if(CAMS[cam.mode].d === 0) P.rot = cam.yaw; else P.rot = lerpAng(P.rot, Math.atan2(-wx, -wz), 1 - Math.exp(-12*dt)); }
   else if(CAMS[cam.mode].d === 0) P.rot = cam.yaw;
@@ -1547,11 +2010,14 @@ function update(dt){
   const w = weapon(); player.userData.tools.lanca.visible = w === 'lanca'; player.userData.tools.facao.visible = w === 'facao';
   // passos
   if(P.ground && P.spd > .8){ const ph = Math.floor(P.walk/Math.PI); if(ph !== AUD.stepPh){ AUD.stepPh = ph; sfx(wet ? 'splash' : 'step', wet ? .25 : running ? 1 : .7); if(running && !wet && Math.random() < .5) puff(P.x, P.y + .1, P.z, 0xc9a477, .5, .6, .4, 1.2); } }
-  if(wet && P.spd > 1 && Math.random() < .2) puff(P.x, ACUDE.y + .1, P.z, 0xdbe8f0, .4, .5, .3, 1);
+  if(wet && P.spd > 1 && Math.random() < .25) puff(P.x - Math.sin(P.rot)*.3, ACUDE.y + .08, P.z - Math.cos(P.rot)*.3, 0xe8f2f6, .35, .6, .25, 1.4);
   // alvo e dica
   target = findTarget();
-  const tipEl = $('tip'), tip = target ? (COARSE ? '' : '<kbd>E</kbd>') + target.label : '';
-  if(tipEl.dataset.v !== tip){ tipEl.dataset.v = tip; if(COARSE) tipEl.textContent = tip; else tipEl.innerHTML = tip; tipEl.hidden = !tip; }
+  const tipEl = $('tip'), tip = target ? (TOUCH ? '👆 ' : '<kbd>E</kbd>') + target.label : '';
+  if(tipEl.dataset.v !== tip){ tipEl.dataset.v = tip; if(TOUCH) tipEl.textContent = tip; else tipEl.innerHTML = tip; tipEl.hidden = !tip;
+    const VERB = {DAR:'PARTIDA', 'PÔR':'LENHA', REACENDER:'ACENDER', FOGUEIRA:'FOGO', BEBER:'BEBER'};
+    let v = target ? target.label.split(/[\s:·(!]/)[0].toUpperCase() : 'AÇÃO'; v = VERB[v] || v;
+    const pa = $('padAct'); pa.textContent = v; pa.classList.toggle('long', v.length > 7); }
   lastSave += dt; if(lastSave > 30){ lastSave = 0; saveGame(); }
   cullT -= dt; if(cullT <= 0){ cullT = 1; updateNodes(); }
 }
@@ -1567,7 +2033,7 @@ function animateWorld(dt, t, night){
   for(const p of puffs){ if(!p.visible) continue; const d = p.userData; d.life -= dt; if(d.life <= 0){ p.visible = false; continue; }
     p.position.x += d.vx*dt; p.position.y += d.vy*dt; p.position.z += d.vz*dt; p.scale.setScalar(Math.max(.05, p.scale.x + d.grow*dt)); p.material.opacity = (d.life/d.max)*d.op; }
   for(const n of nodes){ const s = n.obj.userData.shake; if(s > 0){ n.obj.userData.shake = s - dt; n.obj.rotation.z = Math.sin(s*60)*s*.25; } else if(s !== undefined && n.obj.rotation.z) n.obj.rotation.z = 0; }
-  for(const h of houses){ const m = h.obj.userData.mark; if(m.visible){ m.rotation.y += dt*2; m.position.y = 2.6 + Math.sin(sec*2 + h.x)*.15; } }
+  for(const h of houses){ const m = h.obj.userData.mark; if(m.visible){ m.rotation.y += dt*2; m.position.y = m.userData.y0 + Math.sin(sec*2 + h.x)*.12; } }
   // fogueiras
   let nearD = 1e9, near = null;
   for(const f of fires){
@@ -1593,7 +2059,9 @@ function animateWorld(dt, t, night){
   }
   // fumaça do motor de vez em quando
   if(Math.random() < dt*.6 && carP.pecas < NEED.pecas) puff(CAR.x - Math.sin(CAR.rot)*1.5, H(CAR.x, CAR.z) + 1.1, CAR.z - Math.cos(CAR.rot)*1.5, 0x8a8a8a, .5, 1.6, .9, 1.1);
-  water.position.y = ACUDE.y + Math.sin(sec*.8)*.03;
+  waterNorm.offset.set(sec*.011, sec*.007); waterMat.normalScale.setScalar(.28 + Math.sin(sec*.7)*.06 + (rainNow ? .25 : 0));
+  foamMat.opacity = .42 + Math.sin(sec*1.3)*.16; foamTex.offset.x = Math.sin(sec*.35)*.015;
+  water.position.y = ACUDE.y + Math.sin(sec*.8)*.008;
   return nearD;
 }
 function cull(){
