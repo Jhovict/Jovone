@@ -7,8 +7,22 @@ A página inicial (`index.html`) é o launcher: lista os jogos em cartões.
 ```
 index.html          ← launcher
 turbo-br316/        ← cada jogo em sua pasta, com index.html próprio
-  index.html
+  index.html          corrida 3D pelas estradas brasileiras
+pane-seca/
+  index.html          sobrevivência 3D no sertão (feito a partir do motor do Turbo BR-316)
 ```
+
+## Pane Seca
+
+O carro do Turbo BR-316 ficou sem gasolina no meio da BR-316. A pé, em terceira pessoa (ou primeira, tecla `V`), o jogador:
+
+- controla vida, fome, sede e fôlego; o sol do meio-dia seca mais rápido e a chuva alivia;
+- corta carnaúbas e árvores, quebra pedras, colhe umbu e fruta de mandacaru, revira ferros-velhos, vasculha casas abandonadas, bebe no açude e caça bodes;
+- fabrica fogueira, lança, facão, ataduras e abrigo de palha, e assa carne no fogo;
+- enfrenta matilhas de cães do mato à noite (maiores a cada noite), que não entram no círculo da fogueira, e dorme no carro, numa casa ou no abrigo para pular até o amanhecer;
+- vence ao instalar 3 peças de motor e 4 galões (20 L) no carro e dar a partida.
+
+Reaproveita do Turbo BR-316: renderizador e iluminação, ciclo de horário (agora contínuo), chuva, cenário do sertão (carnaúba, mandacaru, moitas, casinhas, bodes, urubus), pedestre como personagem, áudio sintetizado e trilha, toque, gamepad e o visual da interface. Salva sozinho no `localStorage` com o prefixo `pseca`.
 
 ## Como adicionar um jogo
 

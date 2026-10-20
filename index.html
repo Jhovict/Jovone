@@ -77,6 +77,44 @@ const GAMES = [
       } catch (e) {}
       return out;
     }
+  },
+  {
+    id: 'pane-seca',
+    title: 'Pane Seca',
+    tag: 'Sobrevivência 3D',
+    desc: 'O tanque secou no meio da BR-316. A pé pelo sertão, mate a fome e a sede, fabrique ferramentas e fogueiras, aguente as noites dos cães do mato e conserte o carro para escapar.',
+    cover: `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ns" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05091a"/><stop offset=".55" stop-color="#1b2a52"/><stop offset="1" stop-color="#5a3e5a"/></linearGradient>
+        <radialGradient id="fg" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffb347" stop-opacity=".75"/><stop offset="1" stop-color="#ff7a1a" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#ns)"/>
+      <g fill="#dfe7ff"><circle cx="34" cy="22" r="1.2"/><circle cx="78" cy="40" r="1"/><circle cx="120" cy="16" r="1.3"/><circle cx="168" cy="34" r="1"/><circle cx="292" cy="28" r="1.2"/><circle cx="250" cy="50" r="1"/><circle cx="12" cy="58" r="1"/></g>
+      <circle cx="232" cy="36" r="13" fill="#e6ecff"/><circle cx="238" cy="32" r="12" fill="#1b2a52"/>
+      <path d="M0 112 L50 92 L96 106 L150 84 L212 104 L262 88 L320 100 L320 126 L0 126Z" fill="#141b33"/>
+      <path d="M0 122H320V180H0Z" fill="#2a2228"/>
+      <path d="M196 122H238L320 180H150Z" fill="#1a1d26"/>
+      <path d="M217 124L236 180" stroke="#e0b034" stroke-width="2.5" stroke-dasharray="7 9"/>
+      <ellipse cx="112" cy="150" rx="74" ry="26" fill="url(#fg)"/>
+      <g transform="translate(112 152)"><path d="M-12 4H12" stroke="#5a3d24" stroke-width="4"/><path d="M-9 6L9 -2M9 6L-9 -2" stroke="#4a3220" stroke-width="3"/>
+        <path d="M0 -26C7 -16 10 -8 6 0H-6C-10 -8 -6 -16 0 -26Z" fill="#ff7a1a"/><path d="M0 -15C4 -9 5 -4 3 0H-3C-5 -4 -4 -9 0 -15Z" fill="#ffd85a"/></g>
+      <g fill="#2f4a33"><rect x="34" y="96" width="8" height="40" rx="4"/><rect x="24" y="104" width="6" height="16" rx="3"/><rect x="46" y="100" width="6" height="18" rx="3"/><rect x="24" y="116" width="12" height="5" rx="2"/><rect x="40" y="114" width="12" height="5" rx="2"/></g>
+      <g transform="translate(150 152)"><path d="M-5 -2V-22M5 -2V-22" stroke="#3b4a66" stroke-width="5"/><rect x="-7" y="-36" width="14" height="16" rx="3" fill="#b5683a"/><circle cx="0" cy="-41" r="5" fill="#c68a5e"/><ellipse cx="0" cy="-45" rx="10" ry="2.4" fill="#7a4a24"/><rect x="-4.5" y="-50" width="9" height="6" rx="2" fill="#7a4a24"/><path d="M7 -32L16 -48" stroke="#7a5a3a" stroke-width="2.4"/></g>
+      <g transform="translate(262 146)"><rect x="-30" y="-14" width="60" height="20" rx="7" fill="#a82a20"/><path d="M-12 -14L-6 -26H14L20 -14Z" fill="#7a1f18"/><path d="M-30 -14L-48 -34L-44 -36L-24 -16Z" fill="#c8352a"/><rect x="-26" y="2" width="12" height="9" rx="3" fill="#05070c"/><rect x="16" y="2" width="12" height="9" rx="3" fill="#05070c"/><rect x="24" y="-8" width="7" height="4" rx="1.5" fill="#ffb030"/></g>
+      <g fill="#ffd84a"><circle cx="292" cy="118" r="1.6"/><circle cx="297" cy="118" r="1.6"/><circle cx="18" cy="140" r="1.6"/><circle cx="23" cy="140" r="1.6"/></g>
+    </svg>`,
+    stats: () => {
+      const out = [];
+      try {
+        const best = JSON.parse(localStorage.getItem('psecaBest') || '0');
+        if (best) out.push('🌙 ' + best + (best === 1 ? ' dia' : ' dias') + ' de recorde');
+        const esc = JSON.parse(localStorage.getItem('psecaEsc') || '0');
+        if (esc) out.push('🚗 ' + esc + (esc === 1 ? ' fuga' : ' fugas'));
+        const sv = JSON.parse(localStorage.getItem('psecaSave') || 'null');
+        if (sv && sv.curDay) out.push('💾 dia ' + sv.curDay + ' salvo');
+      } catch (e) {}
+      return out;
+    }
   }
   /* , { id:'meu-fps', title:'...', tag:'FPS', desc:'...', cover:'...' } */
 ];
