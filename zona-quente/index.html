@@ -1013,16 +1013,16 @@ const pathLen = (x, z, path) => { let L = 0, px = x, pz = z; for(const p of path
    ===================================================================== */
 const W = {
   faca:   {n:'Faca', slot:3, kind:'knife', dmg:40, back:90, rate:.45, range:1.9, spd:1, reward:1500},
-  falcao: {n:'Falcão', slot:2, kind:'pistol', dmg:28, rate:.14, mag:13, res:39, rel:2.1, sp:.009, msp:.035, jsp:.08, rv:.024, rh:.007, ap:.5, fall:.85, price:200, reward:300, spd:.98, snd:'pistol', ads:.065},
-  tupa:   {n:'Tupã .50', slot:2, kind:'pistol', dmg:56, rate:.33, mag:7, res:35, rel:2.3, sp:.007, msp:.07, jsp:.12, rv:.075, rh:.016, ap:.9, fall:.84, price:700, reward:300, spd:.95, snd:'magnum', ads:.075},
-  vespa:  {n:'Vespa', slot:1, kind:'smg', dmg:25, rate:.075, auto:true, mag:30, res:120, rel:2.4, sp:.011, msp:.02, jsp:.08, rv:.014, rh:.009, ap:.6, fall:.78, price:1250, reward:600, spd:.96, snd:'smg', ads:.082},
-  trovao: {n:'Trovão', slot:1, kind:'shotgun', dmg:20, pel:9, rate:.88, mag:7, res:28, rel:.5, shell:true, sp:.06, msp:.01, jsp:.04, rv:.07, rh:.012, ap:.75, fall:.5, price:1100, reward:900, spd:.92, snd:'shotgun', ads:.068},
-  carcara:{n:'Carcará', slot:1, kind:'rifle', dmg:36, rate:.1, auto:true, mag:30, res:90, rel:2.5, sp:.0035, msp:.085, jsp:.2, rv:.021, rh:.012, ap:.78, fall:.98, price:2700, reward:300, spd:.88, snd:'rifle', ads:.088},
-  jaguar: {n:'Jaguar', slot:1, kind:'rifle', dmg:33, rate:.09, auto:true, mag:30, res:90, rel:2.9, sp:.0028, msp:.075, jsp:.2, rv:.016, rh:.008, ap:.78, fall:.97, price:2900, reward:300, spd:.9, snd:'rifle2', ads:.118},
-  gaviao: {n:'Gavião', slot:1, kind:'sniper', dmg:115, rate:1.45, mag:5, res:30, rel:3.4, sp:.0006, usp:.07, msp:.16, jsp:.3, rv:.09, rh:.01, ap:.97, fall:.99, price:4750, reward:100, spd:.82, snd:'sniper', scope:[2.5, 6]},
-  he:     {n:'Granada', slot:4, kind:'nade', price:300, spd:1},
-  flash:  {n:'Atordoante', slot:4, kind:'nade', price:200, spd:1},
-  smoke:  {n:'Fumaça', slot:4, kind:'nade', price:300, spd:1}
+  falcao: {n:'Falcão', slot:2, kind:'pistol', dmg:28, rate:.14, mag:13, res:39, rel:2.1, sp:.009, msp:.035, jsp:.08, rv:.024, rh:.007, ap:.5, fall:.85, price:200, reward:300, spd:0.96, snd:'pistol', ads:.065},
+  tupa:   {n:'Tupã .50', slot:2, kind:'pistol', dmg:56, rate:.33, mag:7, res:35, rel:2.3, sp:.007, msp:.07, jsp:.12, rv:.075, rh:.016, ap:.9, fall:.84, price:700, reward:300, spd:0.92, snd:'magnum', ads:.075},
+  vespa:  {n:'Vespa', slot:1, kind:'smg', dmg:25, rate:.075, auto:true, mag:30, res:120, rel:2.4, sp:.011, msp:.02, jsp:.08, rv:.014, rh:.009, ap:.6, fall:.78, price:1250, reward:600, spd:0.98, snd:'smg', ads:.082},
+  trovao: {n:'Trovão', slot:1, kind:'shotgun', dmg:20, pel:9, rate:.88, mag:7, res:28, rel:.5, shell:true, sp:.06, msp:.01, jsp:.04, rv:.07, rh:.012, ap:.75, fall:.5, price:1100, reward:900, spd:0.88, snd:'shotgun', ads:.068},
+  carcara:{n:'Carcará', slot:1, kind:'rifle', dmg:36, rate:.1, auto:true, mag:30, res:90, rel:2.5, sp:.0035, msp:.085, jsp:.2, rv:.021, rh:.012, ap:.78, fall:.98, price:2700, reward:300, spd:0.86, snd:'rifle', ads:.088},
+  jaguar: {n:'Jaguar', slot:1, kind:'rifle', dmg:33, rate:.09, auto:true, mag:30, res:90, rel:2.9, sp:.0028, msp:.075, jsp:.2, rv:.016, rh:.008, ap:.78, fall:.97, price:2900, reward:300, spd:0.9, snd:'rifle2', ads:.118},
+  gaviao: {n:'Gavião', slot:1, kind:'sniper', dmg:115, rate:1.45, mag:5, res:30, rel:3.4, sp:.0006, usp:.07, msp:.16, jsp:.3, rv:.09, rh:.01, ap:.97, fall:.99, price:4750, reward:100, spd:0.8, snd:'sniper', scope:[2.5, 6]},
+  he:     {n:'Granada', slot:4, kind:'nade', price:300, spd:0.98},
+  flash:  {n:'Atordoante', slot:4, kind:'nade', price:200, spd:0.98},
+  smoke:  {n:'Fumaça', slot:4, kind:'nade', price:300, spd:0.98}
 };
 const NADES = ['he', 'flash', 'smoke'];
 const SHOP = [
@@ -1492,7 +1492,7 @@ function switchTo(a, slot, quiet){
   if(a.cur !== slot) a.last = a.cur;
   a.cur = slot; a.reload = 0; a.scope = 0; a.aim = false; a.throwT = 0;
   const k = W[curId(a)].kind;
-  a.draw = k === 'knife' ? .3 : k === 'pistol' ? .35 : k === 'nade' ? .3 : k === 'sniper' ? .75 : .6;
+  a.draw = k === 'knife' ? .25 : k === 'pistol' ? .3 : k === 'nade' ? .28 : k === 'sniper' ? .65 : .5;
   a.shotIdx = 0;
   if(a.model) setModelGun(a.model, curId(a));
   if(a === viewAgent && !quiet) onViewWeapon();
@@ -1656,7 +1656,7 @@ function nearItem(a){
 /* ---------- tiro ---------- */
 const _f = {}, _r = {};
 function inaccuracy(a, w){
-  const sp = Math.min(1, Math.hypot(a.vx, a.vz)/5);
+  const sp = clamp((Math.hypot(a.vx, a.vz) - 1.9)/4.2, 0, 1);
   let s = w.sp + sp*w.msp + (a.ground ? 0 : w.jsp);
   if(w.kind === 'sniper' && !a.scope) s += w.usp;
   if(a.ground && a.crouch > .6) s *= .72;
@@ -2139,7 +2139,7 @@ function updateBot(b, dt){
   const L = Math.hypot(want.mx, want.mz);
   if(L > 1){ want.mx /= L; want.mz /= L; }
   b.crouchT = want.crouch ? 1 : 0;
-  let spd = 5.2*W[curId(b)].spd*(b.crouchT ? .4 : 1)*(b.slow > 0 ? .6 : 1);
+  let spd = 6.1*W[curId(b)].spd*(b.crouchT ? .34 : 1)*(b.slow > 0 ? .75 : 1)*(b.scope ? .55 : 1);
   if(moveMode === 'hold' && !tg) spd *= .55;
   if(b.blind > 1.5 && !tg){ want.mx = want.mz = 0; }
   physics(b, dt, want.mx*spd, want.mz*spd, 1);
@@ -2150,19 +2150,28 @@ function updateBot(b, dt){
 
 /* ---------- física comum (jogador e bots) ---------- */
 function physics(a, dt, tvx, tvz, moving){
-  const accel = a.ground ? 14 : 2.4;
-  a.vx += (tvx - a.vx)*Math.min(1, accel*dt);
-  a.vz += (tvz - a.vz)*Math.min(1, accel*dt);
+  /* como no CS: arranca rápido, freia mais rápido ainda (contra-strafe), conserva o embalo no ar */
+  if(a.ground){
+    const tl = Math.hypot(tvx, tvz), vl = Math.hypot(a.vx, a.vz), dot = a.vx*tvx + a.vz*tvz;
+    const k = dot < 0 ? 7.5 : (tl < .1 || vl > tl + .05) ? 10 : 10.5;
+    a.vx += (tvx - a.vx)*Math.min(1, k*dt);
+    a.vz += (tvz - a.vz)*Math.min(1, k*dt);
+  } else if(tvx || tvz){
+    const vl = Math.hypot(a.vx, a.vz), tl = Math.hypot(tvx, tvz);
+    a.vx += (tvx - a.vx)*Math.min(1, 3.2*dt); a.vz += (tvz - a.vz)*Math.min(1, 3.2*dt);
+    const nl = Math.hypot(a.vx, a.vz), cap = Math.max(vl, tl);
+    if(nl > cap && nl > 0){ a.vx *= cap/nl; a.vz *= cap/nl; }
+  }
   a.crouch += (a.crouchT - a.crouch)*Math.min(1, dt*10);
   const fall = moveBody(a, a.vx*dt, a.vz*dt, dt);
   if(fall < -10){ const dmg = Math.round((-fall - 10)*12); if(dmg > 0) hurt(a, a, 'fall', dmg, 'legs', 0, 0); sfx('land', a === viewAgent ? undefined : a.x, a.z, .8); }
   else if(fall < -3 && a === viewAgent) sfx('land', undefined, undefined, .5);
   const sp = Math.hypot(a.vx, a.vz); a.spd = sp;
   if(a.ground && sp > 1){
-    a.walkPh += sp*dt*2.1;
+    a.walkPh += sp*dt*1.75;
     a.stepAcc += sp*dt;
-    const quiet = sp < 3.2 || a.crouch > .5;
-    if(a.stepAcc > (quiet ? 1.6 : 2.3)){
+    const quiet = sp < 3.45 || a.crouch > .5;
+    if(a.stepAcc > (quiet ? 1.8 : 2.6)){
       a.stepAcc = 0;
       if(!quiet){ sfx('step', a === viewAgent ? undefined : a.x, a.z, a === viewAgent ? .25 : .9); noise(a, a.x, a.z, 16); }
     }
@@ -2238,10 +2247,10 @@ function updateVM(dt){
   let x = lerp(base[0], ads[0], VM.aimK), y = lerp(base[1], ads[1], VM.aimK), z = lerp(base[2], ads[2], VM.aimK);
   let rx = 0, ry = 0, rz = 0;
   /* balanço ao andar e inércia ao girar */
-  const sp = player.ground ? Math.min(1, player.spd/5) : 0, bobA = (1 - VM.aimK*.8)*sp;
-  x += Math.cos(player.walkPh*.5)*.012*bobA; y += Math.abs(Math.sin(player.walkPh*.5))*.012*bobA - (player.ground ? 0 : .012);
+  const sp = player.ground ? Math.min(1, player.spd/6.3) : 0, bobA = (1 - VM.aimK*.8)*sp;
+  x += Math.cos(player.walkPh*.5)*.008*bobA; y += Math.abs(Math.sin(player.walkPh*.5))*.007*bobA - (player.ground ? 0 : .008);
   const dy = angDiff(VM.lyaw, player.yaw), dp = player.pitch - VM.lpitch; VM.lyaw = player.yaw; VM.lpitch = player.pitch;
-  VM.sx = clamp(lerp(VM.sx, dy*1.6, Math.min(1, dt*10)), -.06, .06); VM.sy = clamp(lerp(VM.sy, dp*1.6, Math.min(1, dt*10)), -.06, .06);
+  VM.sx = clamp(lerp(VM.sx, dy*.9, Math.min(1, dt*16)), -.035, .035); VM.sy = clamp(lerp(VM.sy, dp*.9, Math.min(1, dt*16)), -.035, .035);
   x += VM.sx*(1 - VM.aimK*.7); y -= VM.sy*(1 - VM.aimK*.7); ry += VM.sx*1.2; rx += VM.sy*.8;
   /* sacar */
   if(player.draw > 0) VM.drawK = Math.min(VM.drawK, 1); VM.drawK = Math.max(0, VM.drawK - dt*3.2);
@@ -2279,9 +2288,9 @@ function updatePlayer(dt){
   const fx = -Math.sin(a.yaw), fz = -Math.cos(a.yaw), rx = Math.cos(a.yaw), rz = -Math.sin(a.yaw);
   const w = W[curId(a)];
   a.crouchT = (input.crouch || input.crouchToggle) && can ? 1 : 0;
-  let spd = 5.4*(w.spd || 1)*(input.walk ? .52 : 1)*(a.crouch > .5 ? .36 : 1)*((a.aim || a.scope) ? .72 : 1)*(a.slow > 0 ? .6 : 1);
+  let spd = 6.3*(w.spd || 1)*(input.walk ? .52 : 1)*(a.crouch > .5 ? .34 : 1)*(a.scope ? .62 : a.aim ? .92 : 1)*(a.slow > 0 ? .75 : 1);
   if(a.plantT > 0 || a.defusing) spd = 0;
-  if(input.jump && can && a.ground && a.crouch < .5){ a.vy = 5.7; a.ground = false; }
+  if(input.jump && can && a.ground && a.crouch < .5){ a.vy = 6.4; a.ground = false; }
   input.jump = false;
   physics(a, dt, (fx*mz + rx*mx)*spd, (fz*mz + rz*mx)*spd, 1);
   /* arma */
@@ -2380,7 +2389,7 @@ function updateModels(dt){
       m.rotation.x = 0; m.rotation.z = 0; u.dying = false;
       const c = a.crouch;
       u.spine.position.y = 1.0 - .42*c; u.spine.rotation.x = clamp(a.pitch*.75, -.6, .6) + c*.12;
-      const sp = Math.min(1, a.spd/5), sw = Math.sin(a.walkPh*.5)*.62*sp;
+      const sp = Math.min(1, a.spd/6), sw = Math.sin(a.walkPh*.5)*.62*sp;
       u.legs[0].rotation.x = sw - c*.9; u.legs[1].rotation.x = -sw - c*.9;
       u.legs.forEach(l => { l.position.y = .92 - .42*c; l.scale.y = 1 - .25*c; });
       if(u.gunId !== curId(a)) setModelGun(m, curId(a));

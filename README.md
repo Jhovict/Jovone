@@ -43,6 +43,7 @@ Tiro tático em primeira pessoa, Força Tática contra Insurgentes, no mapa orig
 - **Bots** em 4 níveis: visão com campo e linha de visada, tempo de reação, erro de mira que diminui, rajadas controladas, contra-strafe, audição de tiros e passos, rotas por A* no grid, execução por corredores, lurker, rotação e retomada em grupo da defesa, compra por equipe (pistola, economia, forçar, completa), uso de granadas.
 - **Mata-mata em equipe:** renascimento, compras grátis na base, 50 abates.
 - Radar, placar, feed de abates, indicador de dano, espectador em terceira pessoa ao morrer.
+- **Movimentação como no CS:GO:** 6,3 m/s com a faca e cada arma com seu peso (pistola 96%, fuzis 86–90%, Gavião 80% e 62% com luneta); arranca em 0,2 s, para em 0,1 s e o contra-strafe devolve a precisão total na hora; embalo conservado no ar e pulo que alcança as caixas.
 - **Controles:** PC (WASD, mouse com captura do ponteiro), celular na horizontal (joystick, arrastar para mirar, dois botões de fogo que também giram a câmera, mira, pulo, agachar, recarga, troca de arma, granada, usar/plantar/desarmar, loja) e controle Xbox/PlayStation.
 
 Salva opções e estatísticas no `localStorage` com o prefixo `zq`.
