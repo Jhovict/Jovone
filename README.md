@@ -1,6 +1,6 @@
 # Jovone Games
 
-A página inicial (`index.html`) é o launcher: lista os jogos em cartões.
+A página inicial (`index.html`) é o launcher, no estilo da tela inicial de console: uma fileira de capas, o fundo muda para a capa do jogo em foco e o botão Jogar abre o jogo. Navega por toque, mouse, teclado (← → e Enter) ou controle (direcional/analógico e A). Lembra o último jogo aberto (`launcherUltimo` no `localStorage`).
 
 ## Estrutura
 

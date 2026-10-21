@@ -2,50 +2,78 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Jovone Games</title>
-<meta name="theme-color" content="#0d1420">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@500;600;700&display=swap">
+<meta name="theme-color" content="#05070d">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;500;600;700&display=swap">
 <style>
-:root{--night:#0d1420;--panel:#1b2230;--panel-2:#2a3346;--stripe:#f2b632;--ink:#eef2f8;--mute:#93a0b5;
---display:'Bungee','Impact',sans-serif;--body:'Chakra Petch','Segoe UI',system-ui,sans-serif}
+/* Tela de console: fundo com a capa do jogo em foco, fileira horizontal de capas, informações e botão Jogar */
+:root{--bg:#05070d;--ink:#eef2f8;--mute:#93a0b5;--line:rgba(255,255,255,.16);--glass:rgba(12,16,28,.62);--stripe:#f2b632;
+--display:'Bungee','Impact',sans-serif;--body:'Chakra Petch','Segoe UI',system-ui,sans-serif;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%}
-body{background:radial-gradient(1200px 600px at 70% -10%,#1d2a44 0%,transparent 60%),var(--night);color:var(--ink);font-family:var(--body);padding:0 16px 48px}
-.wrap{max-width:1080px;margin:0 auto}
-header{padding:40px 0 24px}
-h1{font-family:var(--display);font-weight:400;font-size:clamp(2rem,7vw,3.4rem);line-height:1;margin:0}
-h1 span{color:var(--stripe)}
-header p{color:var(--mute);margin:10px 0 0;font-size:1.02rem}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
-.card{position:relative;display:flex;flex-direction:column;background:var(--panel);border-radius:18px;overflow:hidden;color:inherit;text-decoration:none;border:2px solid transparent;transition:transform .18s,border-color .18s,box-shadow .18s}
-a.card:hover,a.card:focus-visible{transform:translateY(-4px);border-color:var(--stripe);box-shadow:0 14px 34px rgba(0,0,0,.45);outline:none}
-.cover{aspect-ratio:16/9;background:var(--panel-2);position:relative;overflow:hidden}
-.cover svg{width:100%;height:100%;display:block}
-.tag{position:absolute;top:10px;left:10px;background:rgba(13,20,32,.85);padding:4px 10px;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
-.body h2{font-family:var(--display);font-weight:400;font-size:1.3rem;margin:0}
-.body p{margin:0;color:var(--mute);font-size:.92rem;line-height:1.4}
-.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
-.chip{background:var(--panel-2);border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:600}
-.play{margin-top:6px;align-self:flex-start;background:var(--stripe);color:var(--night);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem;padding:9px 18px;border-radius:999px}
-.soon{opacity:.62;border:2px dashed var(--panel-2);background:transparent}
-.soon .cover{display:grid;place-items:center;background:repeating-linear-gradient(45deg,#161d2b 0 14px,#1b2230 14px 28px)}
-.soon .plus{font-family:var(--display);font-size:3.4rem;color:var(--panel-2)}
-footer{margin-top:40px;color:var(--mute);font-size:.8rem}
-@media (max-width:560px){header{padding-top:28px}.grid{gap:16px}}
-@media (prefers-reduced-motion:reduce){.card{transition:none}}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow-x:hidden}
+.hero{position:fixed;inset:0;z-index:0;overflow:hidden}
+.hero .layer{position:absolute;inset:-4%;opacity:0;transition:opacity .6s,transform 8s ease-out;transform:scale(1.04)}
+.hero .layer.on{opacity:1;transform:scale(1.1)}
+.hero svg,.hero img{width:100%;height:100%;display:block;object-fit:cover}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,7,13,.94) 0%,rgba(5,7,13,.6) 45%,rgba(5,7,13,.2) 100%),linear-gradient(0deg,var(--bg) 0%,transparent 50%)}
+.app{position:relative;z-index:1;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;gap:18px;
+padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(22px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.top{display:flex;align-items:center;gap:14px}
+.brand{font-family:var(--display);font-size:1.15rem;letter-spacing:.02em}
+.brand span{color:var(--stripe)}
+.spacer{flex:1}
+.clock{font-variant-numeric:tabular-nums;font-size:1rem}
+.pad{font-size:.75rem;color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+.pad[hidden]{display:none}
+.row-wrap{overflow-x:auto;scrollbar-width:none;margin-inline:-6px;padding:14px 6px 8px}
+.row-wrap::-webkit-scrollbar{display:none}
+.row{display:flex;gap:14px;align-items:flex-start;width:max-content;padding-right:40vw}
+.tile{flex:none;width:100px;height:100px;border-radius:14px;overflow:hidden;cursor:pointer;border:0;padding:0;background:#111;position:relative;
+transition:width .25s,height .25s,box-shadow .25s;outline:none;color:inherit}
+.tile svg,.tile img{width:100%;height:100%;display:block;object-fit:cover}
+.tile.on{width:156px;height:156px;box-shadow:0 0 0 3px var(--ink),0 18px 40px rgba(0,0,0,.6)}
+.tile:focus-visible{box-shadow:0 0 0 3px var(--stripe)}
+.tile.soon{background:var(--glass);border:1.5px dashed var(--line);display:grid;place-items:center;font-family:var(--display);font-size:2.4rem;color:var(--mute)}
+.info{margin-top:auto;max-width:600px;display:flex;flex-direction:column;gap:12px}
+.eyebrow{font-size:.75rem;letter-spacing:.16em;text-transform:uppercase;color:var(--stripe);font-weight:700}
+.info h1{font-family:var(--display);font-weight:400;font-size:clamp(2.4rem,7vw,4.6rem);line-height:.95;margin:0;text-wrap:balance}
+.info p{margin:0;color:#cfd6e3;line-height:1.5;font-size:1rem;max-width:60ch}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--glass);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:.8rem;font-weight:600}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
+.btn{border:0;border-radius:999px;padding:13px 34px;font:700 1rem var(--body);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;background:var(--ink);color:#05070d;text-decoration:none;display:inline-block}
+.btn:hover,.btn:focus-visible{background:var(--stripe);outline:none}
+.btn[aria-disabled=true]{opacity:.45;pointer-events:none}
+.dock{display:flex;gap:18px;font-size:.78rem;color:var(--mute);flex-wrap:wrap}
+.key{display:inline-grid;place-items:center;min-width:22px;height:22px;border:1px solid var(--line);border-radius:6px;padding:0 5px;margin-right:6px;color:var(--ink)}
+.launch{position:fixed;inset:0;z-index:5;background:var(--bg);display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .35s}
+.launch.show{opacity:1;pointer-events:auto}
+.ring{width:54px;height:54px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--stripe);animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (max-width:560px){.tile{width:78px;height:78px}.tile.on{width:120px;height:120px}.dock{display:none}.info{margin-top:8px}.info h1{font-size:2.2rem}.info p{font-size:.92rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>JOVONE <span>GAMES</span></h1>
-    <p>Escolha um jogo para começar.</p>
+<div class="hero" id="hero"></div>
+<div class="app">
+  <header class="top">
+    <div class="brand">JOVONE <span>GAMES</span></div>
+    <div class="spacer"></div>
+    <span class="pad" id="pad" hidden>🎮 Controle conectado</span>
+    <span class="clock" id="clock">--:--</span>
   </header>
-  <main class="grid" id="grid" aria-label="Lista de jogos"></main>
-  <footer>Mais jogos a caminho.</footer>
+  <div class="row-wrap"><div class="row" id="row" role="listbox" aria-label="Jogos"></div></div>
+  <section class="info" id="info" aria-live="polite"></section>
+  <footer class="dock">
+    <span><span class="key">←</span><span class="key">→</span>Navegar</span>
+    <span><span class="key">Enter</span>Jogar</span>
+    <span><span class="key">A</span>Jogar no controle</span>
+  </footer>
 </div>
+<div class="launch" id="launch"><div style="text-align:center"><div class="ring"></div><div id="launchTxt"></div></div></div>
 <script>
 /* ===== LISTA DE JOGOS =====
    Para adicionar um jogo: crie uma pasta com um index.html e inclua um item aqui.
@@ -189,27 +217,84 @@ const GAMES = [
 ];
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const grid = document.getElementById('grid');
+const coverHTML = g => /^\s*</.test(g.cover || '') ? g.cover : (g.cover ? `<img src="${esc(g.cover)}" alt="">` : '');
+const ITEMS = GAMES.concat([{ soon: true, title: 'Novo jogo', tag: 'Em breve', desc: 'Aventura e outros estilos virão aqui.' }]);
+const row = document.getElementById('row'), hero = document.getElementById('hero'), info = document.getElementById('info');
+let sel = 0;
+try { const last = localStorage.getItem('launcherUltimo'); const i = GAMES.findIndex(g => g.id === last); if (i >= 0) sel = i; } catch (e) {}
 
-GAMES.forEach(g => {
-  const a = document.createElement('a');
-  a.className = 'card';
-  a.href = g.id + '/';
-  const cover = /^\s*</.test(g.cover || '') ? g.cover : (g.cover ? `<img src="${esc(g.cover)}" alt="" style="width:100%;height:100%;object-fit:cover">` : '');
-  let chips = [];
-  try { chips = g.stats ? g.stats() : []; } catch (e) {}
-  a.innerHTML = `<div class="cover">${cover}<span class="tag">${esc(g.tag || 'Jogo')}</span></div>
-    <div class="body"><h2>${esc(g.title)}</h2><p>${esc(g.desc || '')}</p>
-    <div class="stats">${chips.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>
-    <span class="play">Jogar ▸</span></div>`;
-  grid.appendChild(a);
+/* fundos: uma camada por jogo, criada uma única vez */
+const layers = ITEMS.map(g => {
+  const d = document.createElement('div'); d.className = 'layer';
+  d.innerHTML = g.soon ? '' : coverHTML(g);
+  if (g.soon) d.style.background = 'radial-gradient(circle at 70% 30%,#1a2340,#05070d 70%)';
+  hero.appendChild(d); return d;
+});
+const tiles = ITEMS.map((g, i) => {
+  const b = document.createElement('button');
+  b.className = 'tile' + (g.soon ? ' soon' : '');
+  b.setAttribute('role', 'option'); b.setAttribute('aria-label', g.title);
+  b.innerHTML = g.soon ? '+' : coverHTML(g);
+  b.onclick = () => { if (sel === i) play(); else select(i); };
+  row.appendChild(b); return b;
 });
 
-const soon = document.createElement('div');
-soon.className = 'card soon';
-soon.innerHTML = `<div class="cover"><span class="plus">+</span><span class="tag">Em breve</span></div>
-  <div class="body"><h2>Novo jogo</h2><p>Aventura e outros estilos virão aqui.</p></div>`;
-grid.appendChild(soon);
+function select(i) {
+  sel = Math.max(0, Math.min(ITEMS.length - 1, i));
+  tiles.forEach((t, k) => { t.classList.toggle('on', k === sel); t.setAttribute('aria-selected', k === sel); });
+  layers.forEach((l, k) => l.classList.toggle('on', k === sel));
+  tiles[sel].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  const g = ITEMS[sel];
+  let chips = [];
+  try { chips = g.stats ? g.stats() : []; } catch (e) {}
+  info.innerHTML = `<span class="eyebrow">${esc(g.tag || 'Jogo')}</span><h1>${esc(g.title)}</h1><p>${esc(g.desc || '')}</p>
+    ${chips.length ? `<div class="stats">${chips.map(t => `<span class="chip">${esc(t)}</span>`).join('')}</div>` : ''}
+    <div class="actions">${g.soon ? '<span class="btn" aria-disabled="true">Em breve</span>' : `<a class="btn" href="${esc(g.id)}/" id="go">Jogar ▸</a>`}</div>`;
+  const go = document.getElementById('go');
+  if (go) go.onclick = e => { e.preventDefault(); play(); };
+}
+
+function play() {
+  const g = ITEMS[sel]; if (!g || g.soon) return;
+  try { localStorage.setItem('launcherUltimo', g.id); } catch (e) {}
+  document.getElementById('launchTxt').textContent = 'Iniciando ' + g.title + '…';
+  document.getElementById('launch').classList.add('show');
+  setTimeout(() => { location.href = g.id + '/'; }, 700);
+}
+/* ao voltar pelo botão Voltar do navegador, some a tela de carregamento */
+addEventListener('pageshow', () => document.getElementById('launch').classList.remove('show'));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') { select(sel + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft') { select(sel - 1); e.preventDefault(); }
+  else if (e.key === 'Home') select(0);
+  else if (e.key === 'End') select(ITEMS.length - 1);
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
+});
+
+/* controle (Gamepad API): direcional ou analógico navega, A confirma */
+const pad = document.getElementById('pad');
+let prev = {}, holdT = 0;
+function poll(t) {
+  const gp = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(Boolean);
+  pad.hidden = !gp;
+  if (gp) {
+    const ax = gp.axes[0] || 0;
+    const right = (gp.buttons[15] && gp.buttons[15].pressed) || ax > .5;
+    const left = (gp.buttons[14] && gp.buttons[14].pressed) || ax < -.5;
+    const a = gp.buttons[0] && gp.buttons[0].pressed;
+    const dir = right ? 1 : left ? -1 : 0;
+    if (dir && (dir !== prev.dir || t - holdT > 180)) { select(sel + dir); holdT = t + (dir !== prev.dir ? 220 : 0); }
+    if (a && !prev.a) play();
+    prev = { dir, a };
+  }
+  requestAnimationFrame(poll);
+}
+requestAnimationFrame(poll);
+
+function tick() { document.getElementById('clock').textContent = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+tick(); setInterval(tick, 10000);
+select(sel);
 </script>
 </body>
 </html>
