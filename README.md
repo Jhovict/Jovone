@@ -28,7 +28,7 @@ Reaproveita do Turbo BR-316: renderizador e iluminação, ciclo de horário (ago
 
 ## Pong
 
-Pong em canvas 2D, arquivo único, sem bibliotecas. Contra a CPU (fácil, médio ou difícil) ou dois jogadores no mesmo teclado (W/S e ↑/↓; no celular, arrastando o dedo). Partidas até 11 ou 21 pontos, visual retrô preto e branco ou neon. O ângulo da bola depende de onde ela bate na raquete e a velocidade sobe 5% a cada rebatida. Salva as opções e o placar contra a CPU no `localStorage` com o prefixo `pong`.
+Pong em canvas 2D, arquivo único, sem bibliotecas. Contra a CPU (fácil, médio ou difícil) ou dois jogadores locais. Controles: teclado (W/S e ↑/↓, P pausa, Esc menu), controle/joypad pela Gamepad API (analógico ou direcional, Start pausa, Select menu, A confirma, navega no menu e vibra nas rebatidas; o 1º controle é a raquete esquerda e o 2º a direita) e celular (arrastar o dedo em qualquer parte da tela, cada jogador na sua metade; botões na tela para pausar, tela cheia e menu). Partidas até 11 ou 21 pontos, visual retrô preto e branco ou neon. O ângulo da bola depende de onde ela bate na raquete e a velocidade sobe 5% a cada rebatida. Salva as opções e o placar contra a CPU no `localStorage` com o prefixo `pong`.
 
 ## Como adicionar um jogo
 

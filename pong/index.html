@@ -8,7 +8,6 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0}
-[hidden]{display:none!important}
 /* Layout: one-screen arcade cabinet; canvas centered and scaled to fit, settings panel over it */
 :root {
   color-scheme: dark;
@@ -55,7 +54,18 @@ canvas { display: block; width: 100%; height: 100%; background: var(--screen); b
 .start { font-family: var(--font-display); font-size: 14px; padding: 12px 22px; border-color: var(--fg); margin-top: 4px; }
 .start:hover { background: var(--fg); color: var(--screen); }
 .hint { font-size: 11px; color: var(--dim); text-align: center; max-width: 46ch; line-height: 1.6; margin: 0; }
-.row.ai-only[hidden] { display: none !important; }
+[hidden] { display: none !important; }
+.row.pad-focus .seg, .start.pad-focus { outline: 2px solid var(--neon-a); outline-offset: 4px; border-radius: 4px; }
+.status { font-size: 11px; color: var(--neon-a); margin: 0; text-align: center; }
+.girar { display: none; font-size: 11px; color: var(--neon-b); margin: 0; text-align: center; }
+@media (pointer: coarse) and (orientation: portrait) { .girar { display: block; } }
+.hud { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 2; }
+.hud button {
+  font: 600 12px var(--font-body); color: var(--fg); background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--dim); border-radius: 3px; padding: 6px 10px; min-width: 44px; min-height: 36px; cursor: pointer;
+}
+.hud button:focus-visible { outline: 2px solid var(--neon-a); outline-offset: 2px; }
+body.jogando { touch-action: none; -webkit-user-select: none; user-select: none; }
 @media (max-width: 520px) { .row .label { min-width: 0; text-align: center; width: 100%; } }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap">
@@ -67,6 +77,11 @@ canvas { display: block; width: 100%; height: 100%; background: var(--screen); b
 body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
 <div class="cabinet" id="cabinet">
   <canvas id="court" aria-label="Quadra de Pong"></canvas>
+  <div class="hud" id="hud" hidden>
+    <button id="btn-pausa" aria-label="Pausar">Pausar</button>
+    <button id="btn-tela" aria-label="Tela cheia" hidden>Tela cheia</button>
+    <button id="btn-menu">Menu</button>
+  </div>
   <div class="menu" id="menu">
     <h1>PONG</h1>
     <div class="row"><span class="label">Modo</span>
@@ -91,7 +106,9 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
         <button id="opt-s-neon" data-val="neon">Neon</button>
       </div></div>
     <button class="start" id="start">Começar</button>
-    <p class="hint" id="hint">Raquete esquerda: W / S. Raquete direita: ↑ / ↓. No celular, arraste o dedo na sua metade da quadra. P pausa, Esc volta para cá.</p>
+    <p class="hint" id="hint"></p>
+    <p class="status" id="pad-status">Controle: conecte e aperte qualquer botão.</p>
+    <p class="girar">Dica: deite o celular para a quadra ficar maior.</p>
   </div>
 </div>
 
@@ -128,8 +145,9 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     });
     document.getElementById('row-diff').hidden = settings.mode !== 'ai';
     document.getElementById('hint').textContent = settings.mode === 'ai'
-      ? 'Você é a raquete da esquerda: W / S (ou ↑ / ↓). No celular, arraste o dedo em qualquer lugar. P pausa, Esc volta para cá.'
-      : 'Raquete esquerda: W / S. Raquete direita: ↑ / ↓. No celular, arraste o dedo na sua metade da quadra. P pausa, Esc volta para cá.';
+      ? 'Você é a raquete da esquerda: W / S ou ↑ / ↓, analógico ou direcional do controle. No celular, arraste o dedo em qualquer parte da tela. P ou Start pausa, Esc ou Select volta para cá.'
+      : 'Esquerda: W / S ou 1º controle. Direita: ↑ / ↓ ou 2º controle. No celular, cada um arrasta o dedo na sua metade da tela. P ou Start pausa, Esc ou Select volta para cá.';
+    paintPadFocus();
   }
   document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -153,7 +171,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   new ResizeObserver(resize).observe(canvas);
 
   // ---- State ----
-  const mkPaddle = x => ({ x, y: H / 2 - PAD_H / 2, vy: 0, touchY: null });
+  const mkPaddle = x => ({ x, y: H / 2 - PAD_H / 2, vy: 0, touches: 0, dragDy: 0, pad: -1 });
   const left = mkPaddle(PAD_X), right = mkPaddle(W - PAD_X - PAD_W);
   const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: BASE_SPEED };
   const ai = { timer: 0, targetY: H / 2, errorOffset: 0 };
@@ -186,35 +204,157 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   }
 
   // ---- Input ----
+  function togglePause() {
+    left.dragDy = right.dragDy = 0;
+    if (state === 'pause') state = ball.vx ? 'play' : 'serve';
+    else if (state === 'play' || state === 'serve') state = 'pause';
+  }
+  function toMenu() {
+    if (state === 'menu') return;
+    state = 'menu'; menu.hidden = false; syncMenu();
+  }
   addEventListener('keydown', e => {
     keys[e.code] = true;
     if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
     if (state === 'win' && (e.code === 'Space' || e.code === 'Enter')) startGame();
     else if (state === 'menu' && e.code === 'Enter' && document.activeElement?.tagName !== 'BUTTON') startGame();
-    if (e.code === 'KeyP' && (state === 'play' || state === 'serve' || state === 'pause')) {
-      state = state === 'pause' ? (ball.vx ? 'play' : 'serve') : 'pause';
-    }
-    if (e.code === 'Escape' && state !== 'menu') { state = 'menu'; menu.hidden = false; syncMenu(); }
+    if (e.code === 'KeyP') togglePause();
+    if (e.code === 'Escape') toMenu();
   });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && (state === 'play' || state === 'serve')) togglePause(); });
+
+  // On-screen buttons (useful on phones, which have no P or Esc)
+  const hud = document.getElementById('hud');
+  const btnPausa = document.getElementById('btn-pausa');
+  btnPausa.addEventListener('click', togglePause);
+  document.getElementById('btn-menu').addEventListener('click', toMenu);
+  const btnTela = document.getElementById('btn-tela');
+  const cabinet = document.getElementById('cabinet');
+  if (document.fullscreenEnabled && cabinet.requestFullscreen) {
+    btnTela.hidden = false;
+    btnTela.addEventListener('click', () => {
+      const p = document.fullscreenElement ? document.exitFullscreen() : cabinet.requestFullscreen();
+      p?.then(() => screen.orientation?.lock?.('landscape')).catch(() => {});
+    });
+  }
   addEventListener('keyup', e => { keys[e.code] = false; });
   addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 
-  function toCourt(t) {
-    const r = canvas.getBoundingClientRect();
-    return { x: (t.clientX - r.left) / r.width * W, y: (t.clientY - r.top) / r.height * H };
-  }
-  function touches(e) {
+  // Touch: relative drag anywhere on the screen, so your finger never hides the paddle.
+  // Single-player: any finger moves your paddle. Two players: left or right half of the screen.
+  const TOUCH_SENS = 1.5;
+  const fingers = new Map(); // touch id -> { p, lastY }
+  document.addEventListener('touchstart', e => {
+    if (e.target.closest('button') || state === 'menu') return;
     e.preventDefault();
-    left.touchY = right.touchY = null;
-    for (const t of e.touches) {
-      const p = toCourt(t);
-      if (settings.mode === 'ai' || p.x < W / 2) left.touchY = p.y; else right.touchY = p.y;
+    if (state === 'win') { startGame(); return; }
+    for (const t of e.changedTouches) {
+      const p = settings.mode === 'ai' || t.clientX < innerWidth / 2 ? left : right;
+      fingers.set(t.identifier, { p, lastY: t.clientY });
+      p.touches++;
     }
-  }
-  canvas.addEventListener('touchstart', e => { if (state === 'win') { e.preventDefault(); startGame(); return; } touches(e); }, { passive: false });
-  canvas.addEventListener('touchmove', touches, { passive: false });
-  canvas.addEventListener('touchend', touches, { passive: false });
+  }, { passive: false });
+  document.addEventListener('touchmove', e => {
+    if (!fingers.size) return;
+    e.preventDefault();
+    const scale = H / canvas.getBoundingClientRect().height * TOUCH_SENS;
+    for (const t of e.changedTouches) {
+      const f = fingers.get(t.identifier); if (!f) continue;
+      f.p.dragDy += (t.clientY - f.lastY) * scale;
+      f.lastY = t.clientY;
+    }
+  }, { passive: false });
+  const lift = e => {
+    for (const t of e.changedTouches) {
+      const f = fingers.get(t.identifier); if (!f) continue;
+      f.p.touches = Math.max(0, f.p.touches - 1);
+      fingers.delete(t.identifier);
+    }
+  };
+  document.addEventListener('touchend', lift);
+  document.addEventListener('touchcancel', lift);
   canvas.addEventListener('mousedown', () => { if (state === 'win') startGame(); });
+  function applyDrag(p, dt) {
+    const y0 = p.y;
+    p.y = Math.max(0, Math.min(H - PAD_H, p.y + p.dragDy));
+    p.vy = dt > 0 ? (p.y - y0) / dt : 0;
+    p.dragDy = 0;
+  }
+
+  // ---- Gamepads (Gamepad API, polled every frame) ----
+  const DEAD = 0.2;
+  const padPrev = {}; // gamepad index -> previous button/axis state for edge detection
+  const B = { A: 0, BACK: 1, SELECT: 8, START: 9, UP: 12, DOWN: 13, LEFT: 14, RIGHT: 15 };
+  var padFocus = -1, padNames = ''; // var: syncMenu() reads padFocus before this line runs
+  const btnDown = (gp, i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
+  function padDir(gp) {
+    if (btnDown(gp, B.UP)) return -1;
+    if (btnDown(gp, B.DOWN)) return 1;
+    const v = gp.axes[1] || 0;
+    return Math.abs(v) < DEAD ? 0 : (v - Math.sign(v) * DEAD) / (1 - DEAD);
+  }
+  function listPads() {
+    return navigator.getGamepads ? [...navigator.getGamepads()].filter(g => g && g.connected) : [];
+  }
+  function rumble(index, strong) {
+    const gp = index >= 0 && navigator.getGamepads ? navigator.getGamepads()[index] : null;
+    try { gp?.vibrationActuator?.playEffect?.('dual-rumble', { duration: strong ? 160 : 50, strongMagnitude: strong ? 0.8 : 0.25, weakMagnitude: strong ? 0.6 : 0.5 })?.catch?.(() => {}); } catch (e) {}
+  }
+
+  // Menu navigation with a controller: up/down picks a row, left/right changes it, A confirms.
+  function menuItems() {
+    return [...menu.querySelectorAll('.row')].filter(r => !r.hidden).concat(document.getElementById('start'));
+  }
+  function paintPadFocus() {
+    const items = menuItems();
+    items.forEach((el, i) => el.classList.toggle('pad-focus', i === padFocus));
+  }
+  function menuStep(gp, pressed) {
+    const items = menuItems();
+    if (padFocus < 0 || padFocus >= items.length) padFocus = items.length - 1;
+    if (pressed.UP) padFocus = (padFocus - 1 + items.length) % items.length;
+    if (pressed.DOWN) padFocus = (padFocus + 1) % items.length;
+    const el = items[padFocus];
+    const isRow = el.classList.contains('row');
+    if (isRow && (pressed.LEFT || pressed.RIGHT || pressed.A)) {
+      const btns = [...el.querySelectorAll('.seg button')];
+      const cur = btns.findIndex(b => b.getAttribute('aria-pressed') === 'true');
+      const next = (cur + (pressed.LEFT ? -1 : 1) + btns.length) % btns.length;
+      btns[next].click();
+    } else if (!isRow && pressed.A) startGame();
+    if (pressed.START) startGame();
+    paintPadFocus();
+  }
+
+  function pollPads() {
+    const pads = listPads();
+    const names = pads.map(g => g.index).join(',');
+    if (names !== padNames) {
+      padNames = names;
+      const st = document.getElementById('pad-status');
+      st.textContent = pads.length === 0 ? 'Controle: conecte e aperte qualquer botão.'
+        : pads.length === 1 ? 'Controle conectado. No modo de dois jogadores, conecte mais um para a direita.'
+        : pads.length + ' controles conectados.';
+      if (pads.length && padFocus < 0) { padFocus = menuItems().length - 1; paintPadFocus(); }
+    }
+    const dirs = [];
+    for (const gp of pads) {
+      const prev = padPrev[gp.index] || {};
+      const now = {
+        A: btnDown(gp, B.A), START: btnDown(gp, B.START), SELECT: btnDown(gp, B.SELECT) || btnDown(gp, B.BACK),
+        UP: btnDown(gp, B.UP) || (gp.axes[1] || 0) < -0.6, DOWN: btnDown(gp, B.DOWN) || (gp.axes[1] || 0) > 0.6,
+        LEFT: btnDown(gp, B.LEFT) || (gp.axes[0] || 0) < -0.6, RIGHT: btnDown(gp, B.RIGHT) || (gp.axes[0] || 0) > 0.6,
+      };
+      const pressed = {};
+      for (const k in now) pressed[k] = now[k] && !prev[k];
+      padPrev[gp.index] = now;
+      if (state === 'menu') menuStep(gp, pressed);
+      else if (state === 'win') { if (pressed.A || pressed.START) startGame(); else if (pressed.SELECT) toMenu(); }
+      else { if (pressed.START) togglePause(); if (pressed.SELECT) toMenu(); }
+      dirs.push({ index: gp.index, dir: padDir(gp) });
+    }
+    return dirs;
+  }
 
   // ---- Paddle physics: accelerate toward a desired velocity for smooth motion ----
   function steer(p, dir, maxSpeed, dt) {
@@ -224,12 +364,12 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     p.y = Math.max(0, Math.min(H - PAD_H, p.y + p.vy * dt));
     if (p.y === 0 || p.y === H - PAD_H) p.vy = 0;
   }
-  function humanDir(p, up, down) {
-    if (p.touchY !== null) {
-      const d = p.touchY - (p.y + PAD_H / 2);
-      return Math.abs(d) < 6 ? 0 : Math.max(-1, Math.min(1, d / 40));
-    }
-    return (keys[down] ? 1 : 0) - (keys[up] ? 1 : 0);
+  const keyDir = (up, down) => (keys[down] ? 1 : 0) - (keys[up] ? 1 : 0);
+  // Touch wins over the controller, the controller over the keyboard.
+  function movePaddle(p, pad, kd, dt) {
+    p.pad = pad ? pad.index : -1;
+    if (p.touches > 0 || p.dragDy) return applyDrag(p, dt);
+    steer(p, pad && pad.dir ? pad.dir : kd, PAD_MAX, dt);
   }
 
   // Where will the ball cross the AI's x? Optionally simulates wall bounces.
@@ -265,6 +405,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     ball.vy = Math.sin(angle) * ball.speed + p.vy * 0.12; // a little "english" from paddle motion
     ball.x = side > 0 ? p.x + PAD_W : p.x - BALL;
     rally++; flash = 0.12;
+    rumble(p.pad, false);
     if (side > 0) rollAiError(); // new aim error each time the ball heads to the AI
   }
   function overlaps(p) {
@@ -286,6 +427,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   }
   function point(side) {
     score[side]++;
+    rumble((side === 0 ? right : left).pad, true); // the side that conceded feels it
     if (score[side] >= settings.target) {
       winner = side; state = 'win';
       if (settings.mode === 'ai') { // placar contra a CPU, mostrado no launcher
@@ -340,8 +482,8 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
       const who = settings.mode === 'ai' ? (winner === 0 ? 'VOCÊ VENCEU' : 'A CPU VENCEU') : `JOGADOR ${winner + 1} VENCEU`;
       text(who, W / 2, H / 2 - 30, 30, winner === 0 ? c.l : c.r, c.glow);
       text(`${score[0]} – ${score[1]}`, W / 2, H / 2 + 16, 16, c.text, false);
-      text('ESPAÇO OU TOQUE PARA JOGAR DE NOVO', W / 2, H / 2 + 64, 11, c.text, false);
-      text('ESC PARA O MENU', W / 2, H / 2 + 90, 9, c.net, false);
+      text('ESPAÇO, TOQUE OU A PARA JOGAR DE NOVO', W / 2, H / 2 + 64, 11, c.text, false);
+      text('ESC OU SELECT PARA O MENU', W / 2, H / 2 + 90, 9, c.net, false);
     }
   }
 
@@ -349,15 +491,20 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    const pads = pollPads();
+    hud.hidden = state === 'menu';
+    btnPausa.textContent = state === 'pause' ? 'Continuar' : 'Pausar';
+    document.body.classList.toggle('jogando', state !== 'menu');
     if (state === 'play' || state === 'serve') {
       if (settings.mode === 'ai') {
-        // In single-player both key sets drive the left paddle
-        const kd = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
-        steer(left, left.touchY !== null ? humanDir(left) : kd, PAD_MAX, dt);
+        // Single-player: both key sets and the first active controller drive the left paddle
+        const kd = keyDir('KeyW', 'KeyS') || keyDir('ArrowUp', 'ArrowDown');
+        const pad = pads.find(d => d.dir) || pads[0];
+        movePaddle(left, pad, kd, dt);
         updateAI(dt);
       } else {
-        steer(left, humanDir(left, 'KeyW', 'KeyS'), PAD_MAX, dt);
-        steer(right, humanDir(right, 'ArrowUp', 'ArrowDown'), PAD_MAX, dt);
+        movePaddle(left, pads[0], keyDir('KeyW', 'KeyS'), dt);
+        movePaddle(right, pads[1], keyDir('ArrowUp', 'ArrowDown'), dt);
       }
       if (state === 'serve') { serveTimer -= dt; if (serveTimer <= 0) serve(); }
       else updateBall(dt);
@@ -366,6 +513,8 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     draw();
     requestAnimationFrame(frame);
   }
+  addEventListener('gamepadconnected', () => { padNames = '*'; });
+  addEventListener('gamepaddisconnected', () => { padNames = '*'; });
   document.fonts?.ready.then(draw);
   requestAnimationFrame(frame);
 })();
