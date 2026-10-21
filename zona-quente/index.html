@@ -1045,6 +1045,9 @@ const GM = {
   wood: new THREE.MeshLambertMaterial({color:0x7c4a26}),
   tan: new THREE.MeshPhongMaterial({color:0xb39b6c, shininess:14}),
   green: new THREE.MeshPhongMaterial({color:0x4d5b3a, shininess:22}),
+  awpStock: new THREE.MeshPhongMaterial({color:0x8e979e, shininess:26, specular:0x2a2a2a}),
+  lensDark: new THREE.MeshPhongMaterial({color:0x0c1422, shininess:160, specular:0x6688aa}),
+  awpMount: new THREE.MeshPhongMaterial({color:0x6f777f, shininess:80, specular:0x888888}),
   glass: new THREE.MeshPhongMaterial({color:0x6aa0ff, shininess:140, specular:0xffffff, emissive:0x10224a}),
   red: new THREE.MeshLambertMaterial({color:0xc8352a}), yellow: new THREE.MeshLambertMaterial({color:0xe0b030}),
   led: new THREE.MeshBasicMaterial({color:0xff2a1a}),
@@ -1124,15 +1127,74 @@ function gunModel(id){
     cy(g, .016, .18, M.poly, 0, .055, .16); bx(g, .042, .085, .12, M.poly, 0, .03, .28);
     mz.position.set(0, .055, -.63); lh = [0, .01, -.32];
   } else if(id === 'gaviao'){
-    bx(g, .06, .07, .52, M.green, 0, .02, -.05);
-    cy(g, .013, .5, M.metal, 0, .04, -.55); cy(g, .021, .06, M.metal, 0, .04, -.82);
-    cy(g, .026, .3, M.metal, 0, .125, -.08); cy(g, .035, .07, M.metal, 0, .125, -.25); cy(g, .031, .05, M.metal, 0, .125, .09);
-    const lens = cy(g, .03, .005, M.glass, 0, .125, -.29);
-    bx(g, .02, .04, .02, M.metal, 0, .087, -.15); bx(g, .02, .04, .02, M.metal, 0, .087, 0);
-    bx(g, .05, .012, .012, M.steel, .04, .06, .07);
-    mag = bx(g, .04, .06, .08, M.poly, 0, -.04, -.05);
-    bx(g, .05, .1, .34, M.green, 0, -.012, .31); bx(g, .04, .04, .18, M.green, 0, .055, .3);
-    mz.position.set(0, .04, -.87); lh = [0, -.02, -.32];
+    /* fuzil de precisão de ferrolho no padrão "ártico": chassi de polímero com furo para o polegar,
+       cano pesado com freio de boca, luneta 8–12× em anéis sobre trilho, bipé recolhido, carregador de 5 */
+    const poly = M.awpStock, steel = M.metal, dark = M.poly;
+    /* perfil lateral (x do desenho = z da arma, para trás positivo) */
+    const P = (pts) => { const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); for(let i = 1; i < pts.length; i++) sh.lineTo(pts[i][0], pts[i][1]); return sh; };
+    const hole = (pts) => { const h = new THREE.Path(); h.moveTo(pts[0][0], pts[0][1]); for(let i = 1; i < pts.length; i++) h.lineTo(pts[i][0], pts[i][1]); return h; };
+    const outline = P([[-0.43, .028], [-0.43, -.012], [-0.405, -.03], [-0.13, -.04], [-0.11, -.046], [-0.02, -.046], [.0, -.05], [.004, -.086], [.012, -.092], [.064, -.092], [.074, -.07], [.08, -.06],
+      [.094, -.15], [.105, -.168], [.135, -.172], [.152, -.158], [.168, -.142], [.3, -.128], [.43, -.124], [.47, -.13], [.488, -.14], [.488, .072], [.46, .078], [.33, .074], [.2, .066], [.13, .052], [.09, .03], [-0.43, .028]]);
+    outline.holes.push(hole([[.012, -.054], [.016, -.082], [.058, -.082], [.064, -.056]]));
+    outline.holes.push(hole([[.128, .018], [.158, -.11], [.178, -.116], [.28, -.11], [.305, -.085], [.3, -.02], [.27, .028], [.18, .036]]));
+    outline.holes.push(hole([[.34, -.098], [.42, -.1], [.425, -.07], [.345, -.068]]));
+    const sg = new THREE.ExtrudeGeometry(outline, {depth:.042, bevelEnabled:true, bevelThickness:.006, bevelSize:.005, bevelSegments:2, curveSegments:4});
+    sg.rotateY(-Math.PI/2); sg.translate(.021, 0, 0);
+    const stock = new THREE.Mesh(sg, poly); stock.castShadow = true; g.add(stock);
+    /* encaixes de polegar no punho (relevo) e textura de borracha na soleira */
+    bx(g, .062, .2, .022, dark, 0, -.032, .5); bx(g, .05, .16, .01, steel, 0, -.03, .484);
+    /* apoio de bochecha ajustável sobre duas hastes */
+    bx(g, .048, .016, .17, poly, 0, .088, .33); cy(g, .005, .014, M.steel, 0, .077, .27).rotation.x = 0; cy(g, .005, .014, M.steel, 0, .077, .39).rotation.x = 0;
+    bx(g, .05, .007, .012, M.steel, 0, .081, .415);
+    /* caixa da culatra, ferrolho e trilho */
+    cy(g, .023, .24, steel, 0, .048, -.04);
+    bx(g, .044, .018, .24, steel, 0, .072, -.04);
+    for(let k = 0; k < 11; k++) bx(g, .046, .006, .01, dark, 0, .084, -.15 + k*.022);
+    bx(g, .006, .02, .07, dark, .024, .05, .02);
+    cy(g, .017, .07, M.metal, 0, .05, .095); cy(g, .019, .012, M.steel, 0, .05, .132);
+    /* alavanca do ferrolho: sobe para a direita e para trás, com a bola na ponta */
+    const hA = new THREE.Vector3(.016, .055, .118), hB = new THREE.Vector3(.054, .084, .146), hd = hB.clone().sub(hA);
+    const handle = new THREE.Mesh(CYLG, M.steel); handle.scale.set(.0055, hd.length(), .0055); handle.position.copy(hA).add(hB).multiplyScalar(.5);
+    handle.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), hd.normalize()); handle.castShadow = true; g.add(handle);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(.0135, 12, 10), dark); knob.position.copy(hB); knob.castShadow = true; g.add(knob);
+    bx(g, .03, .01, .05, steel, 0, .02, -.16);
+    /* cano pesado afinando, freio de boca com janelas */
+    const brl = new THREE.Mesh(new THREE.CylinderGeometry(.0105, .0145, .62, 12), steel); brl.rotation.x = Math.PI/2; brl.position.set(0, .045, -.47); brl.castShadow = true; g.add(brl);
+    cy(g, .018, .016, steel, 0, .045, -.165);
+    cy(g, .019, .085, steel, 0, .045, -.825);
+    for(const zz of [-.808, -.83, -.852]) bx(g, .042, .012, .008, dark, 0, .045, zz);
+    cy(g, .014, .012, dark, 0, .045, -.871);
+    /* luneta: tubo, campânula objetiva, ocular, torres */
+    const SY = .118;
+    cy(g, .016, .26, steel, 0, SY, -.03);
+    const ob = new THREE.Mesh(new THREE.CylinderGeometry(.016, .032, .05, 16), steel); ob.rotation.x = -Math.PI/2; ob.position.set(0, SY, -.185); ob.castShadow = true; g.add(ob);
+    cy(g, .033, .07, steel, 0, SY, -.245); cy(g, .034, .012, dark, 0, SY, -.28);
+    cy(g, .029, .004, M.glass, 0, SY, -.287);
+    const ep = new THREE.Mesh(new THREE.CylinderGeometry(.024, .016, .04, 14), steel); ep.rotation.x = -Math.PI/2; ep.position.set(0, SY, .118); ep.castShadow = true; g.add(ep);
+    cy(g, .025, .055, dark, 0, SY, .165); cy(g, .02, .004, M.lensDark, 0, SY, .193);
+    const tur = (x, y, z, r, h, rz) => { const t = new THREE.Mesh(CYLG, steel); t.scale.set(r, h, r); t.position.set(x, y, z); t.rotation.z = rz; t.castShadow = true; g.add(t);
+      const c = new THREE.Mesh(CYLG, dark); c.scale.set(r*1.05, h*.35, r*1.05); c.position.set(x + (rz ? Math.sign(-rz)*h*.4 : 0), y + (rz ? 0 : h*.4), z); c.rotation.z = rz; g.add(c); };
+    tur(0, SY + .026, -.02, .012, .026, 0); tur(.026, SY, -.02, .011, .024, -Math.PI/2); tur(-.024, SY, .03, .009, .018, Math.PI/2);
+    cy(g, .019, .03, dark, 0, SY, -.02);
+    /* anéis e bases (titânio) presos ao trilho */
+    for(const zz of [-.1, .05]){
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(.019, .005, 6, 16), M.awpMount); ring.position.set(0, SY, zz); ring.castShadow = true; g.add(ring);
+      bx(g, .032, .016, .016, M.awpMount, 0, .096, zz); bx(g, .05, .01, .024, steel, 0, .089, zz);
+      bx(g, .008, .009, .01, dark, .029, .09, zz);
+    }
+    /* bipé recolhido sob o guarda-mão */
+    bx(g, .04, .014, .03, steel, 0, -.045, -.385);
+    for(const sx of [-.012, .012]){ cy(g, .0055, .23, steel, sx, -.052, -.26); bx(g, .014, .008, .018, dark, sx, -.054, -.142); }
+    cy(g, .004, .04, M.steel, 0, -.05, -.36).rotation.z = Math.PI/2;
+    /* gatilho e alça */
+    const trig = bx(g, .006, .026, .008, M.steel, 0, -.064, .035); trig.rotation.x = .3;
+    bx(g, .01, .01, .02, M.steel, 0, -.132, .42); bx(g, .01, .01, .02, M.steel, 0, -.036, -.37);
+    /* carregador destacável de 5 tiros */
+    mag = new THREE.Group(); mag.position.set(0, -.046, -.07); g.add(mag);
+    bx(mag, .038, .055, .07, M.steel, 0, -.027, 0); bx(mag, .042, .008, .076, dark, 0, -.058, 0);
+    for(let k = 0; k < 3; k++) bx(mag, .04, .002, .06, dark, 0, -.012 - k*.014, 0);
+    mz.position.set(0, .045, -.885); lh = [0, -.03, -.31];
+    g.parts_rh = [0, -.088, .098];
   } else if(id === 'faca'){
     bx(g, .026, .032, .11, M.poly, 0, 0, 0); bx(g, .052, .009, .014, M.metal, 0, 0, -.06);
     bx(g, .005, .03, .17, M.steel, 0, .004, -.15); const tip = bx(g, .005, .021, .021, M.steel, 0, .004, -.236); tip.rotation.x = Math.PI/4;
@@ -1147,7 +1209,7 @@ function gunModel(id){
     bx(g, .12, .02, .07, M.glass, 0, .125, 0); const led = bx(g, .02, .02, .02, M.led, .11, .13, .06); led.name = 'led';
   }
   g.add(mz);
-  g.parts = {mz, mag, lh, pump, led:g.getObjectByName('led')};
+  g.parts = {mz, mag, lh, pump, rh:g.parts_rh, led:g.getObjectByName('led')};
   return g;
 }
 function cloneGun(id){
@@ -1156,7 +1218,7 @@ function cloneGun(id){
     bakeMeshes(g, ms, g); GUN_CACHE[id] = g;
   }
   const src = GUN_CACHE[id], c = src.clone(true);
-  c.parts = {lh:src.parts.lh, led:c.getObjectByName('led')};
+  c.parts = {lh:src.parts.lh, rh:src.parts.rh, led:c.getObjectByName('led')};
   return c;
 }
 /* braços em primeira pessoa (presos à arma) */
@@ -1175,7 +1237,8 @@ function buildVM(id, team){
   if(id === 'faca'){ gun.rotation.set(.15, .1, -.35); limb(root, [0, -.01, .045], [.12, -.22, .34], sleeve, .075); }
   else if(W[id].kind === 'nade'){ limb(root, [0, -.03, .02], [.12, -.24, .34], sleeve, .075); }
   else {
-    limb(root, [0, -.045, .05], [.12, -.3, .42], sleeve, .078);
+    const rh = gun.parts.rh || [0, -.045, .05];
+    limb(root, rh, [rh[0] + .12, rh[1] - .26, rh[2] + .37], sleeve, .078);
     const lh = gun.parts.lh;
     if(lh) limb(root, lh, [lh[0] - .24, lh[1] - .26, lh[2] + .36], sleeve, .074);
   }
@@ -2224,7 +2287,7 @@ const VM = {root:new THREE.Group(), model:null, id:null, kick:0, sx:0, sy:0, lya
 vmScene.add(VM.root);
 const vmFlash = new THREE.Sprite(new THREE.SpriteMaterial({map:flareTex, transparent:true, depthWrite:false, depthTest:false, blending:THREE.AdditiveBlending}));
 vmFlash.visible = false; vmFlash.renderOrder = 5; vmScene.add(vmFlash);
-const VMBASE = {rifle:[.165, -.175, -.54], smg:[.145, -.155, -.45], shotgun:[.15, -.165, -.5], sniper:[.16, -.175, -.52], pistol:[.13, -.13, -.37], knife:[.16, -.145, -.34], nade:[.16, -.14, -.34]};
+const VMBASE = {rifle:[.165, -.175, -.54], smg:[.145, -.155, -.45], shotgun:[.15, -.165, -.5], sniper:[.215, -.2, -.64], pistol:[.13, -.13, -.37], knife:[.16, -.145, -.34], nade:[.16, -.14, -.34]};
 function setVM(id, team){
   if(VM.model){ VM.root.remove(VM.model); }
   VM.model = buildVM(id, team); VM.id = id; VM.root.add(VM.model); VM.drawK = 1;
@@ -2245,7 +2308,7 @@ function updateVM(dt){
   VM.aimK += ((player.aim && k !== 'knife' && k !== 'nade' ? 1 : 0) - VM.aimK)*Math.min(1, dt*12);
   const ads = [0, -(w.ads || .08), k === 'pistol' ? -.31 : -.36];
   let x = lerp(base[0], ads[0], VM.aimK), y = lerp(base[1], ads[1], VM.aimK), z = lerp(base[2], ads[2], VM.aimK);
-  let rx = 0, ry = 0, rz = 0;
+  let rx = 0, ry = k === 'sniper' ? .16*(1 - VM.aimK) : 0, rz = k === 'sniper' ? -.04*(1 - VM.aimK) : 0;
   /* balanço ao andar e inércia ao girar */
   const sp = player.ground ? Math.min(1, player.spd/6.3) : 0, bobA = (1 - VM.aimK*.8)*sp;
   x += Math.cos(player.walkPh*.5)*.008*bobA; y += Math.abs(Math.sin(player.walkPh*.5))*.007*bobA - (player.ground ? 0 : .008);
