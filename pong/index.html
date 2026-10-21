@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pong Jovone</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+/* Layout: one-screen arcade cabinet; canvas centered and scaled to fit, settings panel over it */
+:root {
+  color-scheme: dark;
+  --bg: #07080c;
+  --screen: #000000;
+  --fg: #f2f2ee;
+  --dim: #6d7180;
+  --neon-a: #2ef2ff;
+  --neon-b: #ff3dbb;
+  --panel: rgba(7, 8, 12, 0.92);
+  --font-display: "Press Start 2P", ui-monospace, "Courier New", monospace;
+  --font-body: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.cabinet { position: relative; width: 100%; max-width: 960px; aspect-ratio: 8 / 5; max-height: 100%; }
+canvas { display: block; width: 100%; height: 100%; background: var(--screen); border-radius: 6px; touch-action: none; }
+.menu {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: clamp(8px, 2.2vh, 18px); background: var(--panel); border-radius: 6px; padding: 16px; box-sizing: border-box; overflow-y: auto;
+}
+.menu h1 { font-family: var(--font-display); font-size: clamp(22px, 5vw, 44px); margin: 0; letter-spacing: 0.08em; text-wrap: balance; }
+.row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+.row .label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); min-width: 7.5em; text-align: right; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button, .start {
+  font: 600 13px var(--font-body); color: var(--fg); background: transparent;
+  border: 1px solid var(--dim); padding: 6px 12px; cursor: pointer; border-radius: 3px;
+}
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--screen); border-color: var(--fg); }
+.seg button:focus-visible, .start:focus-visible { outline: 2px solid var(--neon-a); outline-offset: 2px; }
+.start { font-family: var(--font-display); font-size: 14px; padding: 12px 22px; border-color: var(--fg); margin-top: 4px; }
+.start:hover { background: var(--fg); color: var(--screen); }
+.hint { font-size: 11px; color: var(--dim); text-align: center; max-width: 46ch; line-height: 1.6; margin: 0; }
+.row.ai-only[hidden] { display: none !important; }
+@media (max-width: 520px) { .row .label { min-width: 0; text-align: center; width: 100%; } }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap">
+
+</head>
+<body>
+<a class="voltar" href="../">‹ Jogos</a>
+<style>.voltar{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:5;font:600 12px var(--font-body);color:var(--dim);text-decoration:none;padding:4px 8px;border:1px solid var(--dim);border-radius:3px;background:var(--bg)}.voltar:hover,.voltar:focus-visible{color:var(--fg);border-color:var(--fg)}
+body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
+<div class="cabinet" id="cabinet">
+  <canvas id="court" aria-label="Quadra de Pong"></canvas>
+  <div class="menu" id="menu">
+    <h1>PONG</h1>
+    <div class="row"><span class="label">Modo</span>
+      <div class="seg" data-key="mode">
+        <button id="opt-mode-ai" data-val="ai">Jogador x CPU</button>
+        <button id="opt-mode-two" data-val="two">Dois jogadores</button>
+      </div></div>
+    <div class="row ai-only" id="row-diff"><span class="label">Dificuldade</span>
+      <div class="seg" data-key="difficulty">
+        <button id="opt-d-easy" data-val="easy">Fácil</button>
+        <button id="opt-d-medium" data-val="medium">Médio</button>
+        <button id="opt-d-hard" data-val="hard">Difícil</button>
+      </div></div>
+    <div class="row"><span class="label">Partida</span>
+      <div class="seg" data-key="target">
+        <button id="opt-t-11" data-val="11">Até 11 pontos</button>
+        <button id="opt-t-21" data-val="21">Até 21 pontos</button>
+      </div></div>
+    <div class="row"><span class="label">Visual</span>
+      <div class="seg" data-key="style">
+        <button id="opt-s-retro" data-val="retro">Retrô P&amp;B</button>
+        <button id="opt-s-neon" data-val="neon">Neon</button>
+      </div></div>
+    <button class="start" id="start">Começar</button>
+    <p class="hint" id="hint">Raquete esquerda: W / S. Raquete direita: ↑ / ↓. No celular, arraste o dedo na sua metade da quadra. P pausa, Esc volta para cá.</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---- Padrões. Troque mode para 'two' para começar em dois jogadores. ----
+  const DEFAULTS = { mode: 'ai', difficulty: 'medium', target: 11, style: 'neon' };
+
+  // AI tuning per difficulty (see explanation): how often it re-reads the ball,
+  // its top speed relative to a human paddle, how far off its aim can be,
+  // and whether it predicts wall bounces.
+  const AI = {
+    easy:   { reaction: 0.30, speed: 0.55, error: 70, predict: false, dead: 14 },
+    medium: { reaction: 0.15, speed: 0.78, error: 38, predict: false, dead: 8 },
+    hard:   { reaction: 0.06, speed: 0.95, error: 16, predict: true,  dead: 4 },
+  };
+
+  const W = 800, H = 500;
+  const PAD_W = 12, PAD_H = 84, PAD_X = 28, PAD_MAX = 520, PAD_ACCEL = 4200;
+  const BALL = 10, BASE_SPEED = 360, SPEED_UP = 1.05, MAX_SPEED = 900;
+  const MAX_ANGLE = Math.PI * 0.33; // ~60° at the paddle edge
+
+  const canvas = document.getElementById('court');
+  const ctx = canvas.getContext('2d');
+  const menu = document.getElementById('menu');
+  const settings = { ...DEFAULTS };
+  try { Object.assign(settings, JSON.parse(localStorage.getItem('pongConfig') || '{}')); } catch (e) {}
+
+  // ---- Settings UI ----
+  function syncMenu() {
+    document.querySelectorAll('.seg').forEach(seg => {
+      const key = seg.dataset.key;
+      seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.val === String(settings[key]))));
+    });
+    document.getElementById('row-diff').hidden = settings.mode !== 'ai';
+    document.getElementById('hint').textContent = settings.mode === 'ai'
+      ? 'Você é a raquete da esquerda: W / S (ou ↑ / ↓). No celular, arraste o dedo em qualquer lugar. P pausa, Esc volta para cá.'
+      : 'Raquete esquerda: W / S. Raquete direita: ↑ / ↓. No celular, arraste o dedo na sua metade da quadra. P pausa, Esc volta para cá.';
+  }
+  document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const key = seg.dataset.key;
+    settings[key] = key === 'target' ? Number(b.dataset.val) : b.dataset.val;
+    try { localStorage.setItem('pongConfig', JSON.stringify(settings)); } catch (e) {}
+    syncMenu(); draw();
+  }));
+  document.getElementById('start').addEventListener('click', startGame);
+  syncMenu();
+
+  // ---- Canvas sizing (crisp on high-DPI) ----
+  function resize() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+    draw();
+  }
+  new ResizeObserver(resize).observe(canvas);
+
+  // ---- State ----
+  const mkPaddle = x => ({ x, y: H / 2 - PAD_H / 2, vy: 0, touchY: null });
+  const left = mkPaddle(PAD_X), right = mkPaddle(W - PAD_X - PAD_W);
+  const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: BASE_SPEED };
+  const ai = { timer: 0, targetY: H / 2, errorOffset: 0 };
+  let score = [0, 0], state = 'menu', serveTimer = 0, serveDir = 1, rally = 0, winner = -1, flash = 0;
+  const keys = {};
+
+  function startGame() {
+    score = [0, 0]; winner = -1;
+    left.y = right.y = H / 2 - PAD_H / 2; left.vy = right.vy = 0;
+    menu.hidden = true;
+    serveDir = Math.random() < 0.5 ? -1 : 1;
+    resetBall();
+    canvas.focus?.();
+  }
+  function resetBall() {
+    ball.x = W / 2 - BALL / 2; ball.y = H / 2 - BALL / 2;
+    ball.vx = ball.vy = 0; ball.speed = BASE_SPEED; rally = 0;
+    state = 'serve'; serveTimer = 0.9;
+    rollAiError();
+  }
+  function serve() {
+    const a = (Math.random() * 2 - 1) * Math.PI * 0.18;
+    ball.vx = Math.cos(a) * ball.speed * serveDir;
+    ball.vy = Math.sin(a) * ball.speed;
+    state = 'play';
+  }
+  function rollAiError() {
+    const t = AI[settings.difficulty];
+    ai.errorOffset = (Math.random() * 2 - 1) * t.error;
+  }
+
+  // ---- Input ----
+  addEventListener('keydown', e => {
+    keys[e.code] = true;
+    if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
+    if (state === 'win' && (e.code === 'Space' || e.code === 'Enter')) startGame();
+    else if (state === 'menu' && e.code === 'Enter' && document.activeElement?.tagName !== 'BUTTON') startGame();
+    if (e.code === 'KeyP' && (state === 'play' || state === 'serve' || state === 'pause')) {
+      state = state === 'pause' ? (ball.vx ? 'play' : 'serve') : 'pause';
+    }
+    if (e.code === 'Escape' && state !== 'menu') { state = 'menu'; menu.hidden = false; syncMenu(); }
+  });
+  addEventListener('keyup', e => { keys[e.code] = false; });
+  addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+  function toCourt(t) {
+    const r = canvas.getBoundingClientRect();
+    return { x: (t.clientX - r.left) / r.width * W, y: (t.clientY - r.top) / r.height * H };
+  }
+  function touches(e) {
+    e.preventDefault();
+    left.touchY = right.touchY = null;
+    for (const t of e.touches) {
+      const p = toCourt(t);
+      if (settings.mode === 'ai' || p.x < W / 2) left.touchY = p.y; else right.touchY = p.y;
+    }
+  }
+  canvas.addEventListener('touchstart', e => { if (state === 'win') { e.preventDefault(); startGame(); return; } touches(e); }, { passive: false });
+  canvas.addEventListener('touchmove', touches, { passive: false });
+  canvas.addEventListener('touchend', touches, { passive: false });
+  canvas.addEventListener('mousedown', () => { if (state === 'win') startGame(); });
+
+  // ---- Paddle physics: accelerate toward a desired velocity for smooth motion ----
+  function steer(p, dir, maxSpeed, dt) {
+    const want = dir * maxSpeed;
+    const dv = want - p.vy, step = PAD_ACCEL * dt;
+    p.vy += Math.abs(dv) <= step ? dv : Math.sign(dv) * step;
+    p.y = Math.max(0, Math.min(H - PAD_H, p.y + p.vy * dt));
+    if (p.y === 0 || p.y === H - PAD_H) p.vy = 0;
+  }
+  function humanDir(p, up, down) {
+    if (p.touchY !== null) {
+      const d = p.touchY - (p.y + PAD_H / 2);
+      return Math.abs(d) < 6 ? 0 : Math.max(-1, Math.min(1, d / 40));
+    }
+    return (keys[down] ? 1 : 0) - (keys[up] ? 1 : 0);
+  }
+
+  // Where will the ball cross the AI's x? Optionally simulates wall bounces.
+  function predictY(predict) {
+    if (!predict || ball.vx <= 0) return ball.y + BALL / 2;
+    const dist = (right.x - (ball.x + BALL));
+    let y = ball.y + ball.vy * (dist / ball.vx);
+    const span = H - BALL;
+    y = ((y % (2 * span)) + 2 * span) % (2 * span);
+    if (y > span) y = 2 * span - y;
+    return y + BALL / 2;
+  }
+
+  function updateAI(dt) {
+    const t = AI[settings.difficulty];
+    ai.timer -= dt;
+    if (ai.timer <= 0) {
+      ai.timer = t.reaction;
+      ai.targetY = ball.vx > 0 ? predictY(t.predict) + ai.errorOffset : H / 2; // drift home when ball leaves
+    }
+    const d = ai.targetY - (right.y + PAD_H / 2);
+    const dir = Math.abs(d) < t.dead ? 0 : Math.max(-1, Math.min(1, d / 50));
+    steer(right, dir, PAD_MAX * t.speed, dt);
+  }
+
+  // ---- Ball ----
+  function hitPaddle(p, side) {
+    const rel = ((ball.y + BALL / 2) - (p.y + PAD_H / 2)) / (PAD_H / 2);
+    const clamped = Math.max(-1, Math.min(1, rel));
+    const angle = clamped * MAX_ANGLE;
+    ball.speed = Math.min(MAX_SPEED, ball.speed * SPEED_UP);
+    ball.vx = Math.cos(angle) * ball.speed * side;
+    ball.vy = Math.sin(angle) * ball.speed + p.vy * 0.12; // a little "english" from paddle motion
+    ball.x = side > 0 ? p.x + PAD_W : p.x - BALL;
+    rally++; flash = 0.12;
+    if (side > 0) rollAiError(); // new aim error each time the ball heads to the AI
+  }
+  function overlaps(p) {
+    return ball.x < p.x + PAD_W && ball.x + BALL > p.x && ball.y < p.y + PAD_H && ball.y + BALL > p.y;
+  }
+  function updateBall(dt) {
+    // Sub-step so fast balls can't tunnel through paddles
+    const steps = Math.ceil(ball.speed * dt / (BALL * 0.8));
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      ball.x += ball.vx * h; ball.y += ball.vy * h;
+      if (ball.y <= 0) { ball.y = 0; ball.vy = Math.abs(ball.vy); }
+      if (ball.y + BALL >= H) { ball.y = H - BALL; ball.vy = -Math.abs(ball.vy); }
+      if (ball.vx < 0 && overlaps(left)) hitPaddle(left, 1);
+      if (ball.vx > 0 && overlaps(right)) hitPaddle(right, -1);
+      if (ball.x + BALL < 0) return point(1);
+      if (ball.x > W) return point(0);
+    }
+  }
+  function point(side) {
+    score[side]++;
+    if (score[side] >= settings.target) {
+      winner = side; state = 'win';
+      if (settings.mode === 'ai') { // placar contra a CPU, mostrado no launcher
+        const k = side === 0 ? 'pongVitorias' : 'pongDerrotas';
+        try { localStorage.setItem(k, String((Number(localStorage.getItem(k)) || 0) + 1)); } catch (e) {}
+      }
+      return;
+    }
+    serveDir = side === 0 ? 1 : -1; // serve toward the player who lost the point
+    resetBall();
+  }
+
+  // ---- Drawing ----
+  function palette() {
+    return settings.style === 'neon'
+      ? { bg: '#05030d', net: 'rgba(160,140,255,0.35)', l: '#2ef2ff', r: '#ff3dbb', ball: '#fff6a8', text: '#e9e4ff', glow: true }
+      : { bg: '#000000', net: '#8a8a8a', l: '#f2f2ee', r: '#f2f2ee', ball: '#f2f2ee', text: '#f2f2ee', glow: false };
+  }
+  function rect(x, y, w, h, color, glow) {
+    ctx.shadowColor = color; ctx.shadowBlur = glow ? 18 : 0;
+    ctx.fillStyle = color; ctx.fillRect(x, y, w, h);
+    ctx.shadowBlur = 0;
+  }
+  function text(str, x, y, size, color, glow, align = 'center') {
+    ctx.font = `${size}px "Press Start 2P", ui-monospace, monospace`;
+    ctx.textAlign = align; ctx.textBaseline = 'middle';
+    ctx.shadowColor = color; ctx.shadowBlur = glow ? 14 : 0;
+    ctx.fillStyle = color; ctx.fillText(str, x, y);
+    ctx.shadowBlur = 0;
+  }
+  function draw() {
+    const c = palette();
+    ctx.fillStyle = c.bg; ctx.fillRect(0, 0, W, H);
+    if (c.glow) { // faint scanlines for the neon cabinet
+      ctx.fillStyle = 'rgba(255,255,255,0.025)';
+      for (let y = 0; y < H; y += 4) ctx.fillRect(0, y, W, 1);
+    }
+    for (let y = 8; y < H; y += 26) rect(W / 2 - 2, y, 4, 14, c.net, false);
+    text(String(score[0]), W / 2 - 90, 50, 40, c.l, c.glow);
+    text(String(score[1]), W / 2 + 90, 50, 40, c.r, c.glow);
+    rect(left.x, left.y, PAD_W, PAD_H, c.l, c.glow);
+    rect(right.x, right.y, PAD_W, PAD_H, c.r, c.glow);
+    if (state !== 'win') rect(ball.x, ball.y, BALL, BALL, flash > 0 && c.glow ? '#ffffff' : c.ball, c.glow);
+
+    const names = settings.mode === 'ai' ? ['VOCÊ', 'CPU'] : ['J1', 'J2'];
+    text(names[0], W / 2 - 90, 92, 10, c.text, false);
+    text(names[1], W / 2 + 90, 92, 10, c.text, false);
+    if (state === 'play' || state === 'serve') text(`TROCAS ${rally}`, W / 2, H - 18, 9, c.net, false);
+    if (state === 'pause') text('PAUSADO', W / 2, H / 2, 24, c.text, c.glow);
+    if (state === 'win') {
+      ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, 0, W, H);
+      const who = settings.mode === 'ai' ? (winner === 0 ? 'VOCÊ VENCEU' : 'A CPU VENCEU') : `JOGADOR ${winner + 1} VENCEU`;
+      text(who, W / 2, H / 2 - 30, 30, winner === 0 ? c.l : c.r, c.glow);
+      text(`${score[0]} – ${score[1]}`, W / 2, H / 2 + 16, 16, c.text, false);
+      text('ESPAÇO OU TOQUE PARA JOGAR DE NOVO', W / 2, H / 2 + 64, 11, c.text, false);
+      text('ESC PARA O MENU', W / 2, H / 2 + 90, 9, c.net, false);
+    }
+  }
+
+  // ---- Main loop ----
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.033, (now - last) / 1000); last = now;
+    if (state === 'play' || state === 'serve') {
+      if (settings.mode === 'ai') {
+        // In single-player both key sets drive the left paddle
+        const kd = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+        steer(left, left.touchY !== null ? humanDir(left) : kd, PAD_MAX, dt);
+        updateAI(dt);
+      } else {
+        steer(left, humanDir(left, 'KeyW', 'KeyS'), PAD_MAX, dt);
+        steer(right, humanDir(right, 'ArrowUp', 'ArrowDown'), PAD_MAX, dt);
+      }
+      if (state === 'serve') { serveTimer -= dt; if (serveTimer <= 0) serve(); }
+      else updateBall(dt);
+      flash = Math.max(0, flash - dt);
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+  document.fonts?.ready.then(draw);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

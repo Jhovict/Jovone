@@ -10,6 +10,8 @@ turbo-br316/        ← cada jogo em sua pasta, com index.html próprio
   index.html          corrida 3D pelas estradas brasileiras
 pane-seca/
   index.html          sobrevivência 3D no sertão (feito a partir do motor do Turbo BR-316)
+pong/
+  index.html          Pong clássico em canvas 2D (contra a CPU ou dois jogadores)
 ```
 
 ## Pane Seca
@@ -23,6 +25,10 @@ O carro do Turbo BR-316 ficou sem gasolina no meio da BR-316. A pé, em terceira
 - vence ao instalar 3 peças de motor e 4 galões (20 L) no carro e dar a partida.
 
 Reaproveita do Turbo BR-316: renderizador e iluminação, ciclo de horário (agora contínuo), chuva, cenário do sertão (carnaúba, mandacaru, moitas, casinhas, bodes, urubus), pedestre como personagem, áudio sintetizado e trilha, toque, gamepad e o visual da interface. Salva sozinho no `localStorage` com o prefixo `pseca`.
+
+## Pong
+
+Pong em canvas 2D, arquivo único, sem bibliotecas. Contra a CPU (fácil, médio ou difícil) ou dois jogadores no mesmo teclado (W/S e ↑/↓; no celular, arrastando o dedo). Partidas até 11 ou 21 pontos, visual retrô preto e branco ou neon. O ângulo da bola depende de onde ela bate na raquete e a velocidade sobe 5% a cada rebatida. Salva as opções e o placar contra a CPU no `localStorage` com o prefixo `pong`.
 
 ## Como adicionar um jogo
 
