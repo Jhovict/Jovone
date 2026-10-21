@@ -12,6 +12,8 @@ pane-seca/
   index.html          sobrevivência 3D no sertão (feito a partir do motor do Turbo BR-316)
 pong/
   index.html          Pong clássico em canvas 2D (contra a CPU ou dois jogadores)
+zona-quente/
+  index.html          tiro tático em equipe (estilo CS / Critical Ops) contra bots
 ```
 
 ## Pane Seca
@@ -29,6 +31,21 @@ Reaproveita do Turbo BR-316: renderizador e iluminação, ciclo de horário (ago
 ## Pong
 
 Pong em canvas 2D, arquivo único, sem bibliotecas. Contra a CPU (fácil, médio ou difícil) ou dois jogadores locais. Controles: teclado (W/S e ↑/↓, P pausa, Esc menu), controle/joypad pela Gamepad API (analógico ou direcional, Start pausa, Select menu, A confirma, navega no menu e vibra nas rebatidas; o 1º controle é a raquete esquerda e o 2º a direita) e celular (arrastar o dedo em qualquer parte da tela, cada jogador na sua metade; botões na tela para pausar, tela cheia e menu). Partidas até 11 ou 21 pontos, visual retrô preto e branco ou neon. O ângulo da bola depende de onde ela bate na raquete e a velocidade sobe 5% a cada rebatida. Salva as opções e o placar contra a CPU no `localStorage` com o prefixo `pong`.
+
+## Zona Quente
+
+Tiro tático em primeira pessoa, Força Tática contra Insurgentes, no mapa original **Mercado** (dois pontos de bomba, meio, passarela, corredor longo e túneis cobertos).
+
+- **Desarme:** os Insurgentes plantam a bomba no ponto A ou B (3,2 s), a Força Tática desarma (10 s, ou 5 s com kit); quem vencer 7 rodadas leva, com troca de lado depois da 6ª.
+- **Economia como no CS:** dinheiro por vitória, derrota (bônus crescente), abates por tipo de arma e plantio; loja na base nos primeiros 20 s; sobreviventes mantêm as armas; armas caídas podem ser pegas.
+- **Arsenal:** pistolas Falcão e Tupã .50, submetralhadora Vespa, escopeta Trovão, fuzis Carcará e Jaguar, fuzil de precisão Gavião (luneta em 2 níveis), faca (golpe pelas costas), granada, atordoante e fumaça, colete, capacete e kit.
+- **Tiro:** cabeça ×4, tronco, barriga ×1,25 e pernas ×0,75; colete e capacete absorvem conforme a penetração da arma; dispersão por movimento, pulo e agachamento; recuo com padrão; queda de dano com a distância.
+- **Bots** em 4 níveis: visão com campo e linha de visada, tempo de reação, erro de mira que diminui, rajadas controladas, contra-strafe, audição de tiros e passos, rotas por A* no grid, execução por corredores, lurker, rotação e retomada em grupo da defesa, compra por equipe (pistola, economia, forçar, completa), uso de granadas.
+- **Mata-mata em equipe:** renascimento, compras grátis na base, 50 abates.
+- Radar, placar, feed de abates, indicador de dano, espectador em terceira pessoa ao morrer.
+- **Controles:** PC (WASD, mouse com captura do ponteiro), celular na horizontal (joystick, arrastar para mirar, dois botões de fogo que também giram a câmera, mira, pulo, agachar, recarga, troca de arma, granada, usar/plantar/desarmar, loja) e controle Xbox/PlayStation.
+
+Salva opções e estatísticas no `localStorage` com o prefixo `zq`.
 
 ## Como adicionar um jogo
 
