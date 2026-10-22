@@ -52,7 +52,9 @@ Salva opções e estatísticas no `localStorage` com o prefixo `zq`.
 
 ## Pulse Kart
 
-Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) no circuito original **Apex Loop**, de 1,3 km: reta dos boxes com pórtico de largada, curva 1, esses, grampo e o curvão de volta.
+Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) em três circuitos originais: **Apex Loop** (1,3 km, reta dos boxes, esses, grampo e curvão), **Orla** (à beira-mar, com areia, coqueiros e mar) e **Centro** (de rua, entre prédios e muros de concreto). A pista é escolhida no menu (a página recarrega para montá-la).
+
+- **Modo com itens** (opcional): caixas na pista dão turbo, óleo, míssil teleguiado ou escudo, com sorteio que favorece quem está atrás; os bots também usam.
 
 - **Kart Pulse:** chassi tubular cromado, para-choque e carenagem frontal com placa de número, sideboxes, banco envolvente, tanque, volante que gira, motor dois tempos com aletas, vela, carburador e caixa de ar, escapamento com câmara de expansão, corrente e coroa, eixo traseiro com freio a disco e pneus traseiros largos. Oito pinturas.
 - **Piloto:** macacão preto com faixas na cor do kart, luvas, botas e capacete com faixas e viseira escura. Ele se inclina e olha para dentro das curvas.
@@ -62,7 +64,7 @@ Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) no circuito
 - **Pilotagem:** aderência limitada pela velocidade, drift (segure na curva e solte: turbo azul ou laranja conforme o tempo), vácuo atrás de outro kart, grama e brita freiam, batidas no alambrado e entre karts.
 - **Controles:** teclado (setas/WASD, Espaço drift, V câmera, P pausa, M som), controle (RT/A acelera, LT/B freia, analógico, RB/X drift, Y câmera, Start pausa) e celular na horizontal (botões de direção, acelerador, freio e drift).
 
-Salva opções, melhor volta, fantasma e estatísticas no `localStorage` com o prefixo `pkart`.
+Salva opções, melhor volta e fantasma (por pista) e estatísticas no `localStorage` com o prefixo `pkart`.
 
 ## Como adicionar um jogo
 
