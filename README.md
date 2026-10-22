@@ -14,6 +14,8 @@ pong/
   index.html          Pong clássico em canvas 2D (contra a CPU ou dois jogadores)
 zona-quente/
   index.html          tiro tático em equipe (estilo CS / Critical Ops) contra bots
+pulse-kart/
+  index.html          corrida de kart 3D no circuito Apex Loop
 ```
 
 ## Pane Seca
@@ -47,6 +49,20 @@ Tiro tático em primeira pessoa, Força Tática contra Insurgentes, no mapa orig
 - **Controles:** PC (WASD, mouse com captura do ponteiro), celular na horizontal (joystick, arrastar para mirar, dois botões de fogo que também giram a câmera, mira, pulo, agachar, recarga, troca de arma, granada, usar/plantar/desarmar, loja) e controle Xbox/PlayStation.
 
 Salva opções e estatísticas no `localStorage` com o prefixo `zq`.
+
+## Pulse Kart
+
+Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) no circuito original **Apex Loop**, de 1,3 km: reta dos boxes com pórtico de largada, curva 1, esses, grampo e o curvão de volta.
+
+- **Kart Pulse:** chassi tubular cromado, para-choque e carenagem frontal com placa de número, sideboxes, banco envolvente, tanque, volante que gira, motor dois tempos com aletas, vela, carburador e caixa de ar, escapamento com câmara de expansão, corrente e coroa, eixo traseiro com freio a disco e pneus traseiros largos. Oito pinturas.
+- **Piloto:** macacão preto com faixas na cor do kart, luvas, botas e capacete com faixas e viseira escura. Ele se inclina e olha para dentro das curvas.
+- **Circuito:** asfalto, faixas brancas, zebras vermelhas e brancas nas curvas, caixas de brita e barreiras de pneus por fora das curvas fortes, alambrado com postes, placas de patrocínio, três pórticos (o da largada com as cinco luzes), muro dos boxes, prédio do paddock com boxes numerados, arquibancadas com torcida, postos de fiscais com bandeira, árvores e morros.
+- **Corrida:** 3, 5 ou 8 voltas contra 7 pilotos em três níveis (Amador, Piloto, Profissional), largada com as cinco luzes vermelhas, posição ao vivo, torre de tempos, minimapa e resultado com pódio. Os bots seguem o traçado ideal, freiam antes das curvas, desviam e disputam posição.
+- **Contra o relógio:** voltas livres sozinho; o kart fantasma repete a melhor volta (salva no navegador).
+- **Pilotagem:** aderência limitada pela velocidade, drift (segure na curva e solte: turbo azul ou laranja conforme o tempo), vácuo atrás de outro kart, grama e brita freiam, batidas no alambrado e entre karts.
+- **Controles:** teclado (setas/WASD, Espaço drift, V câmera, P pausa, M som), controle (RT/A acelera, LT/B freia, analógico, RB/X drift, Y câmera, Start pausa) e celular na horizontal (botões de direção, acelerador, freio e drift).
+
+Salva opções, melhor volta, fantasma e estatísticas no `localStorage` com o prefixo `pkart`.
 
 ## Como adicionar um jogo
 

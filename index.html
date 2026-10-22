@@ -145,6 +145,44 @@ const GAMES = [
     }
   },
   {
+    id: 'pulse-kart',
+    title: 'Pulse Kart',
+    tag: 'Kart 3D',
+    desc: 'Kart 125cc no circuito Apex Loop: largada com as cinco luzes, drift com turbo, vácuo nas retas e corrida contra 7 pilotos — ou contra o relógio com o kart fantasma.',
+    cover: `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="ks" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f86d6"/><stop offset="1" stop-color="#cfe1ee"/></linearGradient></defs>
+      <rect width="320" height="180" fill="url(#ks)"/>
+      <path d="M0 92 L60 78 L110 90 L170 70 L240 88 L320 74 L320 100 L0 100Z" fill="#8fae86"/>
+      <rect y="96" width="320" height="84" fill="#467c35"/>
+      <path d="M-20 180 C60 130 120 112 200 104 L330 98 L330 118 C240 120 170 136 110 180Z" fill="#3a3d42"/>
+      <path d="M-20 180 C60 130 120 112 200 104 L330 98" fill="none" stroke="#f2f2ee" stroke-width="5" stroke-dasharray="12 12"/>
+      <path d="M-20 180 C60 130 120 112 200 104 L330 98" fill="none" stroke="#d8261c" stroke-width="5" stroke-dasharray="12 12" stroke-dashoffset="12"/>
+      <g stroke="#9aa1a8" stroke-width="3"><path d="M40 98V40M150 92V40"/><path d="M36 40H154" stroke-width="7" stroke="#14171c"/></g>
+      <g fill="#ff2a1a"><circle cx="80" cy="50" r="4"/><circle cx="92" cy="50" r="4"/><circle cx="104" cy="50" r="4"/><circle cx="116" cy="50" r="4"/></g>
+      <g transform="translate(196 132)">
+        <ellipse cx="0" cy="18" rx="62" ry="8" fill="#000" opacity=".25"/>
+        <rect x="-60" y="2" width="22" height="18" rx="5" fill="#15161a"/><rect x="38" y="2" width="22" height="18" rx="5" fill="#15161a"/>
+        <path d="M-50 4 L-30 -6 L30 -6 L50 4 L44 10 L-44 10Z" fill="#f26a1b"/>
+        <path d="M-16 -6 L-8 -26 L8 -26 L16 -6Z" fill="#1a1b1e"/><path d="M-11 -10 L-7 -24 L-3 -24 L-6 -10Z" fill="#f26a1b"/>
+        <circle cx="0" cy="-36" r="13" fill="#f4f4f0"/><path d="M-12 -38 A13 13 0 0 1 12 -38 L12 -34 L-12 -34Z" fill="#101318"/>
+        <path d="M-4 -49 L-2 -36 M4 -49 L2 -36" stroke="#f26a1b" stroke-width="3"/>
+        <rect x="-12" y="-4" width="24" height="10" rx="2" fill="#f4f4f0"/><text x="0" y="5" font-family="Impact,sans-serif" font-size="10" text-anchor="middle" fill="#111">7</text>
+        <rect x="24" y="-18" width="8" height="14" fill="#c6cacf"/>
+      </g>
+      <g transform="translate(118 112) scale(.5)"><rect x="-60" y="2" width="22" height="18" rx="5" fill="#15161a"/><rect x="38" y="2" width="22" height="18" rx="5" fill="#15161a"/><path d="M-50 4 L-30 -6 L30 -6 L50 4 L44 10 L-44 10Z" fill="#1f6fd6"/><circle cx="0" cy="-30" r="13" fill="#1f6fd6"/><path d="M-12 -32 A13 13 0 0 1 12 -32 L12 -28 L-12 -28Z" fill="#101318"/></g>
+    </svg>`,
+    stats: () => {
+      const out = [];
+      try {
+        const best = JSON.parse(localStorage.getItem('pkartBest') || 'null');
+        if (best) { const m = Math.floor(best / 60), s2 = best - m * 60; out.push('⏱ ' + m + ':' + (s2 < 10 ? '0' : '') + s2.toFixed(2) + ' melhor volta'); }
+        const st = JSON.parse(localStorage.getItem('pkartStats') || 'null');
+        if (st && st.wins) out.push('🏆 ' + st.wins + (st.wins === 1 ? ' vitória' : ' vitórias'));
+      } catch (e) {}
+      return out;
+    }
+  },
+  {
     id: 'pong',
     title: 'Pong',
     tag: 'Arcade 2D',
