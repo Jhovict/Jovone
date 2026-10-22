@@ -192,7 +192,7 @@ body.touch .keys{display:none}
     <div class="times" id="times"><span>Atual</span><b id="tCur">0:00.0</b><span>Última</span><b id="tLast">—</b><span>Melhor</span><b class="best" id="tBest">—</b></div>
     <div class="tower" id="tower"></div>
     <canvas class="map" id="map" width="340" height="340"></canvas>
-    <div class="speedo"><div class="v" id="spd">0</div><div class="u">km/h</div><div class="dbar" id="dbar"><i id="dfill"></i></div><div class="dlabel"><span>Drift</span><span id="dlv">turbo</span></div></div>
+    <div class="speedo"><div class="v" id="spd">0</div><div class="u">km/h</div></div>
     <div class="tag" id="tag">Vácuo</div>
     <div class="itemBox" id="itemBox" hidden><span id="itemIc"></span><small id="itemN">vazio</small></div>
     <div class="lights" id="lights" hidden><i></i><i></i><i></i><i></i><i></i></div>
@@ -236,6 +236,8 @@ body.touch .keys{display:none}
       <h3>Campeonato</h3><div class="seg" id="optCup"></div>
       <div class="cinfo" id="cInfo"></div>
       <div id="cStand"></div>
+      <h3>Colisão entre karts</h3>
+      <div class="seg" data-coll="1"><button data-v="1" aria-pressed="true">Ligada<small>karts batem e se empurram</small></button><button data-v="0" aria-pressed="false">Desligada<small>karts se atravessam</small></button></div>
       <div class="row"><button class="btn pri" id="goCareer" type="button">Correr etapa 1</button><button class="btn" data-go="Garage" type="button">🔧 Garagem</button></div>
     </div></section>
     <!-- corrida rápida -->
@@ -249,6 +251,8 @@ body.touch .keys{display:none}
       <div class="seg" id="optDiff"><button data-v="0" aria-pressed="false">Amador</button><button data-v="1" aria-pressed="true">Piloto</button><button data-v="2" aria-pressed="false">Profissional</button></div>
       <h3>Itens</h3>
       <div class="seg" id="optItems"><button data-v="0" aria-pressed="true">Corrida limpa</button><button data-v="1" aria-pressed="false">Com itens<small>⚡ 🛢️ 🚀 🛡️</small></button></div>
+      <h3>Colisão entre karts</h3>
+      <div class="seg" data-coll="1"><button data-v="1" aria-pressed="true">Ligada<small>karts batem e se empurram</small></button><button data-v="0" aria-pressed="false">Desligada<small>karts se atravessam</small></button></div>
       <div class="row"><button class="btn pri" id="goQuick" type="button">Correr</button></div>
     </div></section>
     <!-- contra o relógio -->
@@ -284,7 +288,7 @@ body.touch .keys{display:none}
       <h2 id="howTitle">COMO <span>JOGAR</span></h2>
       <ul>
         <li><b>Largada:</b> as cinco luzes vermelhas acendem uma a uma; quando todas apagam, acelere.</li>
-        <li><b>Drift e turbo:</b> numa curva, segure o drift enquanto vira. A barra enche: solte com ela azul para um turbo curto ou laranja para um turbo longo.</li>
+        <li><b>Drift:</b> numa curva, segure o drift enquanto vira para o kart deslizar e fechar mais a curva. O drift não dá turbo: use para contornar curvas fechadas sem frear tanto.</li>
         <li><b>Vácuo:</b> colado atrás de outro kart na reta você ganha velocidade. Use para ultrapassar.</li>
         <li><b>Zebras e grama:</b> a zebra pode ser usada; na grama e na brita o kart perde muita velocidade. O alambrado segura quem sai demais.</li>
         <li><b>Contra o relógio:</b> voltas livres sozinho. O kart fantasma repete a sua melhor volta.</li>
@@ -323,9 +327,16 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.4</div>
-      <h2 id="newsTitle">MENU <span>NOVO</span></h2>
+      <div class="ver" id="newsVer">Versão 1.5</div>
+      <h2 id="newsTitle">MAIS <span>DIFÍCIL</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Drift sem turbo:</b> o drift continua fazendo o kart deslizar e fechar a curva, mas não dá mais turbo.</li>
+        <li><b>Adversários mais rápidos e competitivos</b> em todos os níveis e campeonatos: freiam mais tarde, contornam as curvas mais rápido, erram menos e partem para a ultrapassagem em vez de esperar atrás. Quem fica muito para trás encosta no pelotão, então a corrida fica disputada até o fim.</li>
+        <li><b>Colisão corrigida:</b> os karts não se atravessam mais; a batida agora cobre o kart inteiro, da frente à traseira.</li>
+        <li><b>Opção de colisão</b> na Carreira e na Corrida rápida: ligada (karts batem e se empurram) ou desligada (karts se atravessam).</li>
+      </ul>
+      <h3>Versão 1.4 · Menu novo</h3>
       <ul>
         <li><b>Tela de título</b> com o logo: aperte qualquer tecla, toque ou A no controle para começar.</li>
         <li><b>Menu principal</b> com Carreira, Corrida rápida, Contra o relógio, Garagem e Troféus, cada um na sua tela, com as opções do modo e botão de voltar.</li>
@@ -385,7 +396,7 @@ const store = {
 };
 const TOUCH = (matchMedia && matchMedia('(pointer:coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
 document.body.classList.toggle('touch', TOUCH);
-const OPT = Object.assign({mode:'race', laps:3, diff:1, liv:0, cam:0, mute:false, track:0, items:0}, store.get('Opt', {}));
+const OPT = Object.assign({mode:'race', laps:3, diff:1, liv:0, cam:0, mute:false, track:0, items:0, coll:1}, store.get('Opt', {}));
 const saveOpt = () => store.set('Opt', OPT);
 const TRACKS = [
   {id:'apex', n:'Apex Loop', d:'internacional', ctrl:[[0, 0], [70, 0], [140, 0], [195, -12], [228, -48], [232, -100], [204, -140], [146, -152], [104, -180], [106, -228], [152, -252], [214, -244], [258, -266], [262, -312], [226, -338], [168, -330], [112, -300], [62, -262], [22, -206], [-24, -156], [-58, -98], [-66, -46], [-46, -10]], ground:'grass', deco:'trees', walls:'fence', gravel:true},
@@ -441,11 +452,11 @@ const TRACKS = [
 /* carreira: 5 campeonatos de 5 etapas (índices em TRACKS) */
 const TID = id => TRACKS.findIndex(t => t.id === id);
 const CUPS = [
-  {n:'Copa Regional', d:'kartódromos do interior', t:['interior', 'fazenda', 'parque', 'vale', 'pomar'], diff:0, pow:0},
-  {n:'Copa Litoral', d:'praias, porto e dunas', t:['orla', 'porto', 'dunas', 'ilha', 'farol'], diff:1, pow:0},
-  {n:'Copa Metrópole', d:'ruas da cidade, de dia e de noite', t:['centro', 'avenida', 'viaduto', 'industrial', 'olimpico'], diff:1, pow:.02},
-  {n:'Copa Natureza', d:'floresta, serra e cânion', t:['amazonia', 'serra', 'canion', 'cerrado', 'pantanal'], diff:2, pow:0},
-  {n:'Mundial Pulse', d:'os circuitos mais difíceis', t:['apex', 'tempestade', 'noite', 'gp', 'redshift'], diff:2, pow:.025}
+  {n:'Copa Regional', d:'kartódromos do interior', t:['interior', 'fazenda', 'parque', 'vale', 'pomar'], diff:0, pow:.01},
+  {n:'Copa Litoral', d:'praias, porto e dunas', t:['orla', 'porto', 'dunas', 'ilha', 'farol'], diff:1, pow:.005},
+  {n:'Copa Metrópole', d:'ruas da cidade, de dia e de noite', t:['centro', 'avenida', 'viaduto', 'industrial', 'olimpico'], diff:1, pow:.025},
+  {n:'Copa Natureza', d:'floresta, serra e cânion', t:['amazonia', 'serra', 'canion', 'cerrado', 'pantanal'], diff:2, pow:.01},
+  {n:'Mundial Pulse', d:'os circuitos mais difíceis', t:['apex', 'tempestade', 'noite', 'gp', 'redshift'], diff:2, pow:.035}
 ].map(c => Object.assign(c, {ti:c.t.map(TID)}));
 const POINTS = [25, 18, 15, 12, 10, 8, 6, 4], PRIZE = [600, 420, 320, 240, 180, 140, 110, 90];
 const UPG = [{k:'eng', n:'Motor', d:'velocidade final'}, {k:'tire', n:'Pneus', d:'aderência nas curvas'}, {k:'acc', n:'Embreagem', d:'arrancada'}], UPRICE = [700, 1500, 2600];
@@ -550,7 +561,7 @@ function numTex(n, col){
 /* =====================================================================
    CIRCUITO APEX LOOP
    ===================================================================== */
-const KART = {vmax:28.5, acc:12.5, brake:26, lat:TRK.rain ? 16.5 : 21, brakeAI:TRK.rain ? 13 : 17};
+const KART = {vmax:28.5, acc:12.5, brake:26, lat:TRK.rain ? 16.5 : 21, brakeAI:TRK.rain ? 14.5 : 19.5};
 /* traçado (metros, vista de cima): reta dos boxes, curva 1, esses, grampo, curvão de volta */
 const CTRL = TRK.ctrl;
 const curve = new THREE.CatmullRomCurve3(CTRL.map(p => new THREE.Vector3(p[0], 0, p[1])), true, 'centripetal');
@@ -577,7 +588,7 @@ const wrap = i => ((i % N) + N) % N;
     if(TRK.gravel && Math.abs(KS[i]) > 1/48){ const s = -Math.sign(KS[i]); for(let k = -24; k <= 30; k++) GRAV[wrap(i + k)] = s; }
   }
   /* velocidade-limite pela aderência (com folga de frenagem) e traçado ideal */
-  for(let i = 0; i < N; i++){ VLIM[i] = Math.min(40, Math.sqrt(KART.lat*.94/Math.max(1e-4, Math.abs(KS[i])))); LINE[i] = clamp(KL[i]*240, -4.3, 4.3); }
+  for(let i = 0; i < N; i++){ VLIM[i] = Math.min(40, Math.sqrt(KART.lat*.98/Math.max(1e-4, Math.abs(KS[i])))); LINE[i] = clamp(KL[i]*240, -4.3, 4.3); }
   for(let pass = 0; pass < 2; pass++) for(let i = N - 1; i >= 0; i--){ const nx = VLIM[wrap(i + 1)]; VLIM[i] = Math.min(VLIM[i], Math.sqrt(nx*nx + 2*KART.brakeAI*DS)); }
   /* alambrado só onde não invade outro trecho da pista */
   for(let i = 0; i < N; i += 2) for(const sd of [-1, 1]){
@@ -1187,7 +1198,7 @@ function audioTick(dt){
    KARTS, FÍSICA E PILOTOS
    ===================================================================== */
 const BOT_NAMES = ['Bia Torres', 'Caio Lima', 'Duda Rocha', 'Enzo Vale', 'Gabi Nunes', 'Rafa Melo', 'Téo Sales'];
-const DIFF = [{pow:.9, corner:.9, err:1.2}, {pow:.97, corner:.97, err:.8}, {pow:1.02, corner:1.02, err:.45}];
+const DIFF = [{pow:.99, corner:1.0, err:.7}, {pow:1.025, corner:1.045, err:.42}, {pow:1.055, corner:1.08, err:.22}];
 const KARTS = []; let player = null, ghost = null;
 function makeKart(livIdx, num, name, isPlayer){
   const L = LIVERIES[livIdx], model = kartModel(L, num); scene.add(model);
@@ -1245,7 +1256,6 @@ function stepKart(k, dt, others){
   }
   /* drift: termina ao soltar, ao frear muito ou fora da pista */
   if(k.drift && (!k.driftHeld || sp < 7 || k.surf >= 2 || k.brk > .5)){
-    if(k.surf < 2 && k.driftT >= .55){ k.boostLvl = k.driftT >= 1.25 ? 2 : 1; k.boost = k.boostLvl > 1 ? 1.25 : .7; if(k.isPlayer) SFX.boost(k.boostLvl); }
     k.drift = 0; k.driftT = 0;
   }
   /* vácuo: logo atrás de outro kart, alinhado */
@@ -1263,14 +1273,22 @@ function stepKart(k, dt, others){
   const dirDot = fx*TX[i] + fz*TZ[i];
   k.wrong = dirDot < -.3 && sp > 3 ? k.wrong + dt : 0;
 }
+/* colisão entre karts: cada kart é coberto por dois círculos (frente e traseira) */
+const KR = .68, KOFF = .5;
 function collideKarts(){
+  if(!OPT.coll) return;
   for(let a = 0; a < KARTS.length; a++) for(let b = a + 1; b < KARTS.length; b++){
-    const A = KARTS[a], Bk = KARTS[b], dx = Bk.x - A.x, dz = Bk.z - A.z, d2 = dx*dx + dz*dz;
-    if(d2 > 1.6*1.6 || d2 < 1e-6) continue;
-    const d = Math.sqrt(d2), nx = dx/d, nz = dz/d, push = (1.6 - d)/2;
-    A.x -= nx*push; A.z -= nz*push; Bk.x += nx*push; Bk.z += nz*push;
-    const rv = (Bk.vx - A.vx)*nx + (Bk.vz - A.vz)*nz;
-    if(rv < 0){ const j = -rv*.65; A.vx -= nx*j; A.vz -= nz*j; Bk.vx += nx*j; Bk.vz += nz*j; if((A.isPlayer || Bk.isPlayer) && -rv > 1.5){ SFX.hit(-rv*.6); cam.shake = Math.min(.35, -rv*.05); } }
+    const A = KARTS[a], Bk = KARTS[b];
+    if((Bk.x - A.x)**2 + (Bk.z - A.z)**2 > 9) continue;
+    const fa = [-Math.sin(A.h), -Math.cos(A.h)], fb = [-Math.sin(Bk.h), -Math.cos(Bk.h)];
+    for(const sa of [KOFF, -KOFF]) for(const sb of [KOFF, -KOFF]){
+      const ax = A.x + fa[0]*sa, az = A.z + fa[1]*sa, bx = Bk.x + fb[0]*sb, bz = Bk.z + fb[1]*sb, dx = bx - ax, dz = bz - az, d2 = dx*dx + dz*dz;
+      if(d2 > 4*KR*KR || d2 < 1e-6) continue;
+      const d = Math.sqrt(d2), nx = dx/d, nz = dz/d, push = (2*KR - d)/2;
+      A.x -= nx*push; A.z -= nz*push; Bk.x += nx*push; Bk.z += nz*push;
+      const rv = (Bk.vx - A.vx)*nx + (Bk.vz - A.vz)*nz;
+      if(rv < 0){ const j = -rv*.6; A.vx -= nx*j; A.vz -= nz*j; Bk.vx += nx*j; Bk.vz += nz*j; if((A.isPlayer || Bk.isPlayer) && -rv > 1.5){ SFX.hit(-rv*.6); cam.shake = Math.min(.35, -rv*.05); } }
+    }
   }
 }
 /* piloto automático: mira um ponto à frente no traçado e controla a velocidade */
@@ -1290,8 +1308,11 @@ function driveAI(k, dt){
   k.inSteer = clamp(Math.atan2(lr, Math.max(.1, lf))*2.6, -1, 1);
   /* velocidade alvo: o menor limite nos próximos metros */
   let vt = 99; for(let s = 0; s <= look + 8; s += 3) vt = Math.min(vt, VLIM[wrap(k.idx + s)]);
+  /* pelotão junto: quem fica muito atrás do jogador ganha um pouco, quem dispara à frente alivia */
+  if(k.base && player && STATE === 'race'){ const gap = (k.prog - player.prog)*DS, rb = gap < -35 ? Math.min(1.03, 1 + (-gap - 35)*.0004) : gap > 70 ? Math.max(.985, 1 - (gap - 70)*.0003) : 1; k.skill = k.base*rb; k.corner = k.corner0*rb; }
   vt *= k.corner;
-  if(block && block.prog - k.prog < 5/DS) vt = Math.min(vt, Math.abs(block.vf) + .5);
+  /* disputa: só alivia se estiver colado e sem espaço para passar; senão tenta a ultrapassagem */
+  if(block && block.prog - k.prog < 2.6/DS && Math.abs(block.d - k.d) < 1.2) vt = Math.min(vt, Math.abs(block.vf) + .2);
   if(k.surf >= 2) vt = Math.min(vt, 30);
   if(sp > vt + .8){ k.thr = 0; k.brk = clamp((sp - vt)/4, .2, 1); } else { k.thr = 1; k.brk = 0; }
   k.driftHeld = false;
@@ -1337,7 +1358,7 @@ function fxTick(dt){
 function kartFX(k){
   const sh = Math.sin(k.h), ch = Math.cos(k.h), sp = Math.abs(k.vf);
   if(k.drift && sp > 8 && k.driftT > .2){
-    const col = k.driftT >= 1.25 ? 0xff8a2a : k.driftT >= .55 ? 0x4ad2ff : 0xfff4d0;
+    const col = 0xfff4d0;
     for(const sd of [-1, 1]) if(Math.random() < .7){ const x = k.x + ch*sd*.63 + sh*.62, z = k.z - sh*sd*.63 + ch*.62; spark(x, .05, z, col, k.vx*.3 + sh*2, k.vz*.3 + ch*2); }
     if(Math.random() < .3) smoke(k.x + sh*.7, .15, k.z + ch*.7, 0xd8d8d8, .5);
   }
@@ -1425,7 +1446,7 @@ function buildField(){
   if(isRace()){
     const others = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => i !== pl), nums = [3, 11, 22, 27, 44, 55, 88];
     const cup = CUPS[CAR.cup], D = G.mode === 'career' ? Object.assign({}, DIFF[cup.diff], {pow:DIFF[cup.diff].pow + cup.pow, corner:DIFF[cup.diff].corner + cup.pow}) : DIFF[OPT.diff];
-    others.forEach((li, n) => { const b = makeKart(li, nums[n], BOT_NAMES[n], false); b.skill = D.pow*(1 - n*.006) + rnd(-.01, .01); b.corner = D.corner*(1 - n*.005); b.err = D.err*rnd(.8, 1.2); b.lane = rnd(-1.6, 1.6); KARTS.push(b); });
+    others.forEach((li, n) => { const b = makeKart(li, nums[n], BOT_NAMES[n], false); b.skill = b.base = D.pow*(1 - n*.004) + rnd(-.008, .008); b.corner = b.corner0 = D.corner*(1 - n*.004); b.err = D.err*rnd(.8, 1.2); b.lane = rnd(-1.6, 1.6); KARTS.push(b); });
     KARTS.splice(5, 0, player);
   } else KARTS.push(player);
   KARTS.forEach((k, s) => placeOnGrid(k, s));
@@ -1442,7 +1463,7 @@ function startRace(){
   $('tower').hidden = !isRace(); $('posBox').querySelector('.pos').hidden = !isRace();
   $('banner').hidden = true;
   cam.pos.set(0, 0, 0); camSnap = true;
-  if(!store.get('Tip', false)){ setTimeout(() => { if(STATE === 'race') banner('DRIFT = TURBO', TOUCH ? 'segure DRIFT na curva e solte' : 'segure Espaço na curva e solte', 3500); }, (G.goAt + 2)*1000); store.set('Tip', true); }
+  if(!store.get('Tip', false)){ setTimeout(() => { if(STATE === 'race') banner('DRIFT', TOUCH ? 'segure DRIFT para deslizar nas curvas' : 'segure Espaço para deslizar nas curvas', 3500); }, (G.goAt + 2)*1000); store.set('Tip', true); }
 }
 function setStartLights(n, go){
   START_LIGHTS.forEach((L, k) => L.forEach(l => l.material.color.setHex(go ? 0x1a3a22 : k < n ? 0xff2a1a : 0x3a1210)));
@@ -1618,6 +1639,7 @@ $('optLiv').innerHTML = LIVERIES.map((L, i) => `<button data-v="${i}" aria-press
 for(const id of ['qTrack', 'tTrack']) $(id).addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
 $('optCup').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const c = Number(b.dataset.v); if(c !== CAR.cup){ CAR.cup = c; CAR.race = 0; CAR.pts = {}; saveCar(); } SFX.click(); renderMenu(); });
 $('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr) return; CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.click(); renderMenu(); });
+document.querySelectorAll('[data-coll]').forEach(el => el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT.coll = Number(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); }));
 seg('optItems', 'items', Number); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
 const SCREENS = ['Title', 'Hub', 'Career', 'Quick', 'TT', 'Garage', 'Trophies'], SCR_MODE = {Career:'career', Quick:'race', TT:'tt'};
 let SCR = 'Title';
@@ -1654,6 +1676,7 @@ function renderMenu(){
   $('qTrack').innerHTML = $('tTrack').innerHTML = trackOptions();
   for(const [id, key] of [['optItems', 'items'], ['optLaps', 'laps'], ['optDiff', 'diff'], ['optLiv', 'liv']]) [...$(id).children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v) === String(OPT[key])));
   $('ttInfo').innerHTML = `Melhor volta em <b>${TRK.n}</b>: <b>${fmt(G.bestLap)}</b><br>` + (G.ghostBest ? '👻 O kart fantasma repete essa volta.' : 'Complete uma volta para gravar o kart fantasma.');
+  document.querySelectorAll('[data-coll] button').forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === (OPT.coll ? 1 : 0))));
   /* garagem */
   $('cCoins').textContent = '🪙 ' + CAR.coins;
   $('optUp').innerHTML = UPG.map(u => { const lv = CAR.up[u.k], pr = UPRICE[lv]; return `<button data-v="${u.k}" aria-pressed="false" ${lv >= 3 || CAR.coins < pr ? 'disabled style="opacity:.6"' : ''}>${u.n} ${'●'.repeat(lv)}${'○'.repeat(3 - lv)}<small>${lv >= 3 ? 'máximo' : '🪙 ' + pr + ' · ' + u.d}</small></button>`; }).join('');
@@ -1666,7 +1689,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.4';
+const VERSION = '1.5';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -1696,8 +1719,6 @@ let hudT = 0;
 function hud(dt){
   const P = player; if(!P) return;
   $('spd').textContent = Math.round(Math.abs(P.vf)*3.6);
-  const dk = P.drift ? clamp(P.driftT/1.25, 0, 1) : 0; $('dfill').style.width = (dk*100).toFixed(0) + '%'; $('dbar').classList.toggle('l2', P.driftT >= 1.25 && !!P.drift);
-  $('dlv').textContent = P.boost > 0 ? 'TURBO!' : P.drift ? (P.driftT >= 1.25 ? 'laranja' : P.driftT >= .55 ? 'azul' : '...') : 'turbo';
   const tg = $('tag'); tg.classList.toggle('on', P.slip > .5 && STATE === 'race'); tg.classList.add('slip');
   $('wrong').hidden = !(P.wrong > 1.2 && STATE === 'race');
   const ib = $('itemBox'), on = isRace() && !!OPT.items; ib.hidden = !on; $('tItem').hidden = !on;
