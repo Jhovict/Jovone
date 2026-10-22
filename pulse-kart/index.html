@@ -239,9 +239,16 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.0</div>
-      <h2 id="newsTitle">BEM-VINDO AO <span>PULSE KART</span></h2>
+      <div class="ver" id="newsVer">Versão 1.1</div>
+      <h2 id="newsTitle">KART <span>REFEITO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Kart mais detalhado:</b> spoiler dianteiro e sideboxes arredondados, pneus slick com ombro e escrita no flanco, aros de magnésio em prato com raios, banco envolvente, motor com cárter, cilindro aletado, carburador e caixa de ar, escapamento com câmara de expansão e silencioso, disco de freio ventilado e para-choque traseiro de plástico.</li>
+        <li><b>Piloto novo:</b> corpo, braços e pernas arredondados com as faixas do macacão, luvas, sapatilhas e capacete com faixas, viseira e aerofólio.</li>
+        <li>Números também nas laterais do kart.</li>
+        <li><b>Corrigido:</b> o bloco verde que aparecia na pista antes da linha de chegada (eram as copas das árvores, todas no mesmo ponto). Agora as árvores ficam no lugar certo, em volta do circuito.</li>
+      </ul>
+      <h3>Versão 1.0 · Lançamento</h3>
       <ul>
         <li><b>Circuito Apex Loop:</b> reta dos boxes com pórtico de largada e luzes, esses, grampo, zebras vermelhas e brancas, caixas de brita, pneus de proteção, alambrado, arquibancadas e o prédio do paddock.</li>
         <li><b>Kart Pulse 125cc:</b> chassi tubular, carenagem frontal, sideboxes, banco, motor dois tempos com aletas, vela, carburador e escapamento, eixo traseiro com freio a disco e pneus largos atrás.</li>
@@ -603,10 +610,10 @@ const FLAGS = [Math.round(N*.12), Math.round(N*.3), Math.round(N*.5), Math.round
   }
   const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(.18, .26, 3, 6), BM(0x6a4a30), pts.length);
   const leaf = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({color:0xffffff, flatShading:true, shininess:0}), pts.length);
-  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), V = new THREE.Vector3(), cols = [0x2f6b2a, 0x3d7d31, 0x2a5a2c, 0x4a8a38].map(c => new THREE.Color(c));
+  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), V = new THREE.Vector3(), cols = [0x2f6b2a, 0x3d7d31, 0x2a5a2c, 0x4a8a38].map(c => new THREE.Color(c)), UP = new THREE.Vector3(0, 1, 0);
   pts.forEach(([x, z, s], k) => {
     M4.compose(V.set(x, 1.5*s, z), Q.identity(), S.set(s, s, s)); trunk.setMatrixAt(k, M4);
-    M4.compose(V.set(x, 4.1*s, z), Q.setFromAxisAngle(V.set(0, 1, 0), rnd(TAU)), S.set(s, s*rnd(1, 1.4), s)); leaf.setMatrixAt(k, M4); leaf.setColorAt(k, cols[k & 3]);
+    Q.setFromAxisAngle(UP, rnd(TAU)); M4.compose(V.set(x, 4.1*s, z), Q, S.set(s, s*rnd(1, 1.4), s)); leaf.setMatrixAt(k, M4); leaf.setColorAt(k, cols[k & 3]);
   });
   trunk.castShadow = leaf.castShadow = true; scene.add(trunk, leaf);
   const hillM = new THREE.MeshPhongMaterial({color:0x6f8f62, flatShading:true, shininess:0});
@@ -670,17 +677,46 @@ function topExtrude(g, pts, h, c, y, bevel = .025){
 function sphere(g, r, c, x, y, z, sx = 1, sy = 1, sz = 1, opts){
   const o = opts || []; const m = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 14, ...o), cm(c)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); g.add(m); return m;
 }
+/* sólido de revolução em torno do eixo x (pneus, aros, cubos): pts = [raio, posição no eixo] */
+function lathe(g, pts, c, x, y, z, seg = 24){
+  const geo = new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0], p[1])), seg); geo.rotateZ(Math.PI/2);
+  const m = new THREE.Mesh(geo, cm(c)); m.position.set(x, y, z); g.add(m); return m;
+}
 function wheel(rad, w, rim, sd){
-  const g = new THREE.Group(), tire = 0x19191b;
-  CYL(g, rad, w, tire, 0, 0, 0, 'x', 22);
-  CYL(g, rad*.94, w + .006, 0x232325, 0, 0, 0, 'x', 22);
-  CYL(g, rad*.64, w + .012, rim, 0, 0, 0, 'x', 18);
-  CYL(g, rad*.5, w + .016, 0x8e959c, 0, 0, 0, 'x', 14);
-  CYL(g, rad*.18, w + .03, 0x2a2c30, 0, 0, 0, 'x', 10);
-  for(let k = 0; k < 6; k++){ const a = k/6*TAU; B(g, .006, rad*.95, .022, 0x6a7078, sd*(w/2 + .009), Math.cos(a)*rad*.32, Math.sin(a)*rad*.32, a); }
-  for(let k = 0; k < 4; k++){ const a = k/4*TAU + .3; B(g, .004, .012, .03, 0xf2f2f2, sd*(w/2 + .002), Math.cos(a)*rad*.8, Math.sin(a)*rad*.8, a); }
+  const g = new THREE.Group(), h = w/2, rr = rad*.64;
+  /* pneu slick com ombro arredondado e flanco com escrita */
+  lathe(g, [[rr, -h + .004], [rad - .022, -h], [rad - .008, -h + .01], [rad - .001, -h + .026], [rad, -h + .04], [rad, h - .04], [rad - .001, h - .026], [rad - .008, h - .01], [rad - .022, h], [rr, h - .004]], 0x1a1a1c, 0, 0, 0, 28);
+  for(let k = 0; k < 4; k++){ const a = k/4*TAU + .4; B(g, .003, .012, .036, 0xe8e8e2, sd*(h - .001), Math.cos(a)*rad*.8, Math.sin(a)*rad*.8, a); B(g, .003, .01, .02, 0xf26a1b, sd*(h - .001), Math.cos(a + .35)*rad*.8, Math.sin(a + .35)*rad*.8, a + .35); }
+  /* aro de magnésio em prato, com borda, raios e cubo */
+  lathe(g, [[.012, -h + .006], [rr - .006, -h + .006], [rr, -h + .014], [rr, h - .014], [rr - .006, h - .006], [.012, h - .006]], rim, 0, 0, 0, 22);
+  const face = sd*(h - .012);
+  for(let k = 0; k < 5; k++){ const a = k/5*TAU; const sp = B(g, .012, rr*.95, .024, rim, face, Math.cos(a)*rr*.45, Math.sin(a)*rr*.45, a); }
+  lathe(g, [[.0, -.012], [.03, -.012], [.034, 0], [.03, .012], [0, .012]], 0x8e959c, face + sd*.008, 0, 0, 14);
+  for(let k = 0; k < 3; k++){ const a = k/3*TAU; CYL(g, .006, .012, 0x3a3d42, face + sd*.016, Math.cos(a)*.018, Math.sin(a)*.018, 'x', 6); }
+  CYL(g, .012, .02, 0xc8352a, face + sd*.02, 0, 0, 'x', 8);
   return g;
 }
+/* forma 2D com curvas: comandos ['m', x, y] ['l', x, y] ['q', cx, cy, x, y] */
+function pathShape(cmds){ const s = new THREE.Shape(); for(const c of cmds){ if(c[0] === 'm') s.moveTo(c[1], c[2]); else if(c[0] === 'l') s.lineTo(c[1], c[2]); else s.quadraticCurveTo(c[1], c[2], c[3], c[4]); } return s; }
+function extrudeSide(g, shape, width, c, x, bevel = .025){
+  const geo = new THREE.ExtrudeGeometry(shape, {depth:width - bevel*2, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel*.8, bevelSegments:3, curveSegments:10});
+  geo.rotateY(Math.PI/2); geo.translate(x - width/2 + bevel, 0, 0);
+  const m = new THREE.Mesh(geo, cm(c)); g.add(m); return m;
+}
+function extrudeTop(g, shape, h, c, y, bevel = .025){
+  const geo = new THREE.ExtrudeGeometry(shape, {depth:h - bevel*2, bevelEnabled:true, bevelThickness:bevel, bevelSize:bevel*.8, bevelSegments:3, curveSegments:12});
+  geo.rotateX(-Math.PI/2); geo.translate(0, y + bevel, 0);
+  const m = new THREE.Mesh(geo, cm(c)); g.add(m); return m;
+}
+/* membro arredondado: cilindro afinando de a até b, com articulação esférica em a */
+function rlimb(g, a, b, r1, r2, c, joint = true){
+  const A = a.isVector3 ? a : new THREE.Vector3(...a), Bv = b.isVector3 ? b : new THREE.Vector3(...b), d = Bv.clone().sub(A), L = d.length();
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, L, 12), cm(c)); m.position.copy(A).add(Bv).multiplyScalar(.5); m.quaternion.setFromUnitVectors(_ua, d.normalize()); g.add(m);
+  if(joint){ const s = new THREE.Mesh(new THREE.SphereGeometry(r1*1.02, 12, 10), cm(c)); s.position.copy(A); g.add(s); }
+  return m;
+}
+/* faixa sobre um membro: linha fina deslocada para fora */
+function piping(g, a, b, off, w, c){ return limb(g, a.clone().add(off), b.clone().add(off), w, w, c); }
 const LIVERIES = [
   {n:'Pulse', p:0xf26a1b, s:0x14171c, a:0xf2f2ee, rim:0xc9ced4, helm:0xf4f4f0, hs:0xf26a1b, suit:0x1a1b1e, ss:0xf26a1b, css:'#f26a1b'},
   {n:'Azul', p:0x1f6fd6, s:0xf2f2ee, a:0x14171c, rim:0xc9ced4, helm:0x1f6fd6, hs:0xf2f2ee, suit:0x14243a, ss:0x4aa3ff, css:'#1f6fd6'},
@@ -694,131 +730,147 @@ const LIVERIES = [
 const SX = -.06;           /* banco levemente à esquerda: motor fica do lado direito */
 function kartModel(L, num){
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-  const chrome = 0xb8bec6, alu = 0xa2a7ad, fin = 0xc6cacf, black = 0x15161a;
-  /* chassi tubular */
+  const chrome = 0xb8bec6, alu = 0xa2a7ad, fin = 0xc6cacf, black = 0x16171b, plastic = 0x1d1f23;
+  /* ---- chassi tubular (tubos de 30 mm cromados) ---- */
   for(const sd of [-1, 1]){
-    tube(body, [sd*.22, .075, -.78], [sd*.25, .075, .56], .016, chrome);
-    tube(body, [sd*.22, .075, -.78], [sd*.5, .09, -.62], .014, chrome);
-    tube(body, [sd*.25, .075, .1], [sd*.56, .1, .02], .014, chrome);
-    tube(body, [sd*.25, .075, .56], [sd*.56, .11, .62], .014, chrome);
-    tube(body, [sd*.48, .1, -.56], [sd*.48, .2, -.53], .012, chrome);
+    tube(body, [sd*.21, .07, -.74], [sd*.25, .07, .58], .016, chrome, 10);
+    tube(body, [sd*.21, .07, -.74], [sd*.47, .09, -.6], .015, chrome, 10);
+    tube(body, [sd*.47, .09, -.6], [sd*.49, .09, -.46], .015, chrome, 10);
+    tube(body, [sd*.25, .07, .06], [sd*.52, .1, -.02], .014, chrome, 10);
+    tube(body, [sd*.25, .07, .58], [sd*.5, .1, .66], .014, chrome, 10);
+    tube(body, [sd*.49, .09, -.5], [sd*.5, .2, -.53], .012, chrome, 8);
+    B(body, .05, .03, .06, alu, sd*.5, .2, -.53);
   }
-  tube(body, [-.5, .09, -.62], [.5, .09, -.62], .014, chrome); tube(body, [-.25, .075, .25], [.25, .075, .25], .016, chrome);
-  tube(body, [-.25, .075, -.25], [.25, .075, -.25], .014, chrome);
-  B(body, .46, .008, .62, 0x2b2e33, 0, .07, -.46);
-  /* para-choque dianteiro (carenagem) */
-  topExtrude(body, [[-.6, .8], [-.57, .93], [-.42, 1], [0, 1.03], [.42, 1], [.57, .93], [.6, .8], [.5, .75], [.2, .77], [.13, .85], [-.13, .85], [-.2, .77], [-.5, .75]], .1, L.p, .08);
-  topExtrude(body, [[-.58, .82], [-.5, .9], [0, .97], [.5, .9], [.58, .82], [.5, .78], [-.5, .78]], .03, L.s, .2, .01);
-  B(body, 1.1, .03, .2, black, 0, .075, -.88);
-  /* carenagem do bico com a placa de número */
-  sideExtrude(body, [[.9, .1], [.92, .2], [.58, .44], [.44, .46], [.44, .4], [.62, .2], [.7, .1]], .3, L.p, 0);
-  sideExtrude(body, [[.86, .2], [.84, .25], [.6, .41], [.56, .38], [.8, .2]], .31, L.s, 0, .006);
-  B(body, .36, .05, .06, black, 0, .1, -.7);
-  /* sideboxes */
+  tube(body, [-.47, .09, -.6], [.47, .09, -.6], .015, chrome, 10); tube(body, [-.25, .07, .26], [.25, .07, .26], .016, chrome, 10);
+  tube(body, [-.23, .07, -.28], [.23, .07, -.28], .015, chrome, 10); tube(body, [-.5, .1, .66], [.5, .1, .66], .014, chrome, 10);
+  /* bandeja do assoalho */
+  extrudeTop(body, pathShape([['m', -.2, .76], ['l', .2, .76], ['q', .24, .5, .23, .2], ['l', -.23, .2], ['q', -.24, .5, -.2, .76]]), .012, 0x2b2e33, .058, .004);
+  /* ---- spoiler dianteiro (vista de cima, frente arredondada) ---- */
+  const nose = pathShape([['m', -.6, .78], ['q', -.62, .96, -.42, 1.0], ['q', 0, 1.06, .42, 1.0], ['q', .62, .96, .6, .78], ['q', .45, .72, .22, .76], ['l', .15, .84], ['l', -.15, .84], ['l', -.22, .76], ['q', -.45, .72, -.6, .78]]);
+  const nm = extrudeTop(body, nose, .13, L.p, .07, .03); nm.scale.set(1, 1, 1);
+  extrudeTop(body, pathShape([['m', -.5, .86], ['q', 0, .99, .5, .86], ['l', .48, .82], ['q', 0, .94, -.48, .82]]), .012, L.s, .2, .004);
+  extrudeTop(body, pathShape([['m', -.58, .8], ['q', -.58, .95, -.4, .99], ['q', 0, 1.04, .4, .99], ['q', .58, .95, .58, .8], ['l', -.58, .8]]), .03, plastic, .045, .01);
+  for(const sd of [-1, 1]) tube(body, [sd*.2, .09, -.6], [sd*.35, .1, -.8], .012, chrome, 8);
+  /* ---- carenagem frontal (painel com a placa de número) ---- */
+  const panel = pathShape([['m', .86, .12], ['q', .9, .2, .84, .26], ['q', .66, .4, .5, .47], ['q', .44, .49, .42, .45], ['q', .52, .34, .66, .2], ['q', .7, .14, .74, .1], ['l', .86, .12]]);
+  extrudeSide(body, panel, .3, L.p, 0, .03);
+  extrudeSide(body, pathShape([['m', .845, .2], ['q', .86, .24, .82, .27], ['l', .6, .4], ['l', .58, .37], ['l', .8, .23], ['l', .845, .2]]), .31, L.s, 0, .006);
+  /* ---- sideboxes laterais arredondados ---- */
   for(const sd of [-1, 1]){
-    sideExtrude(body, [[.36, .07], [.36, .17], [.25, .25], [-.3, .25], [-.38, .18], [-.38, .07]], .15, L.p, sd*.57);
-    B(body, .158, .05, .7, L.s, sd*.57, .15, 0);
-    B(body, .16, .035, .74, black, sd*.57, .08, 0);
-    B(body, .02, .1, .46, black, sd*.48, .16, 0);
+    const pod = pathShape([['m', .37, .07], ['l', .37, .15], ['q', .36, .26, .24, .26], ['l', -.27, .26], ['q', -.39, .25, -.39, .15], ['l', -.39, .07], ['l', .37, .07]]);
+    extrudeSide(body, pod, .16, L.p, sd*.57, .03);
+    extrudeSide(body, pathShape([['m', .3, .17], ['l', -.32, .17], ['l', -.33, .2], ['l', .3, .2]]), .165, L.s, sd*.57, .004);
+    extrudeSide(body, pathShape([['m', .37, .07], ['l', -.39, .07], ['l', -.39, .11], ['l', .37, .11]]), .17, plastic, sd*.57, .01);
+    B(body, .02, .1, .5, plastic, sd*.49, .15, 0);
   }
-  /* tanque de combustível entre as pernas */
-  B(body, .2, .12, .18, 0xe6e8e4, SX + .03, .15, -.44); CYL(body, .025, .03, 0x1f6fd6, SX + .03, .225, -.4, 'y');
-  /* coluna e volante (volante gira à parte) */
-  tube(body, [SX, .13, -.62], [SX, .42, -.34], .013, chrome);
-  B(body, .06, .03, .1, black, SX - .05, .11, -.72); B(body, .06, .03, .1, black, SX + .07, .11, -.72);
-  tube(body, [SX + .07, .1, -.68], [SX + .07, .2, -.74], .01, 0x9aa1a8); tube(body, [SX - .05, .1, -.68], [SX - .05, .2, -.74], .01, 0x9aa1a8);
-  for(const sd of [-1, 1]) tube(body, [SX, .14, -.58], [sd*.47, .14, -.56], .007, chrome);
-  /* banco envolvente */
+  /* ---- tanque, pedais, coluna de direção e barras de direção ---- */
+  lathe(body, [[0, -.09], [.075, -.09], [.085, -.06], [.085, .06], [.075, .09], [0, .09]], 0xe6e8e4, SX + .03, .15, -.44, 16).rotation.y = Math.PI/2;
+  CYL(body, .024, .03, 0x1f6fd6, SX + .03, .245, -.4, 'y'); tube(body, [SX + .03, .25, -.4], [SX + .2, .3, -.2], .004, 0x3a3d42, 5);
+  tube(body, [SX, .12, -.64], [SX, .42, -.36], .013, chrome, 8);
+  for(const sd of [-1, 1]){ tube(body, [SX + sd*.06, .09, -.66], [SX + sd*.06, .2, -.74], .011, 0x9aa1a8, 6); B(body, .06, .07, .015, black, SX + sd*.06, .2, -.745); }
+  for(const sd of [-1, 1]) tube(body, [SX + .02, .13, -.6], [sd*.45, .14, -.56], .007, chrome, 6);
+  /* ---- banco envolvente (perfil lateral) ---- */
   const seat = 0x2a2c31;
-  B(body, .36, .05, .32, seat, SX, .1, .16);
-  B(body, .38, .5, .04, seat, SX, .35, .32, -.38);
-  for(const sd of [-1, 1]){ B(body, .04, .3, .36, seat, SX + sd*.19, .22, .2, -.2); B(body, .05, .36, .05, seat, SX + sd*.17, .44, .38, -.38); }
-  /* motor 125cc dois tempos (lado direito) */
-  const EX = .3, EZ = .3;
-  B(body, .17, .17, .22, 0x5a5e64, EX, .2, EZ); CYL(body, .085, .03, alu, EX + .1, .2, EZ, 'x', 18); CYL(body, .05, .035, 0x8a9096, EX + .12, .2, EZ, 'x', 12);
-  CYL(body, .045, .2, alu, EX, .38, EZ - .02, 'y', 14);
-  for(let k = 0; k < 7; k++) CYL(body, .072, .012, fin, EX, .3 + k*.022, EZ - .02, 'y', 16);
-  CYL(body, .06, .04, 0x8d9298, EX, .47, EZ - .02, 'y', 16);
-  for(let k = 0; k < 3; k++) B(body, .14, .01, .015, fin, EX, .5, EZ - .06 + k*.04);
-  CYL(body, .01, .035, 0xf2f2ee, EX, .515, EZ - .02, 'y', 8); CYL(body, .007, .02, 0x9aa1a8, EX, .54, EZ - .02, 'y', 6); CYL(body, .004, .1, black, EX - .03, .54, EZ + .02, 'z', 5);
-  CYL(body, .03, .07, 0x8a9096, EX - .12, .34, EZ + .02, 'x', 10); B(body, .05, .05, .05, 0xc6a65a, EX - .17, .34, EZ + .02);
-  B(body, .14, .14, .24, black, .08, .36, .5); for(const z of [.42, .5, .58]) B(body, .145, .006, .01, 0x2f3236, .08, .36, z);
-  tube(body, [EX - .17, .34, EZ + .02], [.15, .36, .45], .02, black);
-  /* escapamento: câmara de expansão e silencioso */
-  tube(body, [EX + .04, .34, EZ - .07], [EX + .12, .22, EZ - .16], .022, chrome);
-  tube(body, [EX + .12, .22, EZ - .16], [EX + .16, .19, EZ + .02], .04, chrome, 12);
-  tube(body, [EX + .16, .19, EZ + .02], [EX + .17, .2, EZ + .34], .05, chrome, 12);
-  tube(body, [EX + .17, .2, EZ + .34], [EX + .17, .22, EZ + .5], .03, chrome);
-  tube(body, [EX + .17, .22, EZ + .5], [EX + .17, .26, EZ + .78], .05, 0x24262a, 12); CYL(body, .02, .02, 0x6a7078, EX + .17, .265, EZ + .8, 'z');
-  /* corrente, coroa e protetor */
-  CYL(body, .075, .012, 0x3a3d42, .38, .14, .53, 'x', 18);
-  B(body, .012, .016, .26, 0x2a2c30, .38, .2, .41); B(body, .012, .016, .26, 0x2a2c30, .38, .09, .41);
-  B(body, .02, .16, .32, L.p, .4, .15, .42);
-  /* eixo traseiro, mancais, disco e pinça de freio */
-  CYL(body, .024, 1.34, chrome, 0, .14, .53, 'x', 10);
-  for(const sd of [-1, 1]) B(body, .05, .08, .06, alu, sd*.3, .12, .53);
-  CYL(body, .09, .012, 0x9aa1a8, -.22, .14, .53, 'x', 22); CYL(body, .05, .014, 0x6a7078, -.22, .14, .53, 'x', 12);
-  B(body, .05, .06, .08, 0xc8352a, -.22, .22, .5);
-  /* para-choque traseiro */
-  B(body, 1.24, .1, .1, black, 0, .16, .9); B(body, .5, .1, .105, L.p, 0, .16, .9);
-  for(const sd of [-1, 1]){ B(body, .12, .12, .14, black, sd*.62, .16, .88); tube(body, [sd*.25, .1, .56], [sd*.4, .16, .86], .013, chrome); }
-  /* placa traseira e lateral */
-  B(body, .26, .2, .015, 0xf4f4f0, SX, .48, .45, -.38);
-  /* piloto: pernas e pélvis ficam no corpo; tronco, braços e cabeça inclinam */
-  const suit = L.suit, ss = L.ss, glove = 0x111214, boot = 0x101113;
-  B(body, .3, .14, .24, suit, SX, .2, .18);
+  extrudeSide(body, pathShape([['m', .04, .07], ['l', .04, .14], ['q', -.1, .1, -.22, .13], ['l', -.4, .62], ['q', -.45, .66, -.48, .6], ['l', -.36, .1], ['q', -.33, .06, -.2, .06], ['l', .04, .07]]), .36, seat, SX, .03);
+  for(const sd of [-1, 1]) extrudeSide(body, pathShape([['m', .02, .12], ['q', -.1, .26, -.26, .3], ['l', -.38, .58], ['l', -.4, .5], ['l', -.3, .12]]), .04, seat, SX + sd*.18, .015);
+  for(const sd of [-1, 1]) tube(body, [SX + sd*.12, .5, .44], [sd*.22, .1, .58], .01, chrome, 6);
+  /* ---- motor 125cc dois tempos (lado direito) ---- */
+  const EX = .31, EZ = .3;
+  extrudeSide(body, pathShape([['m', .12, .12], ['q', .14, .3, 0, .3], ['q', -.14, .3, -.12, .12], ['q', 0, .08, .12, .12]]), .17, 0x5a5e64, EX, .02).position.z = EZ;
+  lathe(body, [[0, -.02], [.085, -.02], [.09, 0], [.085, .02], [0, .02]], alu, EX + .1, .2, EZ, 20);
+  lathe(body, [[0, -.015], [.05, -.015], [.05, .015], [0, .015]], 0x8a9096, EX + .125, .2, EZ, 14);
+  CYL(body, .045, .2, alu, EX, .38, EZ - .02, 'y', 16);
+  for(let k = 0; k < 8; k++) CYL(body, .074 - Math.abs(k - 3.5)*.002, .01, fin, EX, .3 + k*.02, EZ - .02, 'y', 18);
+  CYL(body, .062, .04, 0x8d9298, EX, .47, EZ - .02, 'y', 18);
+  for(let k = 0; k < 4; k++) B(body, .13, .012, .012, fin, EX, .5, EZ - .065 + k*.03);
+  CYL(body, .011, .035, 0xf2f2ee, EX, .52, EZ - .02, 'y', 10); CYL(body, .007, .02, 0x9aa1a8, EX, .545, EZ - .02, 'y', 8); CYL(body, .004, .11, black, EX - .03, .545, EZ + .03, 'z', 5);
+  tube(body, [EX - .05, .34, EZ + .02], [EX - .14, .34, EZ + .02], .03, 0x8a9096, 12); lathe(body, [[0, -.03], [.035, -.03], [.035, .03], [0, .03]], 0xc6a65a, EX - .17, .34, EZ + .02, 12);
+  /* caixa de ar com cornetas */
+  const ab = extrudeSide(body, pathShape([['m', .1, .3], ['q', .12, .44, 0, .44], ['l', -.1, .44], ['q', -.14, .42, -.13, .32], ['q', -.12, .28, .1, .3]]), .16, black, .08, .02); ab.position.z = .6;
+  for(const z of [.54, .6, .66]) B(body, .165, .006, .01, 0x2f3236, .08, .37, z);
+  tube(body, [EX - .2, .34, EZ + .02], [.16, .35, .5], .02, black, 8);
+  /* escapamento: coletor, câmara de expansão e silencioso de carbono */
+  tube(body, [EX + .04, .35, EZ - .07], [EX + .13, .25, EZ - .16], .022, chrome, 10);
+  tube(body, [EX + .13, .25, EZ - .16], [EX + .17, .21, .03], .024, chrome, 10);
+  lathe(body, [[.022, -.02], [.045, .06], [.052, .2], [.05, .34], [.03, .44], [.026, .5]], chrome, EX + .17, .21, .05, 16).rotation.y = Math.PI/2;
+  tube(body, [EX + .17, .21, .54], [EX + .17, .3, .6], .026, chrome, 8);
+  lathe(body, [[.0, 0], [.045, .01], [.05, .04], [.05, .22], [.04, .25], [.02, .26], [.0, .26]], 0x24262a, EX + .17, .3, .58, 16).rotation.y = Math.PI/2;
+  for(const z of [.15, .45]) tube(body, [EX + .17, .17, z], [EX + .06, .1, z], .005, 0x6a7078, 5);
+  /* corrente, pinhão, coroa e protetor */
+  lathe(body, [[0, -.008], [.078, -.008], [.078, .008], [0, .008]], 0x3a3d42, .38, .14, .53, 24); CYL(body, .02, .012, 0x3a3d42, .38, .2, EZ, 'x', 10);
+  B(body, .012, .014, .27, 0x2a2c30, .38, .217, .42); B(body, .012, .014, .27, 0x2a2c30, .38, .07, .42);
+  extrudeSide(body, pathShape([['m', .1, .24], ['q', -.26, .26, -.32, .14], ['q', -.28, .04, -.2, .05], ['l', .1, .17]]), .02, L.p, .405, .006).position.z = .15;
+  /* eixo traseiro, mancais, disco ventilado e pinça */
+  CYL(body, .024, 1.36, chrome, 0, .14, .53, 'x', 12);
+  for(const sd of [-1, 1]){ B(body, .06, .09, .07, alu, sd*.3, .12, .53); CYL(body, .035, .03, 0x8a9096, sd*.56, .14, .53, 'x', 10); }
+  lathe(body, [[.03, -.006], [.095, -.006], [.095, .006], [.03, .006]], 0x9aa1a8, -.22, .14, .53, 24);
+  for(let k = 0; k < 8; k++){ const a = k/8*TAU; CYL(body, .006, .014, 0x3a3d42, -.22, .14 + Math.cos(a)*.07, .53 + Math.sin(a)*.07, 'x', 6); }
+  B(body, .05, .07, .09, 0xc8352a, -.22, .225, .5); B(body, .052, .015, .06, 0x2a2c30, -.22, .265, .5);
+  /* ---- para-choque traseiro de plástico ---- */
+  const rb = pathShape([['m', -.68, .92], ['q', -.7, .84, -.62, .82], ['l', -.22, .82], ['l', -.18, .86], ['l', .18, .86], ['l', .22, .82], ['l', .62, .82], ['q', .7, .84, .68, .92], ['q', .66, 1.0, .58, 1.0], ['l', -.58, 1.0], ['q', -.66, 1.0, -.68, .92]]);
+  const rbm = extrudeTop(body, rb, .13, plastic, .09, .03); rbm.scale.z = -1;
+  extrudeTop(body, pathShape([['m', -.18, .86], ['l', .18, .86], ['l', .2, .99], ['l', -.2, .99]]), .135, L.p, .088, .01).scale.z = -1;
+  extrudeTop(body, pathShape([['m', -.6, .985], ['l', .6, .985], ['l', .6, .995], ['l', -.6, .995]]), .03, L.s, .16, .003).scale.z = -1;
+  for(const sd of [-1, 1]) tube(body, [sd*.25, .09, .6], [sd*.4, .16, .84], .013, chrome, 8);
+  /* ---- piloto (macacão Nomex, luvas, sapatilhas) ---- */
+  const suit = L.suit, ss = L.ss, glove = 0x121316, boot = 0x111214, V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const pel = sphere(body, .17, suit, SX, .21, .14, 1, .55, .8);
   for(const sd of [-1, 1]){
-    const hp = [SX + sd*.09, .22, .1], kn = [SX + sd*.12, .37, -.24], an = [SX + sd*.1, .16, -.6];
-    limb(body, hp, kn, .13, .13, suit); limb(body, kn, an, .11, .11, suit);
-    limb(body, [hp[0] + sd*.066, hp[1], hp[2]], [kn[0] + sd*.058, kn[1], kn[2]], .012, .05, ss);
-    limb(body, [kn[0] + sd*.05, kn[1], kn[2]], [an[0] + sd*.05, an[1], an[2]], .012, .045, ss);
-    B(body, .1, .1, .2, boot, an[0], .13, -.66, -.5); B(body, .1, .025, .21, 0x2a2b2e, an[0], .085, -.67, -.5);
+    const hp = V(SX + sd*.09, .22, .08), kn = V(SX + sd*.12, .37, -.25), an = V(SX + sd*.1, .17, -.6);
+    rlimb(body, hp, kn, .068, .058, suit); rlimb(body, kn, an, .056, .042, suit);
+    piping(body, hp, kn, V(sd*.064, 0, 0), .014, ss); piping(body, kn, an, V(sd*.052, 0, 0), .012, ss);
+    sphere(body, .05, boot, an.x, .16, -.63, 1, 1, 1.5); sphere(body, .045, boot, an.x, .13, -.68, 1, .7, 1.6);
+    B(body, .09, .015, .2, 0x2a2b2e, an.x, .1, -.67, -.42);
   }
-  const upper = new THREE.Group(); upper.position.set(SX, .26, .24); root.add(upper);
-  const UPR = .34; upper.rotation.x = UPR;
-  B(upper, .38, .46, .22, suit, 0, .24, 0);
-  for(const sd of [-1, 1]){ B(upper, .014, .42, .07, ss, sd*.19, .24, 0); B(upper, .06, .03, .225, ss, sd*.12, .44, 0); }
-  B(upper, .2, .06, .01, ss, -.06, .38, -.112); B(upper, .006, .34, .006, 0x3a3b3e, .02, .24, -.112);
-  CYL(upper, .075, .06, suit, 0, .49, 0, 'y', 12);
-  /* braços até o volante (calculados no espaço do tronco) */
+  const upper = new THREE.Group(); upper.position.set(SX, .25, .17); root.add(upper);
+  const UPR = .28; upper.rotation.x = UPR;
+  const torso = lathe(upper, [[0, 0], [.15, 0], [.17, .08], [.18, .24], [.2, .38], [.17, .44], [.08, .47], [0, .47]], suit, 0, 0, 0, 16);
+  torso.geometry.rotateZ(-Math.PI/2); torso.scale.set(1, 1, .64);
+  for(const sd of [-1, 1]){ B(upper, .014, .38, .06, ss, sd*.185, .24, 0); B(upper, .05, .025, .14, ss, sd*.11, .45, 0); }
+  B(upper, .14, .05, .012, ss, -.05, .36, -.122); B(upper, .07, .03, .012, 0xf2f2ee, .06, .37, -.122); B(upper, .005, .3, .006, 0x3a3b3e, .02, .22, -.124);
+  rlimb(upper, V(0, .44, 0), V(0, .5, 0), .07, .055, suit, false); CYL(upper, .06, .03, ss, 0, .48, 0, 'y', 14);
+  /* braços até o volante */
   const toLocal = v => v.clone().sub(upper.position).applyAxisAngle(new THREE.Vector3(1, 0, 0), -UPR);
   for(const sd of [-1, 1]){
-    const sh = new THREE.Vector3(sd*.2, .42, 0), hand = toLocal(new THREE.Vector3(SX + sd*.125, .49, -.31));
-    const el = sh.clone().lerp(hand, .5).add(new THREE.Vector3(sd*.09, -.1, .02));
-    limb(upper, sh, el, .1, .1, suit); limb(upper, el, hand, .09, .09, suit);
-    const off = new THREE.Vector3(sd*.05, 0, 0);
-    limb(upper, sh.clone().add(off), el.clone().add(off), .01, .04, ss); limb(upper, el.clone().add(off.multiplyScalar(.9)), hand.clone().add(off), .01, .035, ss);
-    const gl = B(upper, .08, .09, .11, glove, hand.x, hand.y, hand.z); gl.quaternion.setFromUnitVectors(_zA, hand.clone().sub(el).normalize());
-    B(upper, .1, .1, .05, glove, hand.x + (el.x - hand.x)*.18, hand.y + (el.y - hand.y)*.18, hand.z + (el.z - hand.z)*.18);
+    const sh = V(sd*.2, .4, 0), hand = toLocal(V(SX + sd*.125, .49, -.31));
+    const el = sh.clone().lerp(hand, .5).add(V(sd*.08, -.09, .02));
+    sphere(upper, .066, suit, sh.x, sh.y, sh.z);
+    rlimb(upper, sh, el, .055, .048, suit); rlimb(upper, el, hand, .047, .038, suit);
+    piping(upper, sh, el, V(sd*.05, .012, 0), .012, ss); piping(upper, el, hand, V(sd*.044, .01, 0), .011, ss);
+    const dir = hand.clone().sub(el).normalize();
+    const cuff = rlimb(upper, hand.clone().addScaledVector(dir, -.05), hand.clone().addScaledVector(dir, -.01), .05, .05, glove, false);
+    const gl = sphere(upper, .048, glove, hand.x, hand.y, hand.z, 1, .9, 1.3); gl.quaternion.setFromUnitVectors(_zA, dir);
   }
-  /* capacete com faixas e viseira */
-  const head = new THREE.Group(); head.position.set(0, .52, 0); upper.add(head);
-  CYL(head, .05, .08, suit, 0, .02, 0, 'y', 10);
+  /* capacete: casco, faixas, viseira, queixeira, aerofólio */
+  const head = new THREE.Group(); head.position.set(0, .5, 0); upper.add(head);
+  rlimb(head, V(0, 0, 0), V(0, .08, 0), .05, .05, suit, false);
   sphere(head, .145, L.helm, 0, .17, .0, .95, 1, 1.08);
-  for(const dx of [-.4, .4]){ const st = new THREE.Mesh(new THREE.SphereGeometry(.1475, 18, 14, 3*Math.PI/2 + dx - .13, .26, .25, Math.PI - .55), cm(L.hs)); st.geometry.rotateX(Math.PI/2); st.position.set(0, .17, 0); st.scale.set(.95, 1, 1.08); head.add(st); }
-  sphere(head, .148, 0x101318, 0, .17, 0, .95, 1, 1.08, [3*Math.PI/2 - .95, 1.9, 1.2, .5]);
-  sphere(head, .149, L.hs, 0, .17, 0, .95, 1, 1.08, [3*Math.PI/2 - .95, 1.9, 1.17, .04]);
-  CYL(head, .12, .03, 0x15161a, 0, .045, .0, 'y', 16);
-  B(head, .05, .02, .02, 0x2a2b2e, 0, .21, -.155);
-  /* rodas e manga de eixo dianteira */
+  for(const dx of [-.42, -.2, .2, .42]){ const w = Math.abs(dx) > .3 ? .12 : .06; const st = new THREE.Mesh(new THREE.SphereGeometry(.1475, 22, 16, 3*Math.PI/2 + dx - w/2, w, .22, Math.PI - .6), cm(Math.abs(dx) > .3 ? L.hs : 0x15161a)); st.geometry.rotateX(Math.PI/2); st.position.set(0, .17, 0); st.scale.set(.95, 1, 1.08); head.add(st); }
+  sphere(head, .1485, 0x0c0f14, 0, .17, 0, .95, 1, 1.08, [3*Math.PI/2 - .95, 1.9, 1.2, .48]);
+  sphere(head, .1495, L.hs, 0, .17, 0, .95, 1, 1.08, [3*Math.PI/2 - 1.0, 2.0, 1.16, .045]);
+  sphere(head, .1495, L.helm, 0, .17, 0, .95, 1, 1.08, [3*Math.PI/2 - .7, 1.4, 1.75, .35]);
+  B(head, .12, .012, .05, L.hs, 0, .3, .11, .35); B(head, .012, .025, .03, L.helm, -.05, .29, .1); B(head, .012, .025, .03, L.helm, .05, .29, .1);
+  CYL(head, .12, .03, 0x15161a, 0, .045, .0, 'y', 18);
+  /* ---- rodas e mangas de eixo dianteiras ---- */
   const fl = new THREE.Group(), fr = new THREE.Group(), rl = new THREE.Group(), rr = new THREE.Group();
   fl.position.set(-.56, .135, -.53); fr.position.set(.56, .135, -.53); rl.position.set(-.63, .14, .53); rr.position.set(.63, .14, .53);
   const spin = [];
   for(const [g, sd, front] of [[fl, -1, true], [fr, 1, true], [rl, -1, false], [rr, 1, false]]){
     const s = new THREE.Group(); g.add(s); s.add(wheel(front ? .135 : .14, front ? .13 : .21, L.rim, sd)); spin.push(s);
-    if(front){ CYL(g, .012, .1, 0x9aa1a8, -sd*.08, 0, 0, 'x', 8); B(g, .03, .14, .03, 0x9aa1a8, -sd*.12, .02, 0); }
+    if(front){ CYL(g, .013, .1, 0x9aa1a8, -sd*.08, 0, 0, 'x', 8); B(g, .03, .15, .035, alu, -sd*.12, .02, 0); B(g, .07, .015, .02, alu, -sd*.1, .05, .03); }
     root.add(g);
   }
-  /* volante */
+  /* ---- volante com display ---- */
   const sw = new THREE.Group(); sw.position.set(SX, .45, -.325); sw.rotation.x = -.5; root.add(sw);
   const swS = new THREE.Group(); sw.add(swS);
-  const tor = new THREE.Mesh(new THREE.TorusGeometry(.13, .017, 8, 24), cm(0x17181b)); swS.add(tor);
-  for(const a of [0, Math.PI*.85, Math.PI*1.15]){ const sp = B(swS, .012, .12, .012, 0x6a7078, Math.sin(a)*.06, -Math.cos(a)*.06, 0); sp.rotation.z = a; }
-  B(swS, .09, .05, .03, 0x17181b, 0, 0, .005); B(swS, .06, .025, .005, 0x2ed36a, 0, .005, .022);
-  /* placa com número (textura) */
-  const plate = new THREE.Mesh(new THREE.PlaneGeometry(.2, .2), new THREE.MeshLambertMaterial({map:numTex(num, L.css)}));
-  plate.position.set(SX + .06, .33, -.8); plate.rotation.set(-1, Math.PI, 0); plate.rotation.set(-.9, 0, 0); plate.position.set(0, .34, -.765); root.add(plate);
-  const plate2 = new THREE.Mesh(new THREE.PlaneGeometry(.17, .17), plate.material); plate2.position.set(SX, .48, .462); plate2.rotation.x = -.38; root.add(plate2);
+  swS.add(new THREE.Mesh(new THREE.TorusGeometry(.13, .017, 10, 28), cm(0x17181b)));
+  for(const a of [-1.15, 1.15]){ const t = new THREE.Mesh(new THREE.TorusGeometry(.13, .02, 8, 8, .7), cm(0x2a2c30)); t.rotation.z = a - .35 + (a > 0 ? 0 : 0); swS.add(t); }
+  for(const a of [0, Math.PI*.82, Math.PI*1.18]){ const sp = B(swS, .014, .12, .01, 0x6a7078, Math.sin(a)*.06, -Math.cos(a)*.06, 0); sp.rotation.z = a; }
+  B(swS, .1, .055, .03, 0x17181b, 0, .0, .006); B(swS, .07, .03, .005, 0x2ed36a, 0, .006, .023); B(swS, .012, .012, .006, 0xc8352a, .04, -.015, .023);
+  /* placas de número (frente e laterais) */
+  const pmat = new THREE.MeshLambertMaterial({map:numTex(num, L.css)});
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(.17, .17), pmat); plate.position.set(0, .345, -.74); plate.rotation.x = -.95; root.add(plate);
+  for(const sd of [-1, 1]){ const p2 = new THREE.Mesh(new THREE.PlaneGeometry(.13, .13), pmat); p2.position.set(sd*.655, .175, .04); p2.rotation.y = sd*Math.PI/2; root.add(p2); }
   /* funde as peças */
   root.updateMatrixWorld(true);
   bakeMeshes(body, body.children.filter(o => o.isMesh), root);
@@ -1225,7 +1277,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.0';
+const VERSION = '1.1';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') $('btnPlay').focus({preventScroll:true}); }
 $('newsVer').textContent = 'Versão ' + VERSION;
