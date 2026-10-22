@@ -97,7 +97,41 @@ body.touch .lights{top:auto;bottom:130px}
 
 /* janelas */
 .overlay{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(9,13,21,.6)}
-.overlay.menu{background:linear-gradient(90deg,rgba(9,13,21,.9) 0%,rgba(9,13,21,.55) 50%,rgba(9,13,21,0) 80%);justify-content:flex-start}
+.overlay.menu{background:none;padding:0;justify-content:flex-start}
+.scr{width:100%;height:100%;display:flex;align-items:center;padding:16px;background:linear-gradient(90deg,rgba(9,13,21,.88) 0%,rgba(9,13,21,.5) 50%,rgba(9,13,21,0) 80%)}
+.scr.title{flex-direction:column;justify-content:center;gap:28px;background:radial-gradient(ellipse at 50% 55%,rgba(9,13,21,.15),rgba(9,13,21,.8));cursor:pointer}
+.logo{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.logo small{letter-spacing:.3em;font-size:.7rem;color:#c7cfdc;font-weight:700;text-transform:uppercase}
+.logo b{font-family:var(--display);font-weight:400;font-size:clamp(3rem,11vw,7rem);line-height:.86;text-shadow:0 6px 0 rgba(0,0,0,.45),0 0 40px rgba(242,106,27,.35);transform:skewX(-8deg)}
+.logo b span{display:block;color:var(--stripe)}
+.logo em{font-style:normal;font-size:.78rem;letter-spacing:.22em;text-transform:uppercase;color:#c7cfdc}
+.press{border:0;background:rgba(13,20,32,.75);color:var(--ink);font:700 .9rem var(--body);letter-spacing:.24em;text-transform:uppercase;padding:12px 26px;border-radius:999px;cursor:pointer;animation:blink 1.4s ease-in-out infinite;box-shadow:inset 0 0 0 2px var(--stripe)}
+@keyframes blink{50%{opacity:.35}}
+.ver2{position:absolute;bottom:12px;right:16px;font-size:.7rem;color:var(--muted)}
+.hubScr{flex-direction:column;align-items:flex-start;justify-content:center;gap:12px;padding:16px 24px}
+.hubHead h1{font-family:var(--display);font-weight:400;margin:0 0 6px;font-size:2rem;line-height:1}.hubHead h1 span{color:var(--stripe)}
+.hub{display:flex;flex-direction:column;gap:8px;width:min(400px,100%)}
+.tile{display:grid;grid-template-columns:44px 1fr;column-gap:12px;align-items:center;text-align:left;border:0;border-radius:14px;padding:10px 14px;background:rgba(27,34,48,.92);color:var(--ink);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(233,237,243,.08);transition:transform .12s,background .12s}
+.tile i{grid-row:1/3;font-style:normal;font-size:1.7rem;text-align:center}
+.tile b{font-family:var(--display);font-weight:400;font-size:1.05rem}
+.tile small{color:var(--muted);font-size:.74rem}
+.tile:hover,.tile:focus-visible{background:var(--stripe);color:var(--night);outline:none;transform:translateX(6px)}
+.tile:hover small,.tile:focus-visible small{color:#4a1c00}
+.tile.big{padding:14px}.tile.big b{font-size:1.3rem}
+.tileRow{display:flex;gap:8px}.tile.sm{flex:1;display:block;text-align:center;padding:9px}.tile.sm b{font-size:.8rem}
+.backBtn{border:0;background:none;color:var(--muted);font:700 .74rem var(--body);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:0 0 8px;display:block}
+.backBtn:hover,.backBtn:focus-visible{color:var(--stripe);outline:none}
+.note{font-size:.8rem!important}
+.trophies{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.tro{background:var(--panel-2);border-radius:12px;padding:10px 6px;text-align:center;display:flex;flex-direction:column;gap:3px;align-items:center}
+.tro i{font-style:normal;font-size:2.3rem;line-height:1.1}
+.tro b{font-size:.74rem;line-height:1.2}.tro small{font-size:.66rem;color:var(--muted)}
+.tro.lock{opacity:.4}.tro.gold{box-shadow:inset 0 0 0 2px var(--gold);background:linear-gradient(180deg,rgba(242,182,50,.18),var(--panel-2))}
+.recs{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:.8rem}
+.recs div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(233,237,243,.07);padding:3px 0}
+.recs div.lock{opacity:.4}.recs b{font-variant-numeric:tabular-nums;color:#c79bff}
+.menu .card.wide{max-width:640px}
+@media (max-width:620px){.trophies{grid-template-columns:repeat(3,1fr)}.recs{grid-template-columns:1fr}}
 .card{background:var(--panel);border-radius:16px;padding:20px 22px;max-width:620px;width:100%;max-height:100%;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.55)}
 .menu .card{max-width:430px;background:rgba(27,34,48,.92)}
 .card h1{font-family:var(--display);font-weight:400;margin:0;font-size:clamp(1.8rem,5vw,2.6rem);line-height:1}
@@ -140,9 +174,9 @@ body.touch .keys{display:none}
 .rotate{position:absolute;inset:0;z-index:20;background:var(--night);display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px}
 .rotate b{font-family:var(--display);font-weight:400;font-size:1.3rem}
 @media (pointer:coarse) and (orientation:portrait){.rotate{display:flex}}
-@media (max-width:720px){.tower{display:none}.menu .card{max-width:100%}.overlay.menu{background:rgba(9,13,21,.7)}}
+@media (max-width:720px){.tower{display:none}.menu .card{max-width:100%}.scr{background:rgba(9,13,21,.7)}}
 @media (max-height:520px){.top{display:none}body{padding-top:6px;padding-bottom:6px}.card{padding:12px 16px}.card p,.menu .chips{display:none}
-  .card h1{font-size:1.5rem}.card h3{margin:8px 0 4px}.seg button{padding:6px 8px;font-size:.78rem}.seg button small{display:none}#optLiv button span{display:none}}
+  .card h1{font-size:1.5rem}.hub{gap:5px}.tile{padding:6px 12px}.tile.big{padding:8px 12px}.tile small{display:none}.hubHead h1{font-size:1.4rem}.card h3{margin:8px 0 4px}.seg button{padding:6px 8px;font-size:.78rem}.seg button small{display:none}#optLiv button span{display:none}}
 .menu .row{position:sticky;bottom:-20px;margin:12px -22px -20px;padding:12px 22px 16px;background:linear-gradient(180deg,rgba(27,34,48,0),rgba(27,34,48,.98) 30%)}
 </style>
 </head>
@@ -177,42 +211,72 @@ body.touch .keys{display:none}
 
   <!-- menu -->
   <div class="overlay menu" id="menu">
-    <div class="card">
-      <div class="kick" id="menuKick">Circuito Apex Loop · 125cc</div>
-      <h1>PULSE <span>KART</span></h1>
-      <p>Kart de competição de motor dois tempos. Largue com as luzes, use o vácuo nas retas e faça drift nas curvas para ganhar turbo.</p>
-      <h3>Modo</h3>
-      <div class="seg" id="optMode">
-        <button data-v="career" aria-pressed="false">Carreira<small>5 campeonatos</small></button>
-        <button data-v="race" aria-pressed="true">Corrida<small>8 karts</small></button>
-        <button data-v="tt" aria-pressed="false">Contra o relógio<small>com fantasma</small></button>
+    <!-- tela de título -->
+    <section class="scr title" id="scrTitle">
+      <div class="logo"><small>Jovone Games apresenta</small><b>PULSE<span>KART</span></b><em>125cc · 25 pistas · 5 campeonatos</em></div>
+      <button class="press" id="pressStart" type="button">Aperte para começar</button>
+      <div class="ver2" id="titleVer"></div>
+    </section>
+    <!-- menu principal -->
+    <section class="scr hubScr" id="scrHub" hidden>
+      <div class="hubHead"><h1>PULSE <span>KART</span></h1><div class="chips" id="hubStats"></div></div>
+      <div class="hub">
+        <button class="tile big" data-go="Career" type="button"><i>🏆</i><b>Carreira</b><small id="hubCareer">5 campeonatos</small></button>
+        <button class="tile" data-go="Quick" type="button"><i>🏁</i><b>Corrida rápida</b><small>8 karts, com ou sem itens</small></button>
+        <button class="tile" data-go="TT" type="button"><i>⏱</i><b>Contra o relógio</b><small>voltas livres com o kart fantasma</small></button>
+        <button class="tile" data-go="Garage" type="button"><i>🔧</i><b>Garagem</b><small>pintura e melhorias</small></button>
+        <button class="tile" data-go="Trophies" type="button"><i>🥇</i><b>Troféus</b><small>galeria, estatísticas e recordes</small></button>
+        <div class="tileRow"><button class="tile sm" id="btnHow" type="button"><b>Como jogar</b></button><button class="tile sm" id="newsOpen" type="button"><b>✦ Novidades</b></button></div>
       </div>
-      <div id="careerBox" hidden>
-        <h3>Campeonato</h3>
-        <div class="seg" id="optCup"></div>
-        <div class="cinfo" id="cInfo"></div>
-        <h3>Garagem · <span id="cCoins"></span></h3>
-        <div class="seg" id="optUp"></div>
-      </div>
-      <div id="trackRow"><h3>Pista</h3><select class="sel" id="optTrackSel" aria-label="Pista"></select></div>
-      <div id="raceOpts">
-        <h3>Voltas</h3>
-        <div class="seg" id="optLaps"><button data-v="3" aria-pressed="true">3</button><button data-v="5" aria-pressed="false">5</button><button data-v="8" aria-pressed="false">8</button></div>
-        <h3>Adversários</h3>
-        <div class="seg" id="optDiff"><button data-v="0" aria-pressed="false">Amador</button><button data-v="1" aria-pressed="true">Piloto</button><button data-v="2" aria-pressed="false">Profissional</button></div>
-        <h3>Itens</h3>
-        <div class="seg" id="optItems"><button data-v="0" aria-pressed="true">Corrida limpa</button><button data-v="1" aria-pressed="false">Com itens<small>⚡ 🛢️ 🚀 🛡️</small></button></div>
-      </div>
-      <h3>Pintura</h3>
-      <div class="seg" id="optLiv"></div>
-      <div class="chips" id="menuStats"></div>
-      <div class="row">
-        <button class="btn pri" id="btnPlay">Correr</button>
-        <button class="btn" id="btnHow">Como jogar</button>
-        <button class="link" id="newsOpen" type="button">✦ Novidades</button>
-      </div>
-      <div class="keys"><kbd>↑</kbd>/<kbd>W</kbd> acelera · <kbd>↓</kbd>/<kbd>S</kbd> freia e ré · <kbd>←</kbd><kbd>→</kbd> vira · <kbd>Espaço</kbd> drift · <kbd>E</kbd> item · <kbd>V</kbd> câmera · <kbd>P</kbd> pausa · <kbd>M</kbd> som · 🎮 controle compatível</div>
-    </div>
+    </section>
+    <!-- carreira -->
+    <section class="scr" id="scrCareer" hidden><div class="card">
+      <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
+      <div class="kick">Modo carreira</div><h2>CAR<span>REIRA</span></h2>
+      <h3>Campeonato</h3><div class="seg" id="optCup"></div>
+      <div class="cinfo" id="cInfo"></div>
+      <div id="cStand"></div>
+      <div class="row"><button class="btn pri" id="goCareer" type="button">Correr etapa 1</button><button class="btn" data-go="Garage" type="button">🔧 Garagem</button></div>
+    </div></section>
+    <!-- corrida rápida -->
+    <section class="scr" id="scrQuick" hidden><div class="card">
+      <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
+      <div class="kick">Corrida rápida</div><h2>CORRIDA <span>RÁPIDA</span></h2>
+      <h3>Pista</h3><select class="sel" id="qTrack" aria-label="Pista"></select>
+      <h3>Voltas</h3>
+      <div class="seg" id="optLaps"><button data-v="3" aria-pressed="true">3</button><button data-v="5" aria-pressed="false">5</button><button data-v="8" aria-pressed="false">8</button></div>
+      <h3>Adversários</h3>
+      <div class="seg" id="optDiff"><button data-v="0" aria-pressed="false">Amador</button><button data-v="1" aria-pressed="true">Piloto</button><button data-v="2" aria-pressed="false">Profissional</button></div>
+      <h3>Itens</h3>
+      <div class="seg" id="optItems"><button data-v="0" aria-pressed="true">Corrida limpa</button><button data-v="1" aria-pressed="false">Com itens<small>⚡ 🛢️ 🚀 🛡️</small></button></div>
+      <div class="row"><button class="btn pri" id="goQuick" type="button">Correr</button></div>
+    </div></section>
+    <!-- contra o relógio -->
+    <section class="scr" id="scrTT" hidden><div class="card">
+      <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
+      <div class="kick">Sozinho na pista</div><h2>CONTRA O <span>RELÓGIO</span></h2>
+      <h3>Pista</h3><select class="sel" id="tTrack" aria-label="Pista"></select>
+      <div class="cinfo" id="ttInfo"></div>
+      <div class="row"><button class="btn pri" id="goTT" type="button">Correr</button></div>
+    </div></section>
+    <!-- garagem -->
+    <section class="scr" id="scrGarage" hidden><div class="card">
+      <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
+      <div class="kick">Seu kart</div><h2>GARA<span>GEM</span></h2>
+      <h3>Pintura</h3><div class="seg" id="optLiv"></div>
+      <h3>Melhorias da carreira · <span id="cCoins"></span></h3>
+      <div class="seg" id="optUp"></div>
+      <p class="note">As melhorias valem nas corridas da carreira. As moedas vêm das etapas: quanto melhor a posição, mais moedas.</p>
+      <div class="row"><button class="btn pri" data-go="Career" type="button">Ir para a carreira</button></div>
+    </div></section>
+    <!-- troféus -->
+    <section class="scr" id="scrTrophies" hidden><div class="card wide">
+      <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
+      <div class="kick">Galeria</div><h2>TRO<span>FÉUS</span></h2>
+      <div class="trophies" id="trophyCups"></div>
+      <h3>Estatísticas</h3><div class="chips" id="trophyStats"></div>
+      <h3>Recordes por pista</h3><div class="recs" id="trophyRecs"></div>
+    </div></section>
   </div>
 
   <div class="overlay" id="how" hidden role="dialog" aria-modal="true" aria-labelledby="howTitle">
@@ -259,9 +323,16 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.3</div>
-      <h2 id="newsTitle">MODO <span>CARREIRA</span></h2>
+      <div class="ver" id="newsVer">Versão 1.4</div>
+      <h2 id="newsTitle">MENU <span>NOVO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Tela de título</b> com o logo: aperte qualquer tecla, toque ou A no controle para começar.</li>
+        <li><b>Menu principal</b> com Carreira, Corrida rápida, Contra o relógio, Garagem e Troféus, cada um na sua tela, com as opções do modo e botão de voltar.</li>
+        <li><b>Galeria de troféus:</b> troféu de cada campeonato (ouro, prata, bronze ou bloqueado), estatísticas e o recorde de volta de todas as 25 pistas.</li>
+        <li>Menus navegáveis por setas e Esc no teclado, ou direcional, A e B no controle.</li>
+      </ul>
+      <h3>Versão 1.3 · Modo carreira</h3>
       <ul>
         <li><b>Carreira:</b> 5 campeonatos de 5 etapas: Copa Regional, Copa Litoral, Copa Metrópole, Copa Natureza e Mundial Pulse. Pontos estilo F1 a cada corrida, classificação do campeonato e troféu no final. Termine no pódio para liberar o próximo campeonato. O progresso fica salvo.</li>
         <li><b>Garagem:</b> moedas por corrida para melhorar motor (velocidade), pneus (curvas) e embreagem (arrancada), 3 níveis cada.</li>
@@ -1454,7 +1525,7 @@ function banner(a, b, ms = 2000){
 function toMenu(){
   clearItems(); for(const b of BOXES) scene.remove(b.m); BOXES.length = 0;
   STATE = 'menu'; ['end', 'pause', 'how'].forEach(id => $(id).hidden = true); $('hud').hidden = true; $('menu').hidden = false;
-  G.mode = OPT.mode; buildField(); renderMenu(); $('btnPlay').focus({preventScroll:true});
+  G.mode = OPT.mode; buildField(); show(G.mode === 'career' ? 'Career' : G.mode === 'tt' ? 'TT' : 'Quick');
 }
 
 /* =====================================================================
@@ -1466,6 +1537,11 @@ const touchIn = {l:false, r:false, gas:false, brake:false, drift:false, item:fal
 addEventListener('keydown', e => {
   if(!$('news').hidden){ if(e.code === 'Escape' || e.code === 'Enter'){ closeNews(); e.preventDefault(); } return; }
   if(!$('how').hidden){ if(e.code === 'Escape'){ $('how').hidden = true; e.preventDefault(); } return; }
+  if(STATE === 'menu'){
+    if(SCR === 'Title' && !['ShiftLeft', 'ShiftRight', 'ControlLeft', 'AltLeft', 'MetaLeft', 'Tab'].includes(e.code)){ pressStart(); e.preventDefault(); return; }
+    if(e.code === 'ArrowDown' || e.code === 'ArrowUp'){ if(!(e.target instanceof HTMLSelectElement)){ menuMove(e.code === 'ArrowDown' ? 1 : -1); e.preventDefault(); } return; }
+    if(e.code === 'Escape' || e.code === 'Backspace'){ menuBack(); e.preventDefault(); return; }
+  }
   keys[e.code] = true; audioInit();
   if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code) && STATE !== 'menu' && STATE !== 'end') e.preventDefault();
   if(e.repeat) return;
@@ -1499,10 +1575,11 @@ function readInput(dt){
     if(b(14)) steer -= 1; if(b(15)) steer += 1;
     thr = Math.max(thr, v(7), b(0) ? 1 : 0); brk = Math.max(brk, v(6), b(1) ? 1 : 0);
     if(b(5) || b(2)) drift = true; if(b(4)) item = true;
-    const now = {start:b(9), y:b(3), a:b(0)};
-    if(now.start && !prev.start){ if(STATE === 'pause') pauseOff(); else if(STATE === 'race' || STATE === 'count' || STATE === 'done') pauseOn(); else if(STATE === 'menu') startRace(); else if(STATE === 'end') startRace(); }
+    const now = {start:b(9), y:b(3), a:b(0), bb:b(1), up:b(12) || (gp.axes[1] || 0) < -.6, down:b(13) || (gp.axes[1] || 0) > .6};
+    if(now.start && !prev.start){ if(STATE === 'pause') pauseOff(); else if(STATE === 'race' || STATE === 'count' || STATE === 'done') pauseOn(); else if(STATE === 'menu'){ if(SCR === 'Title') pressStart(); else document.activeElement && document.activeElement.click(); } else if(STATE === 'end') $('btnAgain').click(); }
     if(now.y && !prev.y) cycleCam();
-    if(now.a && !prev.a){ if(!$('news').hidden) closeNews(); else if(STATE === 'end') startRace(); }
+    if(now.a && !prev.a){ if(!$('news').hidden) closeNews(); else if(!$('how').hidden) $('how').hidden = true; else if(STATE === 'end') $('btnAgain').click(); else if(STATE === 'menu'){ if(SCR === 'Title') pressStart(); else document.activeElement && document.activeElement.click(); } }
+    if(STATE === 'menu' && $('news').hidden && $('how').hidden){ if(now.up && !prev.up) menuMove(-1); if(now.down && !prev.down) menuMove(1); if(now.bb && !prev.bb) menuBack(); }
     padPrev[gp.index] = now;
   }
   input.steer = clamp(steer, -1, 1); input.thr = clamp(thr, 0, 1); input.brk = clamp(brk, 0, 1); input.drift = drift; input.itemPress = item && !input.item; input.item = item;
@@ -1529,44 +1606,69 @@ $('btnRestart').addEventListener('click', startRace);
 $('btnQuit').addEventListener('click', toMenu);
 $('btnAgain').addEventListener('click', () => G.mode === 'career' ? careerGo() : startRace());
 $('btnMenu').addEventListener('click', toMenu);
-$('btnPlay').addEventListener('click', () => OPT.mode === 'career' ? careerGo() : startRace());
 $('btnHow').addEventListener('click', () => { $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
 $('howClose').addEventListener('click', () => { $('how').hidden = true; });
 document.addEventListener('visibilitychange', () => { if(document.hidden && (STATE === 'race' || STATE === 'count')) pauseOn(); });
 
-/* ---------- menu ---------- */
+/* ---------- menu: título, menu principal e uma tela por modo ---------- */
 function seg(id, key, conv = v => v){
-  const el = $(id);
-  el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT[key] = conv(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); if(key === 'mode' || key === 'liv'){ G.mode = OPT.mode; buildField(); } });
+  $(id).addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; OPT[key] = conv(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); if(key === 'liv'){ G.mode = OPT.mode; buildField(); } });
 }
 $('optLiv').innerHTML = LIVERIES.map((L, i) => `<button data-v="${i}" aria-pressed="false" style="min-width:0;flex:0 0 auto;padding:8px 12px"><i style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${L.css};vertical-align:-2px"></i><span> ${L.n}</span></button>`).join('');
-$('optTrackSel').addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
+for(const id of ['qTrack', 'tTrack']) $(id).addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
 $('optCup').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const c = Number(b.dataset.v); if(c !== CAR.cup){ CAR.cup = c; CAR.race = 0; CAR.pts = {}; saveCar(); } SFX.click(); renderMenu(); });
 $('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr) return; CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.click(); renderMenu(); });
-$('menuKick').textContent = 'Circuito ' + TRK.n + ' · 125cc';
-seg('optItems', 'items', Number); seg('optMode', 'mode'); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
+seg('optItems', 'items', Number); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
+const SCREENS = ['Title', 'Hub', 'Career', 'Quick', 'TT', 'Garage', 'Trophies'], SCR_MODE = {Career:'career', Quick:'race', TT:'tt'};
+let SCR = 'Title';
+function show(name){
+  SCR = name; for(const n of SCREENS) $('scr' + n).hidden = n !== name;
+  const m = SCR_MODE[name]; if(m && OPT.mode !== m){ OPT.mode = m; saveOpt(); G.mode = m; buildField(); }
+  try{ sessionStorage.setItem('pkScr', name === 'Title' ? 'Hub' : name); }catch(e){}
+  renderMenu();
+  const f = $('scr' + name).querySelector(name === 'Hub' ? '.tile' : name === 'Title' ? '.press' : '.btn.pri, .seg button, .tro'); f && f.focus({preventScroll:true});
+}
+$('menu').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if(g){ SFX.click(); show(g.dataset.go); } });
+function pressStart(){ audioInit(); SFX.click(); show('Hub'); }
+$('scrTitle').addEventListener('click', pressStart);
+$('goCareer').addEventListener('click', careerGo); $('goQuick').addEventListener('click', startRace); $('goTT').addEventListener('click', startRace);
+/* foco pelo teclado e pelo controle */
+function menuMove(dir){
+  const list = [...$('scr' + SCR).querySelectorAll('button:not([disabled]), select')].filter(el => el.offsetParent);
+  if(!list.length) return; let i = list.indexOf(document.activeElement); i = i < 0 ? 0 : (i + dir + list.length) % list.length; list[i].focus({preventScroll:false});
+}
+function menuBack(){ if(SCR !== 'Hub' && SCR !== 'Title'){ SFX.click(); show('Hub'); } }
+const trackOptions = () => [{n:'Pistas livres', ti:[0, 1, 2]}].concat(CUPS).map(c => `<optgroup label="${c.n}">` + c.ti.filter(i => c.n !== 'Pistas livres' ? i > 2 : true).map(i => `<option value="${i}" ${trackUnlocked(i) ? '' : 'disabled'} ${i === (OPT.track || 0) ? 'selected' : ''}>${trackUnlocked(i) ? '' : '🔒 '}${TRACKS[i].n} · ${TRACKS[i].d}</option>`).join('') + '</optgroup>').join('');
+const bestOf = t => store.get('Best' + (t.id === 'apex' ? '' : '_' + t.id), null);
 function renderMenu(){
-  $('optTrackSel').innerHTML = [{n:'Pistas livres', ti:[0, 1, 2]}].concat(CUPS).map(c => `<optgroup label="${c.n}">` + c.ti.filter(i => c.n !== 'Pistas livres' ? i > 2 : true).map(i => `<option value="${i}" ${trackUnlocked(i) ? '' : 'disabled'} ${i === (OPT.track || 0) ? 'selected' : ''}>${trackUnlocked(i) ? '' : '🔒 '}${TRACKS[i].n} · ${TRACKS[i].d}</option>`).join('') + '</optgroup>').join('');
-  const car = OPT.mode === 'career'; $('careerBox').hidden = !car; $('trackRow').hidden = car;
-  if(car){
-    $('optCup').innerHTML = CUPS.map((c, i) => `<button data-v="${i}" aria-pressed="${i === CAR.cup}" ${i < CAR.unlocked ? '' : 'disabled style="opacity:.45"'}>${i < CAR.unlocked ? '' : '🔒 '}${c.n}<small>${CAR.trophies[i] ? ['', '🏆 campeão', '🥈 2º', '🥉 3º'][CAR.trophies[i]] || CAR.trophies[i] + 'º' : c.d}</small></button>`).join('');
-    const cup = CUPS[CAR.cup], tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você', mp = tab.findIndex(e => e[0] === me);
-    $('cInfo').innerHTML = `Etapa <b>${CAR.race + 1}/5</b>: <b>${TRACKS[cup.ti[CAR.race]].n}</b> · 3 voltas<br>` + cup.ti.map((ti, k) => (k < CAR.race ? '✔ ' : k === CAR.race ? '▶ ' : '· ') + TRACKS[ti].n).join(' &nbsp; ') + (tab.length ? `<br>Você: <b>${mp + 1}º</b> com ${CAR.pts[me] || 0} pts · líder ${esc(tab[0][0])} (${tab[0][1]} pts)` : '');
-    $('cCoins').textContent = '🪙 ' + CAR.coins;
-    $('optUp').innerHTML = UPG.map(u => { const lv = CAR.up[u.k], pr = UPRICE[lv]; return `<button data-v="${u.k}" aria-pressed="false" ${lv >= 3 || CAR.coins < pr ? 'disabled style="opacity:.6"' : ''}>${u.n} ${'●'.repeat(lv)}${'○'.repeat(3 - lv)}<small>${lv >= 3 ? 'máximo' : '🪙 ' + pr + ' · ' + u.d}</small></button>`; }).join('');
-    $('btnPlay').textContent = 'Correr etapa ' + (CAR.race + 1);
-  } else $('btnPlay').textContent = 'Correr';
-  for(const [id, key] of [['optItems', 'items'], ['optMode', 'mode'], ['optLaps', 'laps'], ['optDiff', 'diff'], ['optLiv', 'liv']]) [...$(id).children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v) === String(OPT[key])));
-  $('raceOpts').hidden = OPT.mode !== 'race'; if(OPT.mode === 'tt') $('trackRow').hidden = false;
-  const st = store.get('Stats', {races:0, wins:0, pods:0}), out = [];
-  if(G.bestLap) out.push('⏱ melhor volta ' + fmt(G.bestLap)); if(st.races) out.push('🏁 ' + st.races + ' corridas'); if(st.wins) out.push('🏆 ' + st.wins + ' vitórias');
-  $('menuStats').innerHTML = out.map(t => `<span class="chip">${t}</span>`).join('');
+  const st = store.get('Stats', {races:0, wins:0, pods:0}), champs = CAR.trophies.filter(t => t && t <= 3).length;
+  $('hubStats').innerHTML = [`🪙 ${CAR.coins}`, `🏆 ${champs}/5 troféus`, `🏁 ${st.races} corridas`].map(t => `<span class="chip">${t}</span>`).join('');
+  $('hubCareer').textContent = CUPS[CAR.cup].n + ' · etapa ' + (CAR.race + 1) + '/5';
+  /* carreira */
+  $('optCup').innerHTML = CUPS.map((c, i) => `<button data-v="${i}" aria-pressed="${i === CAR.cup}" ${i < CAR.unlocked ? '' : 'disabled style="opacity:.45"'}>${i < CAR.unlocked ? '' : '🔒 '}${c.n}<small>${CAR.trophies[i] ? ['', '🏆 campeão', '🥈 2º', '🥉 3º'][CAR.trophies[i]] || CAR.trophies[i] + 'º' : c.d}</small></button>`).join('');
+  const cup = CUPS[CAR.cup], tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você';
+  $('cInfo').innerHTML = `Etapa <b>${CAR.race + 1}/5</b>: <b>${TRACKS[cup.ti[CAR.race]].n}</b> · 3 voltas · 🪙 ${CAR.coins}<br>` + cup.ti.map((ti, k) => (k < CAR.race ? '✔ ' : k === CAR.race ? '▶ ' : '· ') + TRACKS[ti].n).join(' &nbsp; ');
+  $('cStand').innerHTML = tab.length ? '<h3>Classificação</h3><table class="res">' + tab.map((e, i) => `<tr class="${e[0] === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e[0])}</td><td class="t">${e[1]} pts</td></tr>`).join('') + '</table>' : '';
+  $('goCareer').textContent = 'Correr etapa ' + (CAR.race + 1);
+  /* corrida rápida e contra o relógio */
+  $('qTrack').innerHTML = $('tTrack').innerHTML = trackOptions();
+  for(const [id, key] of [['optItems', 'items'], ['optLaps', 'laps'], ['optDiff', 'diff'], ['optLiv', 'liv']]) [...$(id).children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v) === String(OPT[key])));
+  $('ttInfo').innerHTML = `Melhor volta em <b>${TRK.n}</b>: <b>${fmt(G.bestLap)}</b><br>` + (G.ghostBest ? '👻 O kart fantasma repete essa volta.' : 'Complete uma volta para gravar o kart fantasma.');
+  /* garagem */
+  $('cCoins').textContent = '🪙 ' + CAR.coins;
+  $('optUp').innerHTML = UPG.map(u => { const lv = CAR.up[u.k], pr = UPRICE[lv]; return `<button data-v="${u.k}" aria-pressed="false" ${lv >= 3 || CAR.coins < pr ? 'disabled style="opacity:.6"' : ''}>${u.n} ${'●'.repeat(lv)}${'○'.repeat(3 - lv)}<small>${lv >= 3 ? 'máximo' : '🪙 ' + pr + ' · ' + u.d}</small></button>`; }).join('');
+  /* troféus */
+  $('trophyCups').innerHTML = CUPS.map((c, i) => { const t = CAR.trophies[i], lock = i >= CAR.unlocked, ic = lock ? '🔒' : t === 1 ? '🏆' : t === 2 ? '🥈' : t === 3 ? '🥉' : '🏁';
+    return `<div class="tro ${lock ? 'lock' : t === 1 ? 'gold' : ''}"><i>${ic}</i><b>${c.n}</b><small>${lock ? 'bloqueado' : t ? (t <= 3 ? t + 'º no campeonato' : 'melhor: ' + t + 'º') : 'não disputado'}</small></div>`; }).join('');
+  const recs = TRACKS.filter(t => bestOf(t)).length;
+  $('trophyStats').innerHTML = [`🏁 ${st.races} corridas`, `🥇 ${st.wins} vitórias`, `🥉 ${st.pods} pódios`, `🏆 ${champs} campeonatos no pódio`, `⏱ recorde em ${recs}/${TRACKS.length} pistas`].map(t => `<span class="chip">${t}</span>`).join('');
+  $('trophyRecs').innerHTML = TRACKS.map((t, i) => `<div class="${trackUnlocked(i) ? '' : 'lock'}"><span>${trackUnlocked(i) ? '' : '🔒 '}${t.n}</span><b>${fmt(bestOf(t))}</b></div>`).join('');
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.3';
+const VERSION = '1.4';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
-function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') $('btnPlay').focus({preventScroll:true}); }
+function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
 $('newsOpen').addEventListener('click', openNews); $('newsClose').addEventListener('click', closeNews);
 if(store.get('Seen', '') !== VERSION) setTimeout(openNews, 500);
@@ -1712,8 +1814,11 @@ function frame(now){
 }
 /* ---------- início ---------- */
 if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CUPS[CAR.cup].ti.includes(OPT.track))){ OPT.track = 0; saveOpt(); location.reload(); }
-G.mode = OPT.mode; buildField(); renderMenu(); setMute(!!OPT.mute); cam.mode = OPT.cam || 0;
-if(store.get('Auto', 0)){ store.set('Auto', 0); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
+G.mode = OPT.mode; buildField(); setMute(!!OPT.mute); cam.mode = OPT.cam || 0;
+$('titleVer').textContent = 'versão ' + VERSION;
+let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
+if(store.get('Auto', 0)){ store.set('Auto', 0); show('Career'); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
+else show(scr0 && SCREENS.includes(scr0) ? scr0 : 'Title');
 resize(); requestAnimationFrame(frame);
 </script>
 </body>
