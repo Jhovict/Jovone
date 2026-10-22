@@ -347,10 +347,11 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.6</div>
+      <div class="ver" id="newsVer">Versão 1.6.1</div>
       <h2 id="newsTitle">CONTROLES DO <span>CELULAR</span></h2>
       <h3>Novo</h3>
       <ul>
+        <li><b>Corrigido:</b> bater num adversário não dá mais um "turbo". O empurrão lateral da batida era convertido em velocidade para frente; agora a batida só freia ou empurra até a velocidade máxima.</li>
         <li><b>Controles do celular</b> (no menu principal): arraste cada botão para onde quiser, ajuste o tamanho de cada um e a transparência de todos. Toque em Salvar para guardar ou em Padrão para voltar ao original.</li>
       </ul>
       <h3>Versão 1.5 · Mais difícil</h3>
@@ -1265,7 +1266,9 @@ function stepKart(k, dt, others){
   sh = Math.sin(k.h); ch = Math.cos(k.h); fx = -sh; fz = -ch; rx = ch; rz = -sh;
   vf = k.vx*fx + k.vz*fz; vr = k.vx*rx + k.vz*rz;
   const grip = k.drift ? 2.4 : k.surf >= 2 ? 4 : 10, nvr = vr*Math.exp(-grip*dt);
-  if(vf > 0) vf += Math.abs(vr - nvr)*(k.drift ? .75 : .45);
+  /* a velocidade lateral perdida na curva volta para a frente, mas nunca a de uma batida e nunca acima do máximo */
+  if(k.hitT > 0) k.hitT -= dt;
+  else if(vf > 0 && vf < vmax) vf = Math.min(vmax, vf + Math.abs(vr - nvr)*(k.drift ? .75 : .45));
   vr = nvr; k.vf = vf; k.vr = vr;
   k.vx = fx*vf + rx*vr; k.vz = fz*vf + rz*vr;
   k.x += k.vx*dt; k.z += k.vz*dt;
@@ -1298,6 +1301,7 @@ function stepKart(k, dt, others){
   k.wrong = dirDot < -.3 && sp > 3 ? k.wrong + dt : 0;
 }
 /* colisão entre karts: cada kart é coberto por dois círculos (frente e traseira) */
+function capSpeed(k){ const v = Math.hypot(k.vx, k.vz), m = KART.vmax*(k.skill || 1)*(k.boost > 0 ? 1.2 : 1); if(v > m){ k.vx *= m/v; k.vz *= m/v; } }
 const KR = .68, KOFF = .5;
 function collideKarts(){
   if(!OPT.coll) return;
@@ -1311,7 +1315,7 @@ function collideKarts(){
       const d = Math.sqrt(d2), nx = dx/d, nz = dz/d, push = (2*KR - d)/2;
       A.x -= nx*push; A.z -= nz*push; Bk.x += nx*push; Bk.z += nz*push;
       const rv = (Bk.vx - A.vx)*nx + (Bk.vz - A.vz)*nz;
-      if(rv < 0){ const j = -rv*.6; A.vx -= nx*j; A.vz -= nz*j; Bk.vx += nx*j; Bk.vz += nz*j; if((A.isPlayer || Bk.isPlayer) && -rv > 1.5){ SFX.hit(-rv*.6); cam.shake = Math.min(.35, -rv*.05); } }
+      if(rv < 0){ const j = -rv*.5; A.vx -= nx*j; A.vz -= nz*j; Bk.vx += nx*j; Bk.vz += nz*j; A.hitT = Bk.hitT = .6; capSpeed(A); capSpeed(Bk); if((A.isPlayer || Bk.isPlayer) && -rv > 1.5){ SFX.hit(-rv*.6); cam.shake = Math.min(.35, -rv*.05); } }
     }
   }
 }
@@ -1749,7 +1753,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.6';
+const VERSION = '1.6.1';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
