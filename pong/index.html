@@ -66,6 +66,19 @@ canvas { display: block; width: 100%; height: 100%; background: var(--screen); b
 }
 .hud button:focus-visible { outline: 2px solid var(--neon-a); outline-offset: 2px; }
 body.jogando { touch-action: none; -webkit-user-select: none; user-select: none; }
+/* Novidades: painel sobre o menu, aberto sozinho quando a versão muda */
+.news { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; background: var(--panel); border-radius: 6px; padding: 16px; }
+.news .sheet { width: min(520px, 100%); max-height: 100%; overflow-y: auto; border: 1px solid var(--dim); border-radius: 4px; padding: 18px 20px; background: var(--bg); }
+.news .ver { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--neon-a); font-weight: 600; margin: 0; }
+.news h2 { font-family: var(--font-display); font-size: clamp(14px, 3vw, 20px); line-height: 1.4; margin: 6px 0 10px; }
+.news h3 { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); margin: 14px 0 6px; font-weight: 600; }
+.news ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.news li { position: relative; padding-left: 16px; font-size: 13px; line-height: 1.5; }
+.news li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 7px; height: 7px; background: var(--neon-b); }
+.news .start { display: block; margin: 16px auto 0; }
+.link { font: 600 11px var(--font-body); color: var(--neon-a); background: transparent; border: 0; padding: 4px 6px; cursor: pointer; letter-spacing: 0.1em; text-transform: uppercase; }
+.link:hover { text-decoration: underline; }
+.link:focus-visible { outline: 2px solid var(--neon-a); outline-offset: 2px; }
 @media (max-width: 520px) { .row .label { min-width: 0; text-align: center; width: 100%; } }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap">
@@ -109,6 +122,24 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     <p class="hint" id="hint"></p>
     <p class="status" id="pad-status">Controle: conecte e aperte qualquer botão.</p>
     <p class="girar">Dica: deite o celular para a quadra ficar maior.</p>
+    <button class="link" id="news-open" type="button">✦ Novidades</button>
+  </div>
+  <div class="news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="news-title">
+    <div class="sheet">
+      <p class="ver" id="news-ver">Versão 1.1</p>
+      <h2 id="news-title">Controle e celular</h2>
+      <h3>Novo</h3>
+      <ul>
+        <li>Joga com controle (joypad): analógico ou direcional, Start pausa, Select volta ao menu e o menu inteiro se navega pelo controle.</li>
+        <li>Vibração nas rebatidas e dois controles no modo de dois jogadores.</li>
+        <li>No celular: arraste o dedo em qualquer parte da tela, botões de pausar, tela cheia e menu, e pausa sozinho ao sair do app.</li>
+      </ul>
+      <h3>Versão 1.0 · Lançamento</h3>
+      <ul>
+        <li>Contra a CPU (fácil, médio, difícil) ou dois jogadores, partidas até 11 ou 21 pontos, visual retrô P&amp;B ou neon.</li>
+      </ul>
+      <button class="start" id="news-close" type="button">Entendido</button>
+    </div>
   </div>
 </div>
 
@@ -213,7 +244,18 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     if (state === 'menu') return;
     state = 'menu'; menu.hidden = false; syncMenu();
   }
+  // ---- Novidades da versão ----
+  const VERSION = '1.1';
+  const news = document.getElementById('news');
+  function openNews() { news.hidden = false; news.firstElementChild.scrollTop = 0; document.getElementById('news-close').focus({ preventScroll: true }); }
+  function closeNews() { news.hidden = true; try { localStorage.setItem('pong_seen', VERSION); } catch (e) {} document.getElementById('start').focus({ preventScroll: true }); }
+  document.getElementById('news-ver').textContent = 'Versão ' + VERSION;
+  document.getElementById('news-open').addEventListener('click', openNews);
+  document.getElementById('news-close').addEventListener('click', closeNews);
+  try { if (localStorage.getItem('pong_seen') !== VERSION) setTimeout(openNews, 400); } catch (e) {}
+
   addEventListener('keydown', e => {
+    if (!news.hidden) { if (e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space') { closeNews(); e.preventDefault(); } return; }
     keys[e.code] = true;
     if (['ArrowUp', 'ArrowDown', 'Space'].includes(e.code)) e.preventDefault();
     if (state === 'win' && (e.code === 'Space' || e.code === 'Enter')) startGame();
@@ -348,7 +390,8 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
       const pressed = {};
       for (const k in now) pressed[k] = now[k] && !prev[k];
       padPrev[gp.index] = now;
-      if (state === 'menu') menuStep(gp, pressed);
+      if (!news.hidden) { if (pressed.A || pressed.START || pressed.SELECT) closeNews(); }
+      else if (state === 'menu') menuStep(gp, pressed);
       else if (state === 'win') { if (pressed.A || pressed.START) startGame(); else if (pressed.SELECT) toMenu(); }
       else { if (pressed.START) togglePause(); if (pressed.SELECT) toMenu(); }
       dirs.push({ index: gp.index, dir: padDir(gp) });
