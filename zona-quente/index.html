@@ -1017,7 +1017,7 @@ const W = {
   tupa:   {n:'Tupã .50', slot:2, kind:'pistol', dmg:56, rate:.33, mag:7, res:35, rel:2.3, sp:.007, msp:.07, jsp:.12, rv:.075, rh:.016, ap:.9, fall:.84, price:700, reward:300, spd:0.92, snd:'magnum', ads:.075},
   vespa:  {n:'Vespa', slot:1, kind:'smg', dmg:25, rate:.075, auto:true, mag:30, res:120, rel:2.4, sp:.011, msp:.02, jsp:.08, rv:.014, rh:.009, ap:.6, fall:.78, price:1250, reward:600, spd:0.98, snd:'smg', ads:.082},
   trovao: {n:'Trovão', slot:1, kind:'shotgun', dmg:20, pel:9, rate:.88, mag:7, res:28, rel:.5, shell:true, sp:.06, msp:.01, jsp:.04, rv:.07, rh:.012, ap:.75, fall:.5, price:1100, reward:900, spd:0.88, snd:'shotgun', ads:.068},
-  carcara:{n:'Carcará', slot:1, kind:'rifle', dmg:36, rate:.1, auto:true, mag:30, res:90, rel:2.5, sp:.0035, msp:.085, jsp:.2, rv:.021, rh:.012, ap:.78, fall:.98, price:2700, reward:300, spd:0.86, snd:'rifle', ads:.088},
+  carcara:{n:'Carcará', slot:1, kind:'rifle', dmg:36, rate:.1, auto:true, mag:30, res:90, rel:2.5, sp:.0035, msp:.085, jsp:.2, rv:.021, rh:.012, ap:.78, fall:.98, price:2700, reward:300, spd:0.86, snd:'rifle', ads:.101},
   jaguar: {n:'Jaguar', slot:1, kind:'rifle', dmg:33, rate:.09, auto:true, mag:30, res:90, rel:2.9, sp:.0028, msp:.075, jsp:.2, rv:.016, rh:.008, ap:.78, fall:.97, price:2900, reward:300, spd:0.9, snd:'rifle2', ads:.118},
   gaviao: {n:'Gavião', slot:1, kind:'sniper', dmg:115, rate:1.45, mag:5, res:30, rel:3.4, sp:.0006, usp:.07, msp:.16, jsp:.3, rv:.09, rh:.01, ap:.97, fall:.99, price:4750, reward:100, spd:0.8, snd:'sniper', scope:[2.5, 6]},
   he:     {n:'Granada', slot:4, kind:'nade', price:300, spd:0.98},
@@ -1045,6 +1045,10 @@ const GM = {
   wood: new THREE.MeshLambertMaterial({color:0x7c4a26}),
   tan: new THREE.MeshPhongMaterial({color:0xb39b6c, shininess:14}),
   green: new THREE.MeshPhongMaterial({color:0x4d5b3a, shininess:22}),
+  akSteel: new THREE.MeshPhongMaterial({color:0x26282c, shininess:55, specular:0x4a4a4a}),
+  akWood: new THREE.MeshPhongMaterial({color:0x7e3e1a, shininess:48, specular:0x3a2614}),
+  akWoodDark: new THREE.MeshLambertMaterial({color:0x4a2410}),
+  amber: new THREE.MeshPhongMaterial({color:0xd99a32, shininess:140, specular:0xffffff, emissive:0x3a2208}),
   awpStock: new THREE.MeshPhongMaterial({color:0x8e979e, shininess:26, specular:0x2a2a2a}),
   lensDark: new THREE.MeshPhongMaterial({color:0x0c1422, shininess:160, specular:0x6688aa}),
   awpMount: new THREE.MeshPhongMaterial({color:0x6f777f, shininess:80, specular:0x888888}),
@@ -1109,14 +1113,77 @@ function gunModel(id){
     bx(g, .006, .012, .01, M.steel, 0, .07, -.6);
     mz.position.set(0, .05, -.63); lh = [0, -.01, -.3];
   } else if(id === 'carcara'){
-    bx(g, .048, .07, .32, M.metal, 0, .03, -.04); bx(g, .044, .02, .26, M.metal, 0, .072, -.03);
-    bx(g, .054, .055, .17, M.wood, 0, .03, -.28); bx(g, .03, .025, .17, M.wood, 0, .072, -.28);
-    cy(g, .01, .24, M.metal, 0, .04, -.48); bx(g, .008, .035, .012, M.metal, 0, .068, -.56); cy(g, .014, .05, M.metal, 0, .04, -.61);
-    mag = new THREE.Group(); mag.position.set(0, -.03, -.11); g.add(mag);
-    bx(mag, .03, .11, .058, M.metal, 0, -.04, 0, .2); bx(mag, .03, .09, .054, M.metal, 0, -.13, -.035, .5);
-    bx(g, .03, .09, .042, M.poly, 0, -.045, .06, .32);
-    bx(g, .042, .075, .28, M.wood, 0, .005, .26, -.09);
-    mz.position.set(0, .04, -.64); lh = [0, -.012, -.28];
+    /* fuzil de assalto estilo AK-47: caixa de aço estampada, tampa com nervuras, guarda-mão e coronha de madeira envernizada,
+       tubo de gás, maça de mira, quebra-chamas, vareta, carregador curvo de 30 com nervuras, seletor longo e alavanca de manejo */
+    const st = M.akSteel, dk = M.poly, wd = M.akWood, wdd = M.akWoodDark;
+    const P = (pts) => { const sh = new THREE.Shape(); sh.moveTo(pts[0][0], pts[0][1]); for(let i = 1; i < pts.length; i++) sh.lineTo(pts[i][0], pts[i][1]); return sh; };
+    const ext = (sh, d, mat) => { const geo = new THREE.ExtrudeGeometry(sh, {depth:d, bevelEnabled:true, bevelThickness:.004, bevelSize:.004, bevelSegments:2, curveSegments:4});
+      geo.rotateY(-Math.PI/2); geo.translate(d/2, 0, 0); const m = new THREE.Mesh(geo, mat); m.castShadow = true; g.add(m); return m; };
+    /* caixa da culatra (perfil lateral: frente baixa, traseira com o encaixe da coronha) */
+    ext(P([[-.172, .062], [-.172, -.012], [-.16, -.022], [-.07, -.022], [-.07, -.03], [.03, -.03], [.03, -.018], [.112, -.012], [.118, .0], [.118, .062]]), .044, st);
+    /* tampa da culatra com nervuras e degrau traseiro */
+    const dc = new THREE.Mesh(new THREE.CylinderGeometry(.021, .021, .25, 12, 1, false, -Math.PI/2, Math.PI), st); dc.rotation.x = -Math.PI/2; dc.position.set(0, .062, -.02); dc.castShadow = true; g.add(dc);
+    for(const zz of [.04, .06, .08]) bx(g, .046, .006, .006, dk, 0, .078, zz);
+    bx(g, .03, .02, .02, st, 0, .072, .112);
+    /* rebites e entalhe do carregador na lateral */
+    for(const sx of [-.023, .023]){
+      for(const [ry, rz] of [[.0, -.155], [.0, -.12], [.048, -.155], [-.012, .095], [.03, .095], [.01, .01]]){ const r = cy(g, .0035, .004, M.steel, sx, ry, rz); r.rotation.set(0, 0, Math.PI/2); }
+      bx(g, .004, .02, .045, dk, sx*1.02, .02, -.105);
+    }
+    /* seletor longo (lado direito) e alavanca de manejo */
+    const sel = bx(g, .004, .012, .14, st, .025, .046, -.03); sel.rotation.x = -.06;
+    bx(g, .008, .02, .014, st, .027, .036, .035);
+    bx(g, .028, .012, .014, M.steel, .034, .055, -.115); bx(g, .012, .03, .012, st, .022, .055, -.115);
+    /* bloco da alça de mira, folha graduada e entalhe */
+    bx(g, .036, .028, .055, st, 0, .072, -.19);
+    const leaf = bx(g, .022, .005, .07, st, 0, .089, -.17); leaf.rotation.x = .05;
+    bx(g, .024, .012, .008, st, 0, .095, -.14); bx(g, .006, .006, .009, dk, 0, .1, -.14);
+    /* cano, porca, quebra-chamas oblíquo e vareta */
+    cy(g, .0115, .43, st, 0, .036, -.4);
+    cy(g, .014, .03, st, 0, .036, -.185);
+    const brk = cy(g, .0145, .05, st, 0, .036, -.633); bx(g, .03, .006, .012, dk, 0, .046, -.64);
+    bx(g, .008, .02, .006, dk, 0, .04, -.62);
+    cy(g, .0035, .37, M.steel, 0, .011, -.43); cy(g, .006, .012, M.steel, 0, .011, -.61);
+    /* maça de mira com orelhas protetoras e massa */
+    bx(g, .03, .03, .04, st, 0, .045, -.585); bx(g, .022, .02, .03, st, 0, .07, -.585);
+    for(const sx of [-.013, .013]) bx(g, .004, .042, .02, st, sx, .1, -.585);
+    bx(g, .004, .024, .004, st, 0, .092, -.585);
+    bx(g, .016, .02, .02, st, 0, .015, -.585);
+    /* bloco de gás inclinado e tubo de gás */
+    bx(g, .03, .05, .035, st, 0, .057, -.45); bx(g, .024, .03, .02, st, 0, .062, -.475, .5);
+    cy(g, .013, .25, st, 0, .072, -.31);
+    /* guarda-mão superior (sobre o tubo) e inferior com sulcos para os dedos */
+    bx(g, .044, .028, .17, wd, 0, .078, -.3); bx(g, .036, .006, .17, wd, 0, .093, -.3);
+    for(const zz of [-.25, -.35]) bx(g, .046, .004, .008, wdd, 0, .085, zz);
+    ext(P([[-.2, .05], [-.2, .005], [-.19, -.012], [-.21, -.024], [-.37, -.024], [-.385, -.012], [-.392, .04], [-.385, .05]]), .056, wd);
+    for(const sx of [-.0295, .0295]) for(const yy of [.006, .02]) bx(g, .003, .005, .15, wdd, sx, yy, -.29);
+    /* braçadeiras de aço do guarda-mão e argola da bandoleira */
+    bx(g, .06, .07, .012, st, 0, .03, -.198); bx(g, .06, .06, .012, st, 0, .035, -.39);
+    const sw = new THREE.Mesh(new THREE.TorusGeometry(.009, .002, 4, 10), M.steel); sw.position.set(-.032, .015, -.39); sw.rotation.y = Math.PI/2; g.add(sw);
+    /* guarda-mato e gatilho */
+    bx(g, .008, .004, .085, st, 0, -.058, .005); bx(g, .008, .03, .004, st, 0, -.044, .047); bx(g, .008, .03, .004, st, 0, -.044, -.037);
+    const trg = bx(g, .006, .028, .006, M.steel, 0, -.035, .005); trg.rotation.x = .25;
+    /* punho de madeira com quadriculado */
+    const gr = new THREE.Group(); gr.position.set(0, -.012, .072); gr.rotation.x = .3; g.add(gr);
+    bx(gr, .032, .1, .045, wd, 0, -.05, 0); bx(gr, .034, .012, .05, st, 0, -.1, 0);
+    for(let k = 0; k < 4; k++) bx(gr, .034, .004, .03, wdd, 0, -.02 - k*.02, 0);
+    /* coronha de madeira (perfil afinando com queda) e soleira de aço com tampa */
+    ext(P([[.112, .056], [.112, -.004], [.17, -.028], [.42, -.115], [.425, -.11], [.425, .046], [.36, .05], [.2, .056]]), .04, wd);
+    for(const sx of [-.0205, .0205]){ const ln = bx(g, .003, .005, .24, wdd, sx, .0, .28); ln.rotation.x = .16; }
+    bx(g, .046, .168, .012, st, 0, -.034, .432); bx(g, .03, .05, .004, dk, 0, -.01, .439);
+    const sw2 = new THREE.Mesh(new THREE.TorusGeometry(.009, .002, 4, 10), M.steel); sw2.position.set(-.023, -.05, .38); sw2.rotation.y = Math.PI/2; g.add(sw2);
+    /* carregador curvo de 30: gomos em arco, nervuras laterais e trava */
+    mag = new THREE.Group(); mag.position.set(0, -.03, -.105); g.add(mag);
+    let my = 0, mzz = 0, ang = .12;
+    for(let k = 0; k < 6; k++){
+      const seg = new THREE.Group(); seg.position.set(0, my, mzz); seg.rotation.x = ang; mag.add(seg);
+      bx(seg, .03, .03, .062, st, 0, -.015, 0); bx(seg, .032, .028, .008, dk, 0, -.015, -.026);
+      for(const sx of [-.0165, .0165]) bx(seg, .002, .03, .006, M.metal, sx, -.015, .012);
+      my -= Math.cos(ang)*.029; mzz -= Math.sin(ang)*.029; ang += .085;
+    }
+    bx(mag, .034, .012, .072, st, 0, my - .004, mzz - .006).rotation.x = ang;
+    bx(g, .018, .02, .012, st, 0, -.035, -.066);
+    mz.position.set(0, .036, -.665); lh = [0, -.012, -.3];
   } else if(id === 'jaguar'){
     bx(g, .046, .05, .2, M.poly, 0, .01, -.02); bx(g, .046, .06, .28, M.poly, 0, .06, -.06);
     bx(g, .026, .014, .3, M.metal, 0, .097, -.07); bx(g, .02, .03, .03, M.metal, 0, .12, .02);
@@ -1221,26 +1288,54 @@ function cloneGun(id){
   c.parts = {lh:src.parts.lh, rh:src.parts.rh, led:c.getObjectByName('led')};
   return c;
 }
+/* camuflagem de moletom: manchas de borda dura laranja/ferrugem/preto sobre carvão */
+function camoBlobs(g, w, h, n, col, r0, r1){
+  g.fillStyle = col;
+  for(let i = 0; i < n; i++){
+    const x = Math.random()*w, y = Math.random()*h, r = rnd(r0, r1), k = 7 + (Math.random()*4 | 0), sx = rnd(.7, 1.6);
+    for(const ox of [-w, 0, w]) for(const oy of [-h, 0, h]){
+      g.beginPath();
+      for(let j = 0; j < k; j++){ const a = j/k*TAU, rr = r*rnd(.55, 1.15); g.lineTo(x + ox + Math.cos(a)*rr*sx, y + oy + Math.sin(a)*rr); }
+      g.closePath(); g.fill();
+    }
+  }
+}
+const CAMO = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#2a2623'; g.fillRect(0, 0, w, h);
+  camoBlobs(g, w, h, 16, '#d8661f', 18, 38); camoBlobs(g, w, h, 14, '#9b4515', 10, 24);
+  camoBlobs(g, w, h, 12, '#151312', 10, 26); camoBlobs(g, w, h, 10, '#e88a3a', 4, 10);
+  speck(g, w, h, 900, 0, 60, .18, 2);
+});
+const CAMO_DK = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#34312d'; g.fillRect(0, 0, w, h);
+  camoBlobs(g, w, h, 10, '#5e3218', 10, 22); camoBlobs(g, w, h, 12, '#1d1b19', 10, 24); camoBlobs(g, w, h, 6, '#9b4a1a', 4, 9);
+  speck(g, w, h, 900, 0, 60, .18, 2);
+});
 /* braços em primeira pessoa (presos à arma) */
-const ARMM = {ft:new THREE.MeshLambertMaterial({color:0x23324a}), in:new THREE.MeshLambertMaterial({color:0x7d6a48}), glove:new THREE.MeshLambertMaterial({color:0x26272a})};
-function limb(g, hand, elbow, mat, w){
+const ARMM = {ft:new THREE.MeshLambertMaterial({color:0x42567c}), in:new THREE.MeshLambertMaterial({map:CAMO_DK}), glove:new THREE.MeshLambertMaterial({color:0x1f2022}),
+  cuff:{ft:new THREE.MeshLambertMaterial({color:0x34466a}), in:new THREE.MeshLambertMaterial({map:CAMO})}, knuckle:new THREE.MeshLambertMaterial({color:0x2c2d30})};
+function limb(g, hand, elbow, mat, w, team){
   const h = new THREE.Vector3(...hand), e = new THREE.Vector3(...elbow), d = e.clone().sub(h), L = d.length();
   const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), d.normalize());
   const arm = new THREE.Mesh(BOXG, mat); arm.scale.set(w, w, L); arm.position.copy(h).add(e).multiplyScalar(.5); arm.quaternion.copy(q);
+  /* luva tática: palma, protetor de juntas e punho de velcro */
   const glove = new THREE.Mesh(BOXG, ARMM.glove); glove.scale.set(w*.85, w*.75, .1); glove.position.copy(h); glove.quaternion.copy(q);
-  g.add(arm, glove);
+  const kn = new THREE.Mesh(BOXG, ARMM.knuckle); kn.scale.set(w*.78, w*.2, .05); kn.position.copy(h).add(new THREE.Vector3(0, w*.42, -.01).applyQuaternion(q)); kn.quaternion.copy(q);
+  const wr = new THREE.Mesh(BOXG, ARMM.glove); wr.scale.set(w*1.04, w*1.04, .035); wr.position.copy(h).addScaledVector(d, .065); wr.quaternion.copy(q);
+  const cuff = new THREE.Mesh(BOXG, (ARMM.cuff[team] || ARMM.cuff.ft)); cuff.scale.set(w*1.08, w*1.08, .05); cuff.position.copy(h).addScaledVector(d, .1); cuff.quaternion.copy(q);
+  g.add(arm, glove, kn, wr, cuff);
 }
 function buildVM(id, team){
-  const root = new THREE.Group(), gun = id === 'faca' || W[id]?.kind === 'nade' ? gunModel(id) : gunModel(id);
+  const root = new THREE.Group(), gun = gunModel(id);
   root.add(gun);
   const sleeve = ARMM[team] || ARMM.ft;
-  if(id === 'faca'){ gun.rotation.set(.15, .1, -.35); limb(root, [0, -.01, .045], [.12, -.22, .34], sleeve, .075); }
-  else if(W[id].kind === 'nade'){ limb(root, [0, -.03, .02], [.12, -.24, .34], sleeve, .075); }
+  if(id === 'faca'){ gun.rotation.set(.15, .1, -.35); limb(root, [0, -.01, .045], [.12, -.22, .34], sleeve, .075, team); }
+  else if(W[id].kind === 'nade'){ limb(root, [0, -.03, .02], [.12, -.24, .34], sleeve, .075, team); }
   else {
     const rh = gun.parts.rh || [0, -.045, .05];
-    limb(root, rh, [rh[0] + .12, rh[1] - .26, rh[2] + .37], sleeve, .078);
+    limb(root, rh, [rh[0] + .12, rh[1] - .26, rh[2] + .37], sleeve, .078, team);
     const lh = gun.parts.lh;
-    if(lh) limb(root, lh, [lh[0] - .24, lh[1] - .26, lh[2] + .36], sleeve, .074);
+    if(lh) limb(root, lh, [lh[0] - .24, lh[1] - .26, lh[2] + .36], sleeve, .074, team);
   }
   root.userData.gun = gun;
   root.traverse(o => { if(o.isMesh){ o.castShadow = false; o.receiveShadow = false; o.frustumCulled = false; } });
@@ -1248,12 +1343,14 @@ function buildVM(id, team){
 }
 /* soldado em terceira pessoa */
 const SKINS = [0xc68a5e, 0xa86f48, 0x8a5a3c, 0xe0b090, 0x6e4a32, 0xb57b52];
+/* ft: operador Fênix CT (farda azul, capacete com fones, óculos âmbar, máscara)
+   in: Fênix T (balaclava com fones, moletom camuflado laranja, calça cáqui) */
 const TEAMLOOK = {
-  ft:{shirt:0x24324a, pants:0x1f2a3a, vest:0x2a3240, head:0x1c2430, acc:0x4aa3ff},
-  in:{shirt:0x8a7552, pants:0x5e5a44, vest:0x5b5838, head:0x8f2a22, acc:0xff8a3d}
+  ft:{shirt:0x42567c, pants:0x3d5076, pocket:0x34466a, vest:0x34373c, pouch:0x2c2f34, strap:0x1d1f22, patch:0x5d6878},
+  in:{shirt:'camo', pants:0xa58f66, pocket:0x8f7a55, vest:0x2b2c2e, pouch:0x232426, strap:0x1a1b1c, patch:0xe8701e}
 };
 const SMAT = {};
-const smat = c => SMAT[c] || (SMAT[c] = new THREE.MeshLambertMaterial({color:c}));
+const smat = c => c === 'camo' ? (SMAT.camo || (SMAT.camo = new THREE.MeshLambertMaterial({map:CAMO}))) : c === 'camodk' ? (SMAT.camodk || (SMAT.camodk = new THREE.MeshLambertMaterial({map:CAMO_DK}))) : (SMAT[c] || (SMAT[c] = new THREE.MeshLambertMaterial({color:c})));
 const nameTexCache = {};
 function nameSprite(name, team){
   const key = name + team;
@@ -1267,40 +1364,103 @@ function nameSprite(name, team){
   s.scale.set(1.1, .275, 1); s.renderOrder = 20; return s;
 }
 function soldier(team, skin){
-  const L = TEAMLOOK[team], root = new THREE.Group(), sk = smat(skin);
+  const L = TEAMLOOK[team], root = new THREE.Group(), T = team === 'in';
+  const BLK = 0x1b1c1e, BOOT = 0x1d1e20, SOLE = 0x0e0e0f, GLV = 0x1f2022;
+  /* caixa: c = cor (hex), 'camo'/'camodk' ou material */
+  const b = (p, w, h, d, c, x, y, z, rx = 0, rz = 0, ry = 0) => { const m = new THREE.Mesh(BOXG, typeof c === 'object' ? c : smat(c)); m.scale.set(w, h, d); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; p.add(m); return m; };
+  /* pernas: calça com bolso cargo, joelheira, coturno de cano alto; coldre de coxa à direita */
   const legs = [-1, 1].map(sd => { const l = new THREE.Group(); l.position.set(sd*.115, .92, 0);
-    const m = new THREE.Mesh(BOXG, smat(L.pants)); m.scale.set(.17, .84, .2); m.position.y = -.42; m.castShadow = true; l.add(m);
-    const knee = new THREE.Mesh(BOXG, smat(0x222222)); knee.scale.set(.18, .1, .06); knee.position.set(0, -.45, -.11); l.add(knee);
-    const boot = new THREE.Mesh(BOXG, smat(0x2a2522)); boot.scale.set(.18, .12, .3); boot.position.set(0, -.86, -.04); boot.castShadow = true; l.add(boot);
+    b(l, .175, .44, .21, L.pants, 0, -.2, 0); b(l, .16, .36, .19, L.pants, 0, -.6, -.005);
+    b(l, .03, .15, .13, L.pocket, sd*.095, -.3, -.005); b(l, .032, .03, .135, L.pocket, sd*.096, -.22, -.005);
+    b(l, .17, .02, .04, L.pocket, 0, -.08, -.105);
+    /* joelheira articulada com tira */
+    b(l, .17, .16, .06, BLK, 0, -.44, -.115); b(l, .14, .1, .02, 0x2a2b2e, 0, -.44, -.148);
+    b(l, .182, .025, .2, BLK, 0, -.39, 0); b(l, .182, .025, .2, BLK, 0, -.5, 0);
+    /* coturno: cano, peito do pé, biqueira, solado e cadarço */
+    b(l, .175, .2, .2, BOOT, 0, -.76, -.005); b(l, .17, .1, .26, BOOT, 0, -.86, -.06); b(l, .15, .06, .06, BOOT, 0, -.875, -.175);
+    b(l, .18, .035, .32, SOLE, 0, -.907, -.065); b(l, .05, .17, .02, 0x2b2c2e, 0, -.76, -.106);
+    for(let k = 0; k < 4; k++) b(l, .06, .006, .022, 0x3a3b3d, 0, -.69 - k*.04, -.108);
+    b(l, .18, .03, .21, L.pants, 0, -.655, -.005);
+    if(sd > 0){
+      /* coldre de perna: plataforma, duas tiras, pistola */
+      b(l, .03, .2, .11, BLK, .1, -.24, .0); b(l, .2, .03, .225, BLK, .01, -.2, 0); b(l, .2, .03, .225, BLK, .01, -.33, 0);
+      b(l, .045, .17, .07, 0x232426, .125, -.23, .0); b(l, .03, .07, .035, 0x2a2b2e, .128, -.12, .03, -.25);
+    }
     root.add(l); return l; });
-  const hips = new THREE.Mesh(BOXG, smat(L.pants)); hips.scale.set(.38, .2, .24); hips.position.y = .95; hips.castShadow = true; root.add(hips);
+  /* quadril e cinto de guarnição com porta-carregadores */
+  b(root, .38, .2, .24, L.pants, 0, .95, 0);
+  b(root, .4, .06, .26, L.strap, 0, 1.0, 0); b(root, .06, .045, .02, 0x6a6c70, 0, 1.0, -.132);
+  for(const sx of [-.16, .16]) b(root, .06, .09, .05, L.pouch, sx, .97, -.11);
+  b(root, .1, .08, .06, L.pouch, -.19, .97, .06); b(root, .12, .08, .05, L.pouch, .05, .97, .14);
   const spine = new THREE.Group(); spine.position.y = 1.0; root.add(spine);
-  const torso = new THREE.Mesh(BOXG, smat(L.shirt)); torso.scale.set(.44, .52, .24); torso.position.y = .27; torso.castShadow = true; spine.add(torso);
-  const vest = new THREE.Mesh(BOXG, smat(L.vest)); vest.scale.set(.48, .36, .31); vest.position.y = .29; vest.castShadow = true; spine.add(vest);
-  for(const px of [-.13, 0, .13]){ const p = new THREE.Mesh(BOXG, smat(L.vest)); p.scale.set(.1, .12, .06); p.position.set(px, .2, -.18); spine.add(p); }
-  const head = new THREE.Mesh(BOXG, sk); head.scale.set(.22, .25, .24); head.position.y = .66; head.castShadow = true; spine.add(head);
-  if(team === 'ft'){
-    const hel = new THREE.Mesh(BOXG, smat(L.head)); hel.scale.set(.27, .13, .29); hel.position.y = .8; hel.castShadow = true; spine.add(hel);
-    const brim = new THREE.Mesh(BOXG, smat(L.head)); brim.scale.set(.25, .03, .07); brim.position.set(0, .74, -.15); spine.add(brim);
-    const mask = new THREE.Mesh(BOXG, smat(0x15181d)); mask.scale.set(.228, .11, .246); mask.position.y = .6; spine.add(mask);
-    const gog = new THREE.Mesh(BOXG, GM.glass); gog.scale.set(.2, .045, .03); gog.position.set(0, .7, -.125); spine.add(gog);
+  /* tronco (moletom camuflado / camisa de combate azul) */
+  b(spine, .44, .52, .24, L.shirt, 0, .27, 0);
+  if(T){
+    /* capuz caído atrás do pescoço e gola da camiseta branca */
+    b(spine, .3, .12, .1, 'camo', 0, .53, .11, -.3); b(spine, .26, .06, .24, 'camo', 0, .53, -.01);
+    b(spine, .1, .03, .02, 0xe6e2da, 0, .515, -.13);
+    for(const sx of [-.045, .045]) b(spine, .006, .1, .006, 0xd9d4ca, sx, .45, -.18);
   } else {
-    const ban = new THREE.Mesh(BOXG, smat(L.head)); ban.scale.set(.24, .1, .26); ban.position.y = .76; ban.castShadow = true; spine.add(ban);
-    const knot = new THREE.Mesh(BOXG, smat(L.head)); knot.scale.set(.06, .1, .06); knot.position.set(0, .72, .15); spine.add(knot);
-    const scarf = new THREE.Mesh(BOXG, smat(0x3a3428)); scarf.scale.set(.232, .1, .25); scarf.position.y = .6; spine.add(scarf);
+    b(spine, .25, .07, .25, L.pocket, 0, .53, 0);
   }
+  /* colete balístico: placas, ombreiras, faixa lateral, MOLLE, três porta-carregadores e painel com o emblema */
+  b(spine, .38, .36, .07, L.vest, 0, .3, -.14); b(spine, .38, .38, .07, L.vest, 0, .3, .14);
+  b(spine, .47, .15, .27, L.vest, 0, .17, 0);
+  for(const sx of [-.13, .13]) b(spine, .09, .03, .3, L.vest, sx, .49, 0);
+  for(let k = 0; k < 4; k++) b(spine, .36, .008, .072, L.strap, 0, .4 - k*.04, -.143);
+  for(let k = 0; k < 3; k++) b(spine, .36, .008, .072, L.strap, 0, .4 - k*.06, .143);
+  for(const px of [-.12, 0, .12]){ b(spine, .1, .15, .065, L.pouch, px, .17, -.2); b(spine, .102, .035, .07, L.strap, px, .24, -.202); b(spine, .03, .03, .01, L.vest, px, .2, -.237); }
+  b(spine, .2, .1, .03, L.pouch, 0, .37, -.19);
+  if(T){
+    for(const rz of [.8, -.8]) b(spine, .085, .016, .01, L.patch, 0, .37, -.21, 0, rz);
+  } else {
+    b(spine, .12, .05, .008, L.patch, 0, .37, -.208);
+  }
+  b(spine, .07, .14, .08, L.pouch, -.25, .2, .02); b(spine, .02, .1, .02, L.strap, -.25, .3, .04);
+  b(spine, .11, .15, .06, L.pouch, .1, .3, .2);
+  /* cabeça */
+  const head = b(spine, .22, .25, .24, skin, 0, .66, 0);
+  if(T){
+    /* balaclava preta com aberturas dos olhos e da boca, fones brancos */
+    const bal = 0x19191b;
+    b(spine, .228, .27, .246, bal, 0, .655, 0); b(spine, .21, .035, .23, bal, 0, .8, 0);
+    for(const sx of [-.05, .05]){ b(spine, .058, .03, .01, skin, sx, .695, -.124); b(spine, .018, .018, .006, 0x1a1410, sx, .695, -.129); }
+    b(spine, .05, .016, .01, 0x2a1a16, 0, .6, -.124);
+    b(spine, .14, .07, .14, bal, 0, .5, 0);
+    for(const sx of [-1, 1]){ b(spine, .018, .028, .028, 0xeeeeee, sx*.118, .655, -.01); b(spine, .006, .1, .006, 0xdddddd, sx*.11, .58, -.03, .2); }
+  } else {
+    /* capacete balístico com trilhos, suporte de visão noturna, fones de comunicação e microfone */
+    const hel = 0x3a3d42;
+    b(spine, .27, .12, .29, hel, 0, .79, .005); b(spine, .23, .05, .25, hel, 0, .86, .005);
+    b(spine, .25, .05, .06, hel, 0, .74, .135); b(spine, .26, .025, .04, hel, 0, .74, -.135);
+    for(const sx of [-1, 1]){ b(spine, .015, .03, .16, 0x2a2c30, sx*.137, .78, .0); }
+    b(spine, .06, .045, .02, 0x2a2c30, 0, .8, -.15); b(spine, .02, .02, .02, 0x2a2c30, 0, .77, -.16);
+    for(const sx of [-1, 1]){ b(spine, .05, .1, .1, 0x2a2c30, sx*.135, .67, .0); b(spine, .055, .03, .03, 0x404348, sx*.137, .7, .0); }
+    b(spine, .008, .008, .1, 0x1d1e20, .12, .6, -.08, 0, 0, -.5); b(spine, .02, .02, .02, 0x1d1e20, .07, .6, -.13);
+    /* óculos âmbar com armação e máscara facial preta */
+    b(spine, .232, .04, .25, 0x1d1e20, 0, .71, .0);
+    b(spine, .21, .06, .03, 0x1d1e20, 0, .7, -.125);
+    b(spine, .19, .045, .01, GM.amber, 0, .7, -.141);
+    b(spine, .228, .145, .246, 0x15171a, 0, .6, 0); b(spine, .14, .07, .14, 0x15171a, 0, .5, 0);
+  }
+  /* braços: manga superior, antebraço, cotoveleira (FT), punho e luva */
   const arm = (sd, rx, rz) => { const a = new THREE.Group(); a.position.set(sd*.29, .48, 0); a.rotation.set(rx, 0, rz);
-    const m = new THREE.Mesh(BOXG, smat(L.shirt)); m.scale.set(.12, .52, .13); m.position.y = -.25; m.castShadow = true; a.add(m);
-    const band = new THREE.Mesh(BOXG, smat(L.acc)); band.scale.set(.13, .06, .14); band.position.y = -.08; a.add(band);
-    const hnd = new THREE.Mesh(BOXG, ARMM.glove); hnd.scale.set(.1, .1, .1); hnd.position.y = -.55; a.add(hnd);
+    b(a, .13, .27, .14, L.shirt, 0, -.13, 0);
+    b(a, .12, .26, .13, T ? 'camodk' : L.shirt, 0, -.38, 0);
+    if(T){ b(a, .126, .03, .136, 'camo', 0, -.27, 0); }
+    else { b(a, .135, .1, .1, L.pocket, sd*.005, -.12, 0); b(a, .137, .05, .06, L.pocket, sd*.0, -.06, -.02); b(a, .126, .08, .14, BLK, 0, -.27, .0); }
+    b(a, .124, .04, .134, GLV, 0, -.5, 0);
+    b(a, .1, .1, .1, GLV, 0, -.56, 0); b(a, .102, .03, .06, 0x2c2d30, 0, -.58, -.03);
     spine.add(a); return a; };
   const arms = [arm(-1, 1.36, .46), arm(1, 1.2, -.1)];
   const gunHold = new THREE.Group(); gunHold.position.set(.07, .36, -.38); spine.add(gunHold);
-  const back = new THREE.Group(); back.position.set(0, .3, .2); spine.add(back);
-  /* funde as peças: uma malha por perna, braço e tronco */
-  for(const l of legs) bakeMeshes(l, l.children.filter(o => o.isMesh), root);
-  for(const a of arms) bakeMeshes(a, a.children.filter(o => o.isMesh), root);
-  bakeMeshes(spine, spine.children.filter(o => o.isMesh), root);
+  const back = new THREE.Group(); back.position.set(0, .3, .23); spine.add(back);
+  /* funde as peças lisas (uma malha por perna, braço e tronco); as camufladas ficam com a textura */
+  const flat = o => o.isMesh && !o.material.map;
+  for(const l of legs) bakeMeshes(l, l.children.filter(flat), root);
+  for(const a of arms) bakeMeshes(a, a.children.filter(flat), root);
+  bakeMeshes(spine, spine.children.filter(flat), root);
+  bakeMeshes(root, root.children.filter(flat), root);
   root.userData = {legs, spine, arms, gunHold, back, head, gun:null, gunId:null};
   return root;
 }
