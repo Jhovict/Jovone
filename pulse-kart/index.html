@@ -129,6 +129,9 @@ body.touch .keys{display:none}
 .res td:first-child{font-family:var(--display);width:34px}
 .res td.t{text-align:right;color:#c7cfdc}
 .res i{display:inline-block;width:8px;height:12px;border-radius:2px;margin-right:8px;vertical-align:-1px}
+.trophy{display:flex;flex-direction:column;gap:2px;background:var(--panel-2);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:1.6rem}.trophy b{font-size:1rem}.trophy span{font-size:.82rem;color:#c7cfdc}
+.sel{width:100%;background:var(--panel-2);color:var(--ink);border:0;border-radius:10px;padding:9px 10px;font:600 .86rem var(--body)}
+.cinfo{font-size:.84rem;color:#c7cfdc;line-height:1.5;margin-top:8px}.cinfo b{color:var(--ink)}
 .news .ver{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stripe);font-weight:700}
 .news ul,.how ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
 .news li,.how li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45;color:#d7dde7}
@@ -178,13 +181,20 @@ body.touch .keys{display:none}
       <div class="kick" id="menuKick">Circuito Apex Loop · 125cc</div>
       <h1>PULSE <span>KART</span></h1>
       <p>Kart de competição de motor dois tempos. Largue com as luzes, use o vácuo nas retas e faça drift nas curvas para ganhar turbo.</p>
-      <h3>Pista</h3>
-      <div class="seg" id="optTrack"></div>
       <h3>Modo</h3>
       <div class="seg" id="optMode">
+        <button data-v="career" aria-pressed="false">Carreira<small>5 campeonatos</small></button>
         <button data-v="race" aria-pressed="true">Corrida<small>8 karts</small></button>
         <button data-v="tt" aria-pressed="false">Contra o relógio<small>com fantasma</small></button>
       </div>
+      <div id="careerBox" hidden>
+        <h3>Campeonato</h3>
+        <div class="seg" id="optCup"></div>
+        <div class="cinfo" id="cInfo"></div>
+        <h3>Garagem · <span id="cCoins"></span></h3>
+        <div class="seg" id="optUp"></div>
+      </div>
+      <div id="trackRow"><h3>Pista</h3><select class="sel" id="optTrackSel" aria-label="Pista"></select></div>
       <div id="raceOpts">
         <h3>Voltas</h3>
         <div class="seg" id="optLaps"><button data-v="3" aria-pressed="true">3</button><button data-v="5" aria-pressed="false">5</button><button data-v="8" aria-pressed="false">8</button></div>
@@ -241,6 +251,7 @@ body.touch .keys{display:none}
       <div class="kick" id="endK">Resultado</div>
       <h2 id="endT">1º LUGAR</h2>
       <table class="res" id="endTable"></table>
+      <div id="careerEnd"></div>
       <div class="chips" id="endStats"></div>
       <div class="row"><button class="btn pri" id="btnAgain">Correr de novo</button><button class="btn" id="btnMenu">Menu</button></div>
     </div>
@@ -248,9 +259,17 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.2</div>
-      <h2 id="newsTitle">PISTAS NOVAS E <span>ITENS</span></h2>
+      <div class="ver" id="newsVer">Versão 1.3</div>
+      <h2 id="newsTitle">MODO <span>CARREIRA</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Carreira:</b> 5 campeonatos de 5 etapas: Copa Regional, Copa Litoral, Copa Metrópole, Copa Natureza e Mundial Pulse. Pontos estilo F1 a cada corrida, classificação do campeonato e troféu no final. Termine no pódio para liberar o próximo campeonato. O progresso fica salvo.</li>
+        <li><b>Garagem:</b> moedas por corrida para melhorar motor (velocidade), pneus (curvas) e embreagem (arrancada), 3 níveis cada.</li>
+        <li><b>25 pistas</b>, 22 novas: kartódromo do interior, fazenda, parque, vale, pomar ao pôr do sol, porto com contêineres e guindastes, dunas, ilha, farol, avenida noturna, viaduto, distrito industrial, parque olímpico, Amazônia com chuva, serra com neblina, cânion vermelho, cerrado, Pantanal, tempestade, noite, Grande Prêmio e a final Redshift.</li>
+        <li><b>Noite</b> com postes e luz no asfalto, <b>chuva</b> com pista escorregadia e <b>neblina</b> na serra.</li>
+        <li>Nas corridas rápidas, as pistas de cada campeonato são liberadas quando ele é aberto na carreira.</li>
+      </ul>
+      <h3>Versão 1.2 · Pistas novas e itens</h3>
       <ul>
         <li><b>Orla:</b> circuito à beira-mar com areia, coqueiros, mar, zebras e brita, com uma chicane no meio.</li>
         <li><b>Centro:</b> circuito de rua entre prédios, com muros de concreto, calçada e curvas de 90 graus.</li>
@@ -302,8 +321,66 @@ const TRACKS = [
   {id:'orla', n:'Orla', d:'à beira-mar', ground:'sand', deco:'palms', walls:'fence', gravel:true, sea:true,
     ctrl:[[0, 0], [70, 0], [150, 0], [205, -10], [238, -45], [240, -96], [212, -130], [168, -132], [138, -112], [104, -126], [62, -160], [6, -168], [-44, -144], [-70, -96], [-66, -46], [-40, -10]]},
   {id:'centro', n:'Centro', d:'circuito de rua', ground:'city', deco:'buildings', walls:'concrete', gravel:false,
-    ctrl:[[0, 0], [70, 0], [130, 0], [168, -8], [182, -40], [180, -92], [160, -116], [112, -118], [86, -136], [82, -186], [58, -214], [-8, -218], [-40, -196], [-46, -140], [-24, -110], [-24, -66], [-46, -40], [-40, -10]]}
+    ctrl:[[0, 0], [70, 0], [130, 0], [168, -8], [182, -40], [180, -92], [160, -116], [112, -118], [86, -136], [82, -186], [58, -214], [-8, -218], [-40, -196], [-46, -140], [-24, -110], [-24, -66], [-46, -40], [-40, -10]]},
+  {id:'interior', n:'Kartódromo do Interior', d:'Copa Regional', ground:'grass', deco:'trees', walls:'fence', gravel:true,
+    ctrl:[[0,0],[70,0],[140,0],[175,-20],[170,-60],[130,-75],[100,-100],[120,-140],[80,-170],[20,-160],[0,-120],[-40,-110],[-60,-70],[-40,-20]]},
+  {id:'fazenda', n:'Fazenda Boa Vista', d:'Copa Regional', ground:'farm', deco:'trees', walls:'fence', gravel:true,
+    ctrl:[[0,0],[70,0],[140,0],[200,-20],[230,-70],[200,-120],[150,-110],[120,-150],[140,-200],[90,-230],[30,-210],[10,-160],[-40,-140],[-70,-90],[-50,-30]]},
+  {id:'parque', n:'Parque da Cidade', d:'Copa Regional', ground:'grass', deco:'trees', walls:'fence', gravel:true, sky:['#5a9de0', '#d8ecf6'],
+    ctrl:[[0,0],[94,0],[189,0],[270,-20],[297,-81],[256,-135],[162,-142],[81,-135],[54,-176],[94,-216],[40,-256],[-40,-230],[-81,-162],[-88,-81],[-54,-20]]},
+  {id:'vale', n:'Vale Verde', d:'Copa Regional', ground:'grass', deco:'pines', walls:'fence', gravel:true,
+    ctrl:[[0,0],[70,0],[140,0],[190,-30],[180,-80],[220,-120],[200,-180],[140,-190],[110,-150],[60,-170],[20,-220],[-40,-200],[-50,-140],[-20,-100],[-60,-60],[-45,-15]]},
+  {id:'pomar', n:'Pomar', d:'Copa Regional', ground:'farm', deco:'trees', walls:'fence', gravel:true, sky:['#e08a4a', '#f6d8a8'], fogC:0xf0caa0,
+    ctrl:[[0,0],[102,0],[203,0],[268,-44],[232,-109],[283,-167],[239,-225],[152,-210],[87,-254],[0,-232],[-51,-167],[-7,-116],[-72,-65],[-58,-17]]},
+  {id:'porto', n:'Porto', d:'Copa Litoral', ground:'city', deco:'containers', walls:'concrete', gravel:false, sea:true,
+    ctrl:[[0,0],[88,0],[188,0],[244,-15],[262,-56],[231,-94],[262,-131],[256,-200],[188,-225],[125,-212],[75,-250],[0,-250],[-38,-212],[-25,-150],[-69,-112],[-69,-50],[-44,-12]]},
+  {id:'dunas', n:'Dunas', d:'Copa Litoral', ground:'sand', deco:'dunes', walls:'fence', gravel:true, sky:['#3f8fe0', '#f2e2c0'], fogC:0xf0e0c0,
+    ctrl:[[0,0],[70,0],[160,0],[240,-30],[270,-100],[240,-170],[170,-190],[110,-160],[50,-200],[-20,-190],[-60,-130],[-50,-60],[-35,-15]]},
+  {id:'ilha', n:'Ilha do Sol', d:'Copa Litoral', ground:'sand', deco:'palms', walls:'fence', gravel:true, sea:true,
+    ctrl:[[0,0],[70,0],[140,0],[190,-25],[195,-75],[160,-95],[150,-140],[190,-180],[150,-230],[80,-220],[60,-170],[10,-150],[-30,-180],[-75,-150],[-70,-80],[-45,-20]]},
+  {id:'farol', n:'Farol', d:'Copa Litoral', ground:'grass', deco:'rocks', walls:'fence', gravel:true, sea:true, lighthouse:true,
+    ctrl:[[0,0],[70,0],[140,0],[210,-10],[250,-50],[230,-100],[170,-110],[130,-140],[150,-190],[100,-230],[40,-210],[20,-150],[-30,-120],[-70,-70],[-45,-15]]},
+  {id:'avenida', n:'Avenida Noturna', d:'Copa Metrópole', ground:'city', deco:'buildings', walls:'concrete', gravel:false, night:true,
+    ctrl:[[0,0],[70,0],[180,0],[210,-20],[210,-150],[185,-175],[100,-175],[80,-155],[80,-100],[55,-80],[0,-80],[-25,-100],[-25,-150],[-50,-170],[-85,-150],[-85,-30],[-60,-5]]},
+  {id:'viaduto', n:'Viaduto', d:'Copa Metrópole', ground:'city', deco:'buildings', walls:'concrete', gravel:false, sky:['#7a8ea8', '#d0d6dc'], fogC:0xc8ccd2,
+    ctrl:[[0,0],[70,0],[140,0],[170,-30],[150,-70],[170,-110],[130,-140],[80,-120],[40,-150],[60,-200],[0,-230],[-50,-200],[-40,-150],[-70,-110],[-60,-50],[-35,-12]]},
+  {id:'industrial', n:'Distrito Industrial', d:'Copa Metrópole', ground:'city', deco:'containers', walls:'concrete', gravel:false, sky:['#8a96a4', '#d8d0c0'], fogC:0xccc4b4,
+    ctrl:[[0,0],[98,0],[210,0],[259,-35],[224,-84],[280,-126],[280,-196],[224,-224],[154,-196],[126,-252],[56,-266],[28,-196],[-28,-182],[-77,-224],[-112,-168],[-84,-84],[-56,-21]]},
+  {id:'olimpico', n:'Parque Olímpico', d:'Copa Metrópole', ground:'grass', deco:'buildings', walls:'fence', gravel:true,
+    ctrl:[[0,0],[98,0],[196,0],[280,-28],[294,-112],[238,-154],[280,-210],[224,-280],[126,-266],[98,-196],[28,-168],[-28,-224],[-98,-196],[-98,-112],[-63,-28]]},
+  {id:'amazonia', n:'Amazônia', d:'Copa Natureza', ground:'grass', deco:'jungle', walls:'fence', gravel:true, rain:true,
+    ctrl:[[0,0],[70,0],[140,0],[180,-30],[200,-80],[160,-120],[180,-170],[130,-200],[70,-180],[50,-130],[0,-110],[-20,-160],[-70,-150],[-75,-90],[-45,-25]]},
+  {id:'serra', n:'Serra da Neblina', d:'Copa Natureza', ground:'grass', deco:'pines', walls:'fence', gravel:true, fog:[30, 210], fogC:0xcfd6dc, sky:['#9aa8b6', '#d6dce2'],
+    ctrl:[[0,0],[70,0],[150,0],[200,-40],[180,-90],[130,-90],[100,-130],[150,-160],[170,-210],[110,-240],[50,-220],[30,-170],[-20,-150],[-60,-110],[-55,-50],[-35,-12]]},
+  {id:'canion', n:'Cânion Vermelho', d:'Copa Natureza', ground:'dirt', deco:'rocks', walls:'fence', gravel:true, sky:['#3f86d6', '#f0c89a'], fogC:0xe8c49a,
+    ctrl:[[0,0],[70,0],[140,0],[210,-20],[250,-70],[210,-110],[230,-160],[190,-210],[130,-190],[110,-140],[60,-150],[40,-200],[-20,-210],[-60,-160],[-40,-110],[-70,-60],[-45,-15]]},
+  {id:'cerrado', n:'Cerrado', d:'Copa Natureza', ground:'dry', deco:'dry', walls:'fence', gravel:true, sky:['#4f90d8', '#ecdcb0'], fogC:0xe6d6ae,
+    ctrl:[[0,0],[77,0],[154,0],[209,-16],[237,-61],[209,-110],[154,-132],[99,-121],[66,-154],[99,-198],[44,-231],[-22,-209],[-44,-154],[-82,-110],[-66,-44],[-44,-11]]},
+  {id:'pantanal', n:'Pantanal', d:'Copa Natureza', ground:'grass', deco:'palms', walls:'fence', gravel:true, sea:true, water:0x4f8a7a,
+    ctrl:[[0,0],[91,0],[182,0],[260,-39],[247,-117],[182,-143],[208,-208],[143,-260],[65,-234],[52,-169],[-13,-182],[-65,-234],[-104,-169],[-78,-91],[-52,-20]]},
+  {id:'tempestade', n:'Tempestade', d:'Mundial Pulse', ground:'grass', deco:'trees', walls:'fence', gravel:true, rain:true,
+    ctrl:[[0,0],[80,0],[170,0],[240,-30],[260,-90],[220,-130],[240,-190],[200,-250],[130,-240],[100,-190],[50,-220],[-10,-250],[-60,-210],[-50,-150],[-90,-110],[-80,-50],[-45,-12]]},
+  {id:'noite', n:'Noite Pulse', d:'Mundial Pulse', ground:'grass', deco:'trees', walls:'fence', gravel:true, night:true,
+    ctrl:[[0,0],[98,0],[210,0],[280,-42],[266,-112],[322,-168],[308,-252],[224,-280],[182,-224],[112,-238],[70,-308],[-14,-322],[-42,-252],[0,-196],[-70,-154],[-98,-84],[-63,-21]]},
+  {id:'gp', n:'Grande Prêmio', d:'Mundial Pulse', ground:'grass', deco:'trees', walls:'fence', gravel:true,
+    ctrl:[[0,0],[80,0],[180,0],[250,-20],[280,-80],[240,-120],[260,-170],[220,-220],[160,-210],[140,-160],[90,-150],[60,-200],[90,-250],[30,-290],[-40,-270],[-50,-210],[-10,-180],[-40,-130],[-90,-100],[-80,-40],[-45,-10]]},
+  {id:'redshift', n:'Final Redshift', d:'Mundial Pulse', ground:'city', deco:'buildings', walls:'concrete', gravel:false, night:true,
+    ctrl:[[0,0],[77,0],[165,0],[209,-22],[220,-77],[176,-99],[198,-143],[253,-165],[242,-231],[176,-253],[132,-220],[77,-242],[22,-209],[44,-154],[-11,-121],[-66,-154],[-99,-110],[-77,-44],[-44,-11]]},
 ];
+/* carreira: 5 campeonatos de 5 etapas (índices em TRACKS) */
+const TID = id => TRACKS.findIndex(t => t.id === id);
+const CUPS = [
+  {n:'Copa Regional', d:'kartódromos do interior', t:['interior', 'fazenda', 'parque', 'vale', 'pomar'], diff:0, pow:0},
+  {n:'Copa Litoral', d:'praias, porto e dunas', t:['orla', 'porto', 'dunas', 'ilha', 'farol'], diff:1, pow:0},
+  {n:'Copa Metrópole', d:'ruas da cidade, de dia e de noite', t:['centro', 'avenida', 'viaduto', 'industrial', 'olimpico'], diff:1, pow:.02},
+  {n:'Copa Natureza', d:'floresta, serra e cânion', t:['amazonia', 'serra', 'canion', 'cerrado', 'pantanal'], diff:2, pow:0},
+  {n:'Mundial Pulse', d:'os circuitos mais difíceis', t:['apex', 'tempestade', 'noite', 'gp', 'redshift'], diff:2, pow:.025}
+].map(c => Object.assign(c, {ti:c.t.map(TID)}));
+const POINTS = [25, 18, 15, 12, 10, 8, 6, 4], PRIZE = [600, 420, 320, 240, 180, 140, 110, 90];
+const UPG = [{k:'eng', n:'Motor', d:'velocidade final'}, {k:'tire', n:'Pneus', d:'aderência nas curvas'}, {k:'acc', n:'Embreagem', d:'arrancada'}], UPRICE = [700, 1500, 2600];
+const CAR = Object.assign({cup:0, race:0, pts:{}, coins:0, unlocked:1, trophies:[], up:{eng:0, tire:0, acc:0}}, store.get('Career', {}));
+const saveCar = () => store.set('Career', CAR);
+const trackUnlocked = i => i <= 2 || CUPS.some((c, ci) => ci < CAR.unlocked && c.ti.includes(i));
 const TRK = TRACKS[OPT.track] || TRACKS[0], TKEY = TRK.id === 'apex' ? '' : '_' + TRK.id;
 const fmt = t => { if(t == null || !isFinite(t)) return '—'; const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(t < 600 ? 2 : 1); };
 
@@ -315,10 +392,10 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const FOGC = 0xc9dcea;
-scene.fog = new THREE.Fog(FOGC, 170, 620);
+scene.fog = new THREE.Fog(TRK.night ? 0x0b1222 : TRK.rain ? 0x8a96a2 : (TRK.fogC || FOGC), TRK.fog ? TRK.fog[0] : TRK.rain ? 90 : 170, TRK.fog ? TRK.fog[1] : TRK.rain ? 420 : 620);
 const camera = new THREE.PerspectiveCamera(66, 1, .1, 1100);
-scene.add(new THREE.HemisphereLight(0xe2efff, 0x5d7a44, .72));
-const sun = new THREE.DirectionalLight(0xfff1da, 1.0);
+scene.add(TRK.night ? new THREE.HemisphereLight(0x8aa0d0, 0x2a3040, .62) : new THREE.HemisphereLight(0xe2efff, 0x5d7a44, TRK.rain ? .8 : .72));
+const sun = new THREE.DirectionalLight(TRK.night ? 0xb8c8ff : 0xfff1da, TRK.night ? .45 : TRK.rain ? .45 : 1.0);
 const SUN_OFF = new THREE.Vector3(-55, 110, 45);
 sun.castShadow = true; sun.shadow.mapSize.set(TOUCH ? 1024 : 2048, TOUCH ? 1024 : 2048);
 Object.assign(sun.shadow.camera, {left:-42, right:42, top:42, bottom:-42, near:10, far:300});
@@ -344,7 +421,9 @@ function speck(g, w, h, n, lo, hi, a, s = 2){
   for(let i = 0; i < n; i++){ const v = rnd(lo, hi) | 0; g.fillStyle = `rgba(${v},${v},${v},${a})`; g.fillRect(Math.random()*w, Math.random()*h, rnd(1, s), rnd(1, s)); }
 }
 const skyTex = canvasTex(4, 256, (g, w, h) => {
-  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#3f86d6'); gr.addColorStop(.42, '#8fc0ea'); gr.addColorStop(.5, '#cfe1ee'); gr.addColorStop(1, '#cfe1ee');
+  const S = TRK.night ? ['#02050d', '#13203a'] : TRK.rain ? ['#58636e', '#9aa4ae'] : TRK.sky || ['#3f86d6', '#cfe1ee'];
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, S[0]); gr.addColorStop(.5, S[1]); gr.addColorStop(1, S[1]);
+  if(TRK.night){ g.fillStyle = gr; g.fillRect(0, 0, w, h); for(let i = 0; i < 40; i++){ g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(rnd(w), rnd(h*.45), 1, 1); } return; }
   g.fillStyle = gr; g.fillRect(0, 0, w, h);
 }, false);
 scene.background = skyTex;
@@ -357,7 +436,7 @@ const asphaltTex = canvasTex(256, 256, (g, w, h) => {
 });
 /* grama com faixas de corte */
 const grassTex = canvasTex(256, 256, (g, w, h) => {
-  const P = {grass:['#3f7230', '#467c35', 'rgba(40,90,30,.35)', 'rgba(120,170,80,.3)'], sand:['#d6bd8c', '#dcc494', 'rgba(170,140,90,.35)', 'rgba(250,235,200,.4)'], city:['#7d8086', '#83868c', 'rgba(60,62,66,.35)', 'rgba(170,172,176,.3)']}[TRK.ground];
+  const P = {grass:['#3f7230', '#467c35', 'rgba(40,90,30,.35)', 'rgba(120,170,80,.3)'], farm:['#5f8a34', '#68943a', 'rgba(60,90,30,.35)', 'rgba(170,190,90,.3)'], dry:['#9c9452', '#a69e5a', 'rgba(110,100,50,.35)', 'rgba(200,190,120,.3)'], dirt:['#a8583a', '#b0603f', 'rgba(110,50,30,.35)', 'rgba(220,140,100,.3)'], sand:['#d6bd8c', '#dcc494', 'rgba(170,140,90,.35)', 'rgba(250,235,200,.4)'], city:['#7d8086', '#83868c', 'rgba(60,62,66,.35)', 'rgba(170,172,176,.3)']}[TRK.ground];
   g.fillStyle = P[0]; g.fillRect(0, 0, w, h);
   g.fillStyle = P[1]; g.fillRect(0, 0, w, h/2);
   for(let i = 0; i < 5000; i++){ const v = rnd(); g.fillStyle = v < .5 ? P[2] : P[3]; g.fillRect(rnd(w), rnd(h), 1, rnd(1, 4)); }
@@ -400,7 +479,7 @@ function numTex(n, col){
 /* =====================================================================
    CIRCUITO APEX LOOP
    ===================================================================== */
-const KART = {vmax:28.5, acc:12.5, brake:26, lat:21, brakeAI:17};
+const KART = {vmax:28.5, acc:12.5, brake:26, lat:TRK.rain ? 16.5 : 21, brakeAI:TRK.rain ? 13 : 17};
 /* traçado (metros, vista de cima): reta dos boxes, curva 1, esses, grampo, curvão de volta */
 const CTRL = TRK.ctrl;
 const curve = new THREE.CatmullRomCurve3(CTRL.map(p => new THREE.Vector3(p[0], 0, p[1])), true, 'centripetal');
@@ -630,14 +709,16 @@ grandstand(Math.round(N*.86), WALL + 6, 36, 6);
 { let k = 0; for(let i = 20; i < N; i += 55) if(CURBF[i]){ const sd = GRAV[i] || -Math.sign(KS[i]) || 1; if((sd < 0 ? FENCE_L : FENCE_R)[i]) adBoard(i, sd, k++); } }
 const FLAGS = [Math.round(N*.12), Math.round(N*.3), Math.round(N*.5), Math.round(N*.66), Math.round(N*.82)].map((i, k) => marshal(i, (k % 2 ? 1 : -1)*(-Math.sign(KS[i]) || 1)));
 /* árvores e morros ao redor */
+const sparkTex0 = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.35, 'rgba(255,255,255,.6)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }, false);
 (function scenery(){
   const pts = [], seaZ = BOUNDS.z0 - 70, city = TRK.deco === 'buildings';
-  for(let t = 0; t < 3000 && pts.length < (city ? 140 : 320); t++){
+  const want = city ? 140 : TRK.deco === 'jungle' ? 560 : TRK.deco === 'dry' ? 170 : TRK.deco === 'dunes' ? 70 : TRK.deco === 'containers' ? 220 : 320;
+  for(let t = 0; t < 5000 && pts.length < want; t++){
     const x = rnd(BOUNDS.x0 - 160, BOUNDS.x1 + 160), z = rnd(BOUNDS.z0 - 160, BOUNDS.z1 + 160);
-    const i = nearestIdx(x, z, -1); if(Math.hypot(PX[i] - x, PZ[i] - z) < (city ? 34 : 30)) continue;
+    const i = nearestIdx(x, z, -1); if(Math.hypot(PX[i] - x, PZ[i] - z) < (city ? 34 : TRK.deco === 'jungle' ? 24 : TRK.deco === 'dunes' ? 60 : 30)) continue;
     if(x > -60 && x < 200 && z > 10 && z < 70) continue;
     if(TRK.sea && z < seaZ + 20) continue;
-    if(city && pts.some(p => Math.abs(p[0] - x) < 22 && Math.abs(p[1] - z) < 22)) continue;
+    if((city || TRK.deco === 'containers') && pts.some(p => Math.abs(p[0] - x) < (city ? 22 : 14) && Math.abs(p[1] - z) < (city ? 22 : 8))) continue;
     pts.push([x, z, rnd(.8, 1.5)]);
   }
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), V = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0);
@@ -645,22 +726,60 @@ const FLAGS = [Math.round(N*.12), Math.round(N*.3), Math.round(N*.5), Math.round
     const winTex = canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for(let y = 6; y < h; y += 16) for(let x = 6; x < w; x += 16){ g.fillStyle = Math.random() < .3 ? '#9fb8cc' : '#4a5d72'; g.fillRect(x, y, 9, 10); } });
     winTex.repeat.set(3, 6);
     const geo = new THREE.BoxGeometry(1, 1, 1); geo.translate(0, .5, 0);
-    const bm = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({map:winTex}), pts.length), cols = [0xe8d8c0, 0xc9d2dc, 0xd9b8a0, 0xb8c4b0, 0xf0e6d6, 0xa8b4c4].map(c => new THREE.Color(c));
+    const bm = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial(TRK.night ? {map:winTex, emissive:0x8a6a30, emissiveMap:winTex} : {map:winTex}), pts.length), cols = [0xe8d8c0, 0xc9d2dc, 0xd9b8a0, 0xb8c4b0, 0xf0e6d6, 0xa8b4c4].map(c => new THREE.Color(c));
     pts.forEach(([x, z], k) => { M4.compose(V.set(x, 0, z), Q.setFromAxisAngle(UP, Math.round(rnd(4))*Math.PI/2), S.set(rnd(12, 22), rnd(10, 46), rnd(12, 22))); bm.setMatrixAt(k, M4); bm.setColorAt(k, cols[k % cols.length]); });
     bm.castShadow = true; bm.receiveShadow = true; scene.add(bm);
+  } else if(TRK.deco === 'containers'){
+    const geo = new THREE.BoxGeometry(12, 2.6, 2.5); geo.translate(0, 1.3, 0);
+    const cols = [0xc8352a, 0x1f6fd6, 0x2a8a5a, 0xf2b632, 0xe8e8e2, 0x6a4a8a, 0xd8762a].map(c => new THREE.Color(c)), list = [];
+    pts.forEach(([x, z]) => { const hgt = 1 + Math.floor(rnd(3)); for(let y = 0; y < hgt; y++) list.push([x, y*2.6, z]); });
+    const cm2 = new THREE.InstancedMesh(geo, BM(0xffffff), list.length);
+    list.forEach(([x, y, z], k) => { M4.compose(V.set(x, y, z), Q.identity(), S.set(1, 1, 1)); cm2.setMatrixAt(k, M4); cm2.setColorAt(k, cols[Math.floor(rnd(cols.length))]); });
+    cm2.castShadow = cm2.receiveShadow = true; scene.add(cm2);
+    for(let k = 0; k < 4; k++){ const g = new THREE.Group(), x = BOUNDS.x0 - 60 + k*90, z = BOUNDS.z0 - 50; box(g, 1.2, 30, 1.2, BM(0xf2b632), 0, 15, 0); box(g, 30, 1.4, 1.4, BM(0xf2b632), 8, 30, 0); box(g, 3, 3, 3, BM(0x3a3d42), -6, 28, 0); g.position.set(x, 0, z); scene.add(g); bakeStatic(g); }
+  } else if(TRK.deco === 'dunes'){
+    const dm = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 8, 0, TAU, 0, Math.PI/2), new THREE.MeshLambertMaterial({color:0xe2c690}), pts.length);
+    pts.forEach(([x, z, s], k) => { M4.compose(V.set(x, 0, z), Q.setFromAxisAngle(UP, rnd(TAU)), S.set(rnd(18, 34), rnd(4, 10), rnd(12, 24))); dm.setMatrixAt(k, M4); });
+    dm.receiveShadow = true; scene.add(dm);
+  } else if(TRK.deco === 'rocks'){
+    const red = TRK.ground === 'dirt', rm = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshPhongMaterial({color:0xffffff, flatShading:true, shininess:0}), pts.length);
+    const cols = (red ? [0xa8502e, 0x8a4026, 0xc0663a] : [0x8a8e92, 0x6f7377, 0x9a9488]).map(c => new THREE.Color(c));
+    pts.forEach(([x, z, s], k) => { const sc = rnd(1.5, 5)*s; M4.compose(V.set(x, sc*.4, z), Q.setFromAxisAngle(UP, rnd(TAU)), S.set(sc*rnd(1, 1.6), sc*rnd(.6, 1.2), sc)); rm.setMatrixAt(k, M4); rm.setColorAt(k, cols[k % 3]); });
+    rm.castShadow = true; scene.add(rm);
+    if(red) for(let k = 0; k < 9; k++){ const a = k/9*TAU, r = rnd(260, 380), x = BOUNDS.cx + Math.cos(a)*r, z = BOUNDS.cz + Math.sin(a)*r, h = rnd(30, 70), w = rnd(40, 90);
+      for(let l = 0; l < 3; l++){ const m = new THREE.Mesh(new THREE.CylinderGeometry(w*(1 - l*.12) - 4, w*(1 - l*.12), h/3, 9), BM([0xb8603a, 0xa04c2c, 0xc87048][l])); m.position.set(x, h/6 + l*h/3, z); scene.add(m); } }
   } else {
-    const palm = TRK.deco === 'palms';
+    const palm = TRK.deco === 'palms', pine = TRK.deco === 'pines', jungle = TRK.deco === 'jungle', dry = TRK.deco === 'dry';
     const trunk = new THREE.InstancedMesh(new THREE.CylinderGeometry(palm ? .14 : .18, palm ? .22 : .26, palm ? 7 : 3, 6), BM(palm ? 0x8a6a48 : 0x6a4a30), pts.length);
-    const leaf = new THREE.InstancedMesh(palm ? new THREE.ConeGeometry(3, 1.1, 8) : new THREE.IcosahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({color:0xffffff, flatShading:true, shininess:0}), pts.length);
-    const cols = [0x2f6b2a, 0x3d7d31, 0x2a5a2c, 0x4a8a38].map(c => new THREE.Color(c));
+    const leaf = new THREE.InstancedMesh(palm ? new THREE.ConeGeometry(3, 1.1, 8) : pine ? new THREE.ConeGeometry(2.2, 7, 8) : new THREE.IcosahedronGeometry(2.2, 0), new THREE.MeshPhongMaterial({color:0xffffff, flatShading:true, shininess:0}), pts.length);
+    const cols = (pine ? [0x1f4a2a, 0x24522e, 0x1a4226, 0x2c5a34] : dry ? [0x7a8a3a, 0x8a8a44, 0x6a7a3a, 0x9a8c4a] : jungle ? [0x1f5a22, 0x2a6a26, 0x184a1c, 0x2f7a2a] : [0x2f6b2a, 0x3d7d31, 0x2a5a2c, 0x4a8a38]).map(c => new THREE.Color(c));
     pts.forEach(([x, z, s], k) => {
+      if(jungle) s *= 1.4; if(dry) s *= .7;
       M4.compose(V.set(x, (palm ? 3.5 : 1.5)*s, z), Q.identity(), S.set(s, s, s)); trunk.setMatrixAt(k, M4);
-      Q.setFromAxisAngle(UP, rnd(TAU)); M4.compose(V.set(x, (palm ? 7 : 4.1)*s, z), Q, S.set(s, palm ? s*.8 : s*rnd(1, 1.4), s)); leaf.setMatrixAt(k, M4); leaf.setColorAt(k, cols[k & 3]);
+      Q.setFromAxisAngle(UP, rnd(TAU)); M4.compose(V.set(x, (palm ? 7 : pine ? 6 : 4.1)*s, z), Q, S.set(s, palm ? s*.8 : pine ? s : s*rnd(1, 1.4), s)); leaf.setMatrixAt(k, M4); leaf.setColorAt(k, cols[k & 3]);
     });
     trunk.castShadow = leaf.castShadow = true; scene.add(trunk, leaf);
   }
+  if(TRK.lighthouse){ const g = new THREE.Group(); for(let l = 0; l < 6; l++){ const m = new THREE.Mesh(new THREE.CylinderGeometry(3.4 - l*.3, 3.7 - l*.3, 5, 14), BM(l % 2 ? 0xd8261c : 0xf2f2ee)); m.position.y = 2.5 + l*5; g.add(m); }
+    box(g, 4, 3, 4, BM(0x2a2c30), 0, 31.5, 0); const lamp = new THREE.Mesh(new THREE.SphereGeometry(1.4, 12, 8), new THREE.MeshBasicMaterial({color:0xfff2b0})); lamp.position.y = 31.5; g.add(lamp);
+    g.position.set(BOUNDS.x1 + 40, 0, seaZ + 12); scene.add(g); }
+  if(TRK.night){
+    /* postes de iluminação ao longo da pista */
+    const lp = []; for(let i = 0; i < N; i += Math.round(34/DS)){ const sd = (i/Math.round(34/DS)) % 2 ? 1 : -1; lp.push([tp(i, sd*(WALL - .6)), sd, i]); }
+    const pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(.12, .16, 9, 6), BM(0x6a7078), lp.length), head = new THREE.InstancedMesh(new THREE.BoxGeometry(1.6, .25, .6), new THREE.MeshBasicMaterial({color:0xfff1c0}), lp.length);
+    const glowPos = [];
+    lp.forEach(([q, sd, i], k) => { M4.makeTranslation(q.x, 4.5, q.z); pole.setMatrixAt(k, M4); const hx = q.x - RX[i]*sd*.8, hz = q.z - RZ[i]*sd*.8; M4.compose(V.set(hx, 9, hz), Q.setFromAxisAngle(UP, headingAt(i) + Math.PI/2), S.set(1, 1, 1)); head.setMatrixAt(k, M4); glowPos.push(hx, 8.8, hz); });
+    scene.add(pole, head);
+    const gg = new THREE.BufferGeometry(); gg.setAttribute('position', new THREE.Float32BufferAttribute(glowPos, 3));
+    scene.add(new THREE.Points(gg, new THREE.PointsMaterial({map:sparkTex0, size:7, color:0xffd890, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:.8})));
+    /* manchas de luz no asfalto */
+    const pool = new THREE.InstancedMesh(new THREE.CircleGeometry(7, 20), new THREE.MeshBasicMaterial({color:0xffe2a0, transparent:true, opacity:.13, depthWrite:false, blending:THREE.AdditiveBlending}), lp.length);
+    lp.forEach(([q, sd, i], k) => { M4.compose(V.set(q.x - RX[i]*sd*4, .06, q.z - RZ[i]*sd*4), Q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI/2), S.set(1, 1, 1)); pool.setMatrixAt(k, M4); });
+    scene.add(pool);
+  }
+  if(TRK.rain){ TRACKM.asphalt.color.setHex(0x9a9ea6); }
   if(TRK.sea){
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1600, 800), new THREE.MeshPhongMaterial({color:0x2a7fb4, shininess:90, specular:0x9fd0ff, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-2}));
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(1600, 800), new THREE.MeshPhongMaterial({color:TRK.water || 0x2a7fb4, shininess:90, specular:0x9fd0ff, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-2}));
     sea.rotation.x = -Math.PI/2; sea.position.set(BOUNDS.cx, .04, seaZ - 400); scene.add(sea);
     const foam = new THREE.Mesh(new THREE.PlaneGeometry(1600, 3), new THREE.MeshBasicMaterial({color:0xeef6fa, polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-4})); foam.rotation.x = -Math.PI/2; foam.position.set(BOUNDS.cx, .05, seaZ); scene.add(foam);
   }
@@ -1024,14 +1143,14 @@ function stepKart(k, dt, others){
   if(k.slip > .5) vmax *= 1.075;
   if(k.boost > 0){ vmax *= k.boostLvl > 1 ? 1.24 : 1.16; k.boost -= dt; }
   /* acelerador, freio e ré */
-  if(k.thr > 0 && vf < vmax) vf += (KART.acc*k.thr*(1 - Math.max(0, vf)/vmax) + (k.boost > 0 ? 9 : 0))*dt;
+  if(k.thr > 0 && vf < vmax) vf += (KART.acc*(k.accM || 1)*k.thr*(1 - Math.max(0, vf)/vmax) + (k.boost > 0 ? 9 : 0))*dt;
   if(vf > vmax) vf = Math.max(vmax, vf - (k.surf >= 2 ? 22 : 9)*dt);
   if(k.brk > 0){ if(vf > .3) vf = Math.max(0, vf - KART.brake*k.brk*dt); else vf = Math.max(-6, vf - 8*k.brk*dt); }
   if(!(k.thr > 0) && !(k.brk > 0)) vf -= Math.sign(vf)*Math.min(Math.abs(vf), (k.surf >= 2 ? 6 : 2.2)*dt);
   k.vx = fx*vf + rx*vr; k.vz = fz*vf + rz*vr;
   /* direção: raio mínimo limitado pela aderência lateral */
   k.steer += clamp(k.inSteer - k.steer, -5.5*dt, 5.5*dt);
-  const sp = Math.abs(vf), R = Math.max(2.9, sp*sp/KART.lat*(k.surf >= 2 ? 1.6 : 1));
+  const sp = Math.abs(vf), R = Math.max(2.9, sp*sp/(KART.lat*(k.gripM || 1))*(k.surf >= 2 ? 1.6 : 1));
   let yaw;
   if(k.drift){ yaw = k.drift*(.68 + .55*k.steer*k.drift)*sp/(R*.86); if(sp > 8) k.driftT += dt; }
   else yaw = k.steer*vf/R;
@@ -1223,6 +1342,7 @@ function itemsTick(dt){
    CORRIDA
    ===================================================================== */
 let STATE = 'menu';
+const isRace = () => G.mode === 'race' || G.mode === 'career';
 const G = {t:0, raceT:0, countT:0, goAt:0, laps:3, mode:'race', endT:0, results:null, bestLap:store.get('Best' + TKEY, null), ghostRec:[], ghostBest:store.get('Ghost' + TKEY, null), ghostT:0, lastBanner:0};
 const cam = {mode:OPT.cam, shake:0, pos:new THREE.Vector3(), look:new THREE.Vector3(), orbit:0};
 function buildField(){
@@ -1230,9 +1350,10 @@ function buildField(){
   KARTS.length = 0; if(ghost){ scene.remove(ghost.model); ghost = null; }
   const pl = OPT.liv;
   player = makeKart(pl, 7, OPT.name || 'Você', true); player.skill = 1; player.corner = 1; player.err = .4; player.lane = 0;
-  if(G.mode === 'race'){
+  if(G.mode === 'career'){ player.skill = 1 + CAR.up.eng*.022; player.gripM = 1 + CAR.up.tire*.045; player.accM = 1 + CAR.up.acc*.08; }
+  if(isRace()){
     const others = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => i !== pl), nums = [3, 11, 22, 27, 44, 55, 88];
-    const D = DIFF[OPT.diff];
+    const cup = CUPS[CAR.cup], D = G.mode === 'career' ? Object.assign({}, DIFF[cup.diff], {pow:DIFF[cup.diff].pow + cup.pow, corner:DIFF[cup.diff].corner + cup.pow}) : DIFF[OPT.diff];
     others.forEach((li, n) => { const b = makeKart(li, nums[n], BOT_NAMES[n], false); b.skill = D.pow*(1 - n*.006) + rnd(-.01, .01); b.corner = D.corner*(1 - n*.005); b.err = D.err*rnd(.8, 1.2); b.lane = rnd(-1.6, 1.6); KARTS.push(b); });
     KARTS.splice(5, 0, player);
   } else KARTS.push(player);
@@ -1242,12 +1363,12 @@ function buildField(){
 const GHOSTM = new THREE.MeshLambertMaterial({color:0x9fd8ff, transparent:true, opacity:.32, depthWrite:false});
 function startRace(){
   audioInit();
-  G.mode = OPT.mode; G.laps = G.mode === 'race' ? OPT.laps : 99;
+  G.mode = OPT.mode; G.laps = G.mode === 'career' ? 3 : isRace() ? OPT.laps : 99;
   buildField(); clearItems(); buildItemBoxes();
   ['menu', 'end', 'pause', 'how', 'news'].forEach(id => $(id).hidden = true); $('hud').hidden = false;
   STATE = 'count'; G.countT = 0; G.goAt = 3.2 + rnd(.3, 1.1); G.raceT = 0; G.results = null; G.ghostRec = []; G.ghostT = 0;
   $('lights').hidden = false; [...$('lights').children].forEach(l => l.className = ''); setStartLights(0);
-  $('tower').hidden = G.mode !== 'race'; $('posBox').querySelector('.pos').hidden = G.mode !== 'race';
+  $('tower').hidden = !isRace(); $('posBox').querySelector('.pos').hidden = !isRace();
   $('banner').hidden = true;
   cam.pos.set(0, 0, 0); camSnap = true;
   if(!store.get('Tip', false)){ setTimeout(() => { if(STATE === 'race') banner('DRIFT = TURBO', TOUCH ? 'segure DRIFT na curva e solte' : 'segure Espaço na curva e solte', 3500); }, (G.goAt + 2)*1000); store.set('Tip', true); }
@@ -1268,9 +1389,9 @@ function onLap(k){
       if(!ghost && G.ghostBest){ ghost = {model:kartModel(LIVERIES[player.liv], 7)}; ghost.model.traverse(o => { if(o.isMesh){ o.material = GHOSTM; o.castShadow = false; } }); scene.add(ghost.model); }
     }
     if(rec){ SFX.best(); banner(fmt(t), 'melhor volta!', 2200); } else { SFX.lap(); banner(fmt(t), 'volta ' + k.laps, 1600); }
-    if(G.mode === 'race' && k.laps === G.laps - 1) setTimeout(() => banner('ÚLTIMA VOLTA', '', 1600), 1700);
+    if(isRace() && k.laps === G.laps - 1) setTimeout(() => banner('ÚLTIMA VOLTA', '', 1600), 1700);
   }
-  if(G.mode === 'race' && k.laps >= G.laps && !k.finished){
+  if(isRace() && k.laps >= G.laps && !k.finished){
     k.finished = true; k.finishT = G.raceT;
     if(k.isPlayer){ STATE = 'done'; G.endT = 0; const p = placeOf(player); banner(p === 1 ? 'VITÓRIA!' : p + 'º LUGAR', 'bandeira quadriculada', 2600); (p <= 3 ? SFX.win : SFX.lose)(); }
   }
@@ -1287,13 +1408,42 @@ function endRace(){
   });
   rows.sort((a, b) => a.t - b.t);
   const lead = rows[0].t, p = rows.findIndex(r => r.k === player) + 1;
-  $('endK').textContent = TRK.n + ' · ' + G.laps + ' voltas · ' + ['Amador', 'Piloto', 'Profissional'][OPT.diff];
+  $('endK').textContent = TRK.n + ' · ' + G.laps + ' voltas · ' + (G.mode === 'career' ? CUPS[CAR.cup].n + ' · etapa ' + (CAR.race + 1) + '/5' : ['Amador', 'Piloto', 'Profissional'][OPT.diff]);
   $('endT').innerHTML = p === 1 ? 'VITÓRIA <span>· 1º LUGAR</span>' : p + 'º <span>LUGAR</span>';
   $('endTable').innerHTML = rows.map((r, i) => `<tr class="${r.k === player ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${r.k.css}"></i>${esc(r.k.name)}</td><td class="t">${i === 0 ? fmt(r.t) : '+' + (r.t - lead).toFixed(2) + 's'}</td><td class="t">${r.k.best ? fmt(r.k.best) : '—'}</td></tr>`).join('');
   const st = store.get('Stats', {races:0, wins:0, pods:0});
   st.races++; if(p === 1) st.wins++; if(p <= 3) st.pods++; store.set('Stats', st);
   $('endStats').innerHTML = `<span class="chip">🏁 ${st.races} corridas</span><span class="chip">🏆 ${st.wins} vitórias</span><span class="chip">🥉 ${st.pods} pódios</span>` + (G.bestLap ? `<span class="chip">⏱ recorde ${fmt(G.bestLap)}</span>` : '');
+  $('careerEnd').innerHTML = ''; $('btnAgain').textContent = 'Correr de novo';
+  if(G.mode === 'career') careerResult(rows.map(r => r.k), p);
   $('end').hidden = false; $('hud').hidden = true; $('btnAgain').focus({preventScroll:true});
+}
+/* pontos, prêmio e fim de campeonato */
+function careerResult(ord, p){
+  const cup = CUPS[CAR.cup];
+  ord.forEach((k, i) => { CAR.pts[k.name] = (CAR.pts[k.name] || 0) + POINTS[i]; });
+  const prize = PRIZE[p - 1]; CAR.coins += prize; CAR.race++;
+  const tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você', pos = tab.findIndex(e => e[0] === me) + 1;
+  const css = n => (KARTS.find(k => k.name === n) || {}).css || '#888';
+  let html = `<h3>${esc(cup.n)} · classificação após a etapa ${CAR.race}/5</h3><table class="res">` + tab.map((e, i) => `<tr class="${e[0] === me ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${css(e[0])}"></i>${esc(e[0])}</td><td class="t">${e[1]} pts</td></tr>`).join('') + '</table>';
+  let chips = `<span class="chip">🪙 +${prize} moedas (total ${CAR.coins})</span><span class="chip">+${POINTS[p - 1]} pontos</span>`;
+  if(CAR.race >= 5){
+    const t = CAR.trophies[CAR.cup]; if(!t || pos < t) CAR.trophies[CAR.cup] = pos;
+    const next = pos <= 3 && CAR.cup + 1 < CUPS.length;
+    if(next && CAR.unlocked < CAR.cup + 2) CAR.unlocked = CAR.cup + 2;
+    html = `<div class="trophy">${pos === 1 ? '🏆' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏁'} <b>${esc(cup.n)}: ${pos}º no campeonato</b><span>${pos <= 3 ? (next ? 'Próximo campeonato liberado: ' + esc(CUPS[CAR.cup + 1].n) + '!' : CAR.cup + 1 >= CUPS.length ? 'Você é campeão do Mundial Pulse!' : 'Pódio no campeonato!') : 'Termine no pódio (top 3) para liberar o próximo campeonato.'}</span></div>` + html;
+    if(pos === 1) SFX.win();
+    CAR.race = 0; CAR.pts = {}; if(next) CAR.cup++;
+    $('btnAgain').textContent = next ? 'Próximo campeonato' : 'Recomeçar campeonato';
+  } else $('btnAgain').textContent = 'Próxima etapa';
+  saveCar();
+  $('careerEnd').innerHTML = html; $('endStats').innerHTML = chips + $('endStats').innerHTML;
+}
+/* a pista é montada no carregamento: se a etapa é em outra pista, recarrega e começa sozinho */
+function careerGo(){
+  const ti = CUPS[CAR.cup].ti[CAR.race];
+  if(ti !== (OPT.track || 0)){ OPT.track = ti; OPT.mode = 'career'; saveOpt(); store.set('Auto', 1); location.reload(); return; }
+  startRace();
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
 let bannerT = 0;
@@ -1377,9 +1527,9 @@ function pauseOff(){ STATE = G.prevState || 'race'; $('pause').hidden = true; }
 $('btnResume').addEventListener('click', pauseOff);
 $('btnRestart').addEventListener('click', startRace);
 $('btnQuit').addEventListener('click', toMenu);
-$('btnAgain').addEventListener('click', startRace);
+$('btnAgain').addEventListener('click', () => G.mode === 'career' ? careerGo() : startRace());
 $('btnMenu').addEventListener('click', toMenu);
-$('btnPlay').addEventListener('click', startRace);
+$('btnPlay').addEventListener('click', () => OPT.mode === 'career' ? careerGo() : startRace());
 $('btnHow').addEventListener('click', () => { $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
 $('howClose').addEventListener('click', () => { $('how').hidden = true; });
 document.addEventListener('visibilitychange', () => { if(document.hidden && (STATE === 'race' || STATE === 'count')) pauseOn(); });
@@ -1390,21 +1540,31 @@ function seg(id, key, conv = v => v){
   el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT[key] = conv(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); if(key === 'mode' || key === 'liv'){ G.mode = OPT.mode; buildField(); } });
 }
 $('optLiv').innerHTML = LIVERIES.map((L, i) => `<button data-v="${i}" aria-pressed="false" style="min-width:0;flex:0 0 auto;padding:8px 12px"><i style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${L.css};vertical-align:-2px"></i><span> ${L.n}</span></button>`).join('');
-$('optTrack').innerHTML = TRACKS.map((t, i) => `<button data-v="${i}" aria-pressed="false">${t.n}<small>${t.d}</small></button>`).join('');
-$('optTrack').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || Number(b.dataset.v) === (OPT.track || 0)) return; OPT.track = Number(b.dataset.v); saveOpt(); location.reload(); });
+$('optTrackSel').addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
+$('optCup').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const c = Number(b.dataset.v); if(c !== CAR.cup){ CAR.cup = c; CAR.race = 0; CAR.pts = {}; saveCar(); } SFX.click(); renderMenu(); });
+$('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr) return; CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.click(); renderMenu(); });
 $('menuKick').textContent = 'Circuito ' + TRK.n + ' · 125cc';
 seg('optItems', 'items', Number); seg('optMode', 'mode'); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
 function renderMenu(){
-  [...$('optTrack').children].forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.v) === (OPT.track || 0))));
+  $('optTrackSel').innerHTML = [{n:'Pistas livres', ti:[0, 1, 2]}].concat(CUPS).map(c => `<optgroup label="${c.n}">` + c.ti.filter(i => c.n !== 'Pistas livres' ? i > 2 : true).map(i => `<option value="${i}" ${trackUnlocked(i) ? '' : 'disabled'} ${i === (OPT.track || 0) ? 'selected' : ''}>${trackUnlocked(i) ? '' : '🔒 '}${TRACKS[i].n} · ${TRACKS[i].d}</option>`).join('') + '</optgroup>').join('');
+  const car = OPT.mode === 'career'; $('careerBox').hidden = !car; $('trackRow').hidden = car;
+  if(car){
+    $('optCup').innerHTML = CUPS.map((c, i) => `<button data-v="${i}" aria-pressed="${i === CAR.cup}" ${i < CAR.unlocked ? '' : 'disabled style="opacity:.45"'}>${i < CAR.unlocked ? '' : '🔒 '}${c.n}<small>${CAR.trophies[i] ? ['', '🏆 campeão', '🥈 2º', '🥉 3º'][CAR.trophies[i]] || CAR.trophies[i] + 'º' : c.d}</small></button>`).join('');
+    const cup = CUPS[CAR.cup], tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você', mp = tab.findIndex(e => e[0] === me);
+    $('cInfo').innerHTML = `Etapa <b>${CAR.race + 1}/5</b>: <b>${TRACKS[cup.ti[CAR.race]].n}</b> · 3 voltas<br>` + cup.ti.map((ti, k) => (k < CAR.race ? '✔ ' : k === CAR.race ? '▶ ' : '· ') + TRACKS[ti].n).join(' &nbsp; ') + (tab.length ? `<br>Você: <b>${mp + 1}º</b> com ${CAR.pts[me] || 0} pts · líder ${esc(tab[0][0])} (${tab[0][1]} pts)` : '');
+    $('cCoins').textContent = '🪙 ' + CAR.coins;
+    $('optUp').innerHTML = UPG.map(u => { const lv = CAR.up[u.k], pr = UPRICE[lv]; return `<button data-v="${u.k}" aria-pressed="false" ${lv >= 3 || CAR.coins < pr ? 'disabled style="opacity:.6"' : ''}>${u.n} ${'●'.repeat(lv)}${'○'.repeat(3 - lv)}<small>${lv >= 3 ? 'máximo' : '🪙 ' + pr + ' · ' + u.d}</small></button>`; }).join('');
+    $('btnPlay').textContent = 'Correr etapa ' + (CAR.race + 1);
+  } else $('btnPlay').textContent = 'Correr';
   for(const [id, key] of [['optItems', 'items'], ['optMode', 'mode'], ['optLaps', 'laps'], ['optDiff', 'diff'], ['optLiv', 'liv']]) [...$(id).children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v) === String(OPT[key])));
-  $('raceOpts').hidden = OPT.mode !== 'race';
+  $('raceOpts').hidden = OPT.mode !== 'race'; if(OPT.mode === 'tt') $('trackRow').hidden = false;
   const st = store.get('Stats', {races:0, wins:0, pods:0}), out = [];
   if(G.bestLap) out.push('⏱ melhor volta ' + fmt(G.bestLap)); if(st.races) out.push('🏁 ' + st.races + ' corridas'); if(st.wins) out.push('🏆 ' + st.wins + ' vitórias');
   $('menuStats').innerHTML = out.map(t => `<span class="chip">${t}</span>`).join('');
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.2';
+const VERSION = '1.3';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') $('btnPlay').focus({preventScroll:true}); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -1438,14 +1598,14 @@ function hud(dt){
   $('dlv').textContent = P.boost > 0 ? 'TURBO!' : P.drift ? (P.driftT >= 1.25 ? 'laranja' : P.driftT >= .55 ? 'azul' : '...') : 'turbo';
   const tg = $('tag'); tg.classList.toggle('on', P.slip > .5 && STATE === 'race'); tg.classList.add('slip');
   $('wrong').hidden = !(P.wrong > 1.2 && STATE === 'race');
-  const ib = $('itemBox'), on = G.mode === 'race' && !!OPT.items; ib.hidden = !on; $('tItem').hidden = !on;
+  const ib = $('itemBox'), on = isRace() && !!OPT.items; ib.hidden = !on; $('tItem').hidden = !on;
   if(on){ const ic = P.itemRoll > 0 ? ITEM_ICON[['turbo', 'oleo', 'missil', 'escudo'][Math.floor(G.t*12) % 4]] : P.item ? ITEM_ICON[P.item] : ''; if($('itemIc').textContent !== ic) $('itemIc').textContent = ic; $('itemN').textContent = P.itemRoll > 0 ? '...' : P.item ? ITEM_NAME[P.item] : P.shield > 0 ? 'escudo ativo' : 'vazio'; }
   hudT -= dt; if(hudT > 0) return; hudT = .12;
   const lapNow = Math.min(G.laps, P.laps + 1);
-  $('lap').textContent = G.mode === 'race' ? lapNow + '/' + G.laps : String(P.laps + 1);
+  $('lap').textContent = isRace() ? lapNow + '/' + G.laps : String(P.laps + 1);
   $('tCur').textContent = STATE === 'count' ? '0:00.00' : fmt(G.raceT - P.lapStart);
   $('tLast').textContent = fmt(P.lapTimes[P.lapTimes.length - 1]); $('tBest').textContent = fmt(G.bestLap);
-  if(G.mode === 'race'){
+  if(isRace()){
     const ord = order(), p = ord.indexOf(P) + 1; $('pos').innerHTML = p + '<small>/' + ord.length + '</small>';
     const lead = ord[0];
     $('tower').innerHTML = ord.map((k, i) => { const gap = i === 0 ? 'líder' : k.finished ? '🏁' : '+' + ((lead.prog - k.prog)*DS/Math.max(10, Math.abs(k.vf) || 20)).toFixed(1); return `<div class="${k === P ? 'me' : ''}"><span>${i + 1}</span><i style="background:${k.css}"></i><span>${esc(k.name)}</span><em>${gap}</em></div>`; }).join('');
@@ -1526,6 +1686,18 @@ function step(dt){
   for(let i = 0; i < FLAGS.length; i++) FLAGS[i].rotation.y = Math.sin(G.t*6 + i)*.35;
   if(STATE !== 'menu' && STATE !== 'pause') hud(dt);
 }
+const RAIN = TRK.rain ? (() => {
+  const n = TOUCH ? 700 : 1400, pos = new Float32Array(n*6), g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:0xc8d6e4, transparent:true, opacity:.45})); m.frustumCulled = false; scene.add(m);
+  for(let i = 0; i < n; i++){ const x = rnd(-35, 35), y = rnd(0, 22), z = rnd(-35, 35); pos.set([x, y, z, x + .05, y - .7, z], i*6); }
+  return {n, pos, g, m};
+})() : null;
+function rainTick(dt){
+  if(!RAIN) return; const p = RAIN.pos, cx = camera.position.x, cz = camera.position.z;
+  for(let i = 0; i < RAIN.n; i++){ const o = i*6; let y = p[o + 1] - 26*dt; if(y < 0){ y = rnd(16, 22); p[o] = cx + rnd(-35, 35); p[o + 2] = cz + rnd(-35, 35); } else if(Math.abs(p[o] - cx) > 36 || Math.abs(p[o + 2] - cz) > 36){ p[o] = cx + rnd(-35, 35); p[o + 2] = cz + rnd(-35, 35); }
+    p[o + 1] = y; p[o + 3] = p[o] + .05; p[o + 4] = y - .7; p[o + 5] = p[o + 2]; }
+  RAIN.g.attributes.position.needsUpdate = true;
+}
 let last = performance.now();
 function frame(now){
   requestAnimationFrame(frame);
@@ -1534,12 +1706,14 @@ function frame(now){
   updateCamera(dt);
   const f = player || {x:PX[0], z:PZ[0]};
   sun.position.set(f.x + SUN_OFF.x, SUN_OFF.y, f.z + SUN_OFF.z); sun.target.position.set(f.x, 0, f.z);
-  audioTick(dt);
+  audioTick(dt); rainTick(dt);
   if(STATE !== 'menu') drawMap();
   renderer.render(scene, camera);
 }
 /* ---------- início ---------- */
+if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CUPS[CAR.cup].ti.includes(OPT.track))){ OPT.track = 0; saveOpt(); location.reload(); }
 G.mode = OPT.mode; buildField(); renderMenu(); setMute(!!OPT.mute); cam.mode = OPT.cam || 0;
+if(store.get('Auto', 0)){ store.set('Auto', 0); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
 resize(); requestAnimationFrame(frame);
 </script>
 </body>
