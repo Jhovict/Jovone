@@ -61,10 +61,13 @@ body[data-st=play] canvas#cv{cursor:none}
 .feed div.msg{color:var(--ink);font-weight:500}
 @keyframes fin{from{opacity:0;transform:translateX(12px)}}
 .xh{position:absolute;left:50%;top:50%;width:0;height:0}
-.xh i{position:absolute;background:var(--xh);box-shadow:0 0 0 1px rgba(0,0,0,.55)}
-.xh .t,.xh .b{width:2px;height:9px;left:-1px} .xh .l,.xh .r{width:9px;height:2px;top:-1px}
-.xh .d{width:2px;height:2px;left:-1px;top:-1px}
+.xh i{position:absolute;background:var(--xh)}
 .xh.hide{display:none}
+/* prévia da mira nas opções */
+.xhPrev{position:relative;height:84px;border-radius:10px;margin:4px 0 8px;background:linear-gradient(180deg,#9fb4c8 0,#cdb88f 55%,#8a7656 100%)}
+/* enquanto mexe na arma ou na mira, a pausa fica transparente para ver o jogo */
+.overlay.peek{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none}
+.overlay.peek .card{background:rgba(22,30,44,.55)}
 .hitm{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;opacity:0;transition:opacity .12s}
 .hitm::before,.hitm::after{content:"";position:absolute;left:12px;top:-2px;width:2px;height:30px;background:#fff;box-shadow:0 0 2px #000}
 .hitm::before{transform:rotate(45deg)} .hitm::after{transform:rotate(-45deg)}
@@ -364,12 +367,27 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
       <h2>PAUSA</h2>
       <div id="optsBox">
         <div class="opt"><label for="oSens">Sensibilidade</label><input type="range" id="oSens" min="20" max="300" step="5"><output id="oSensV"></output></div>
-        <div class="opt"><label for="oFov">Campo de visão</label><input type="range" id="oFov" min="60" max="100" step="1"><output id="oFovV"></output></div>
+        <div class="opt"><label for="oFov">Campo de visão</label><input type="range" id="oFov" min="60" max="110" step="1"><output id="oFovV"></output></div>
         <div class="opt"><label for="oSfx">Efeitos</label><input type="range" id="oSfx" min="0" max="100" step="5"><output id="oSfxV"></output></div>
         <div class="opt"><label for="oMus">Música</label><input type="range" id="oMus" min="0" max="100" step="5"><output id="oMusV"></output></div>
         <div class="opt"><label for="oQ">Gráficos</label><select id="oQ"><option value="0">Leve</option><option value="1">Médio</option><option value="2">Alto</option></select><span></span></div>
-        <div class="opt"><label for="oXh">Mira</label><select id="oXh"><option value="#5dff9e">Verde</option><option value="#4af0ff">Ciano</option><option value="#ffffff">Branca</option><option value="#ffe14a">Amarela</option><option value="#ff4ad2">Rosa</option></select><span></span></div>
         <div class="opt"><label for="oName">Seu nome</label><input type="text" id="oName" maxlength="14"><span></span></div>
+        <h3>Mira</h3>
+        <div class="xhPrev" aria-hidden="true"><div class="xh" id="xhP"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="seg" id="xhPre" style="margin-bottom:6px"><button type="button" data-p="0">Padrão</button><button type="button" data-p="1">Fina</button><button type="button" data-p="2">Pontinho</button><button type="button" data-p="3">Grande</button></div>
+        <div class="opt"><label for="oXh">Cor</label><select id="oXh"><option value="#5dff9e">Verde</option><option value="#4af0ff">Ciano</option><option value="#ffffff">Branca</option><option value="#ffe14a">Amarela</option><option value="#ff4ad2">Rosa</option><option value="#ff3b3b">Vermelha</option></select><span></span></div>
+        <div class="opt"><label for="oXhLen">Tamanho</label><input type="range" id="oXhLen" min="0" max="20" step="1"><output id="oXhLenV"></output></div>
+        <div class="opt"><label for="oXhThick">Espessura</label><input type="range" id="oXhThick" min="1" max="6" step="1"><output id="oXhThickV"></output></div>
+        <div class="opt"><label for="oXhGap">Espaço</label><input type="range" id="oXhGap" min="-3" max="12" step="1"><output id="oXhGapV"></output></div>
+        <div class="opt"><label for="oXhDot">Ponto central</label><select id="oXhDot"><option value="1">Sim</option><option value="0">Não</option></select><span></span></div>
+        <div class="opt"><label for="oXhOut">Contorno</label><select id="oXhOut"><option value="1">Sim</option><option value="0">Não</option></select><span></span></div>
+        <div class="opt"><label for="oXhDyn">Abertura</label><select id="oXhDyn"><option value="1">Dinâmica (abre ao andar e atirar)</option><option value="0">Estática</option></select><span></span></div>
+        <h3>Arma na tela</h3>
+        <div class="seg" id="vmPre" style="margin-bottom:6px"><button type="button" data-p="0">Padrão</button><button type="button" data-p="1">Clássica</button><button type="button" data-p="2">Baixa</button><button type="button" data-p="3">Perto</button></div>
+        <div class="opt"><label for="oVmFov">Distância</label><input type="range" id="oVmFov" min="40" max="75" step="1"><output id="oVmFovV"></output></div>
+        <div class="opt"><label for="oVmX">Para o lado</label><input type="range" id="oVmX" min="-2" max="2.5" step=".5"><output id="oVmXV"></output></div>
+        <div class="opt"><label for="oVmY">Altura</label><input type="range" id="oVmY" min="-2" max="2" step=".5"><output id="oVmYV"></output></div>
+        <div class="opt"><label for="oVmZ">Para frente</label><input type="range" id="oVmZ" min="-2" max="2" step=".5"><output id="oVmZV"></output></div>
       </div>
       <div class="row">
         <button class="btn pri" id="btnResume">Continuar</button>
@@ -398,9 +416,17 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.3</div>
-      <h2 id="newsTitle">NOVOS <span>MODELOS</span></h2>
+      <div class="ver" id="newsVer">Versão 1.4</div>
+      <h2 id="newsTitle">MIRA E <span>ARMA</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Mira personalizada</b> nas Opções: cor, tamanho, espessura, espaço, ponto central, contorno e abertura dinâmica ou estática, com prévia e quatro modelos prontos.</li>
+        <li><b>Arma na tela</b> como no CS: distância, para o lado, altura e para frente, com os modelos Padrão, Clássica, Baixa e Perto. Na pausa, a tela clareia enquanto você arrasta para ver a arma.</li>
+        <li><b>Campo de visão</b> agora vai até 110°.</li>
+        <li><b>Corrigido:</b> ao mirar com rifles, submetralhadoras, escopeta e pistolas, a arma não cobre mais a mira; ela se aproxima do centro e abaixa, e o zoom continua.</li>
+        <li><b>Corrigido:</b> quando a Força Tática toda morre com a bomba plantada, a próxima rodada começa normalmente, sem esperar a bomba explodir.</li>
+      </ul>
+      <h3>Versão 1.3 · Novos modelos</h3>
       <ul>
         <li><b>Insurgentes:</b> balaclava preta com fones, moletom camuflado laranja e preto com capuz, colete com porta-carregadores e X laranja, calça cáqui com bolsos, coldre de coxa, joelheiras e coturnos.</li>
         <li><b>Força Tática:</b> farda azul, capacete com fones e microfone, óculos âmbar, máscara preta, colete cinza, cotoveleiras, joelheiras e coldre.</li>
@@ -453,9 +479,20 @@ const store = {
 };
 const TOUCH = (matchMedia && matchMedia('(pointer:coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
 document.body.classList.toggle('touch', TOUCH);
-const OPT = Object.assign({sens:1, fov:78, sfx:.8, mus:.4, q:TOUCH ? 1 : 2, xh:'#5dff9e', name:'Você', mode:'bomb', side:'rnd', diff:1, size:5, mute:false}, store.get('Opt', {}));
+/* mira (xh*) e arma na tela (vm*) configuráveis, no estilo dos comandos de mira e viewmodel do CS */
+const XH_PRE = [{xhLen:9, xhThick:2, xhGap:0, xhDot:1, xhOut:1, xhDyn:1}, {xhLen:6, xhThick:1, xhGap:-1, xhDot:0, xhOut:1, xhDyn:0}, {xhLen:0, xhThick:4, xhGap:0, xhDot:1, xhOut:1, xhDyn:0}, {xhLen:14, xhThick:3, xhGap:3, xhDot:0, xhOut:1, xhDyn:1}];
+const VM_PRE = [{vmFov:54, vmX:0, vmY:0, vmZ:0}, {vmFov:60, vmX:2.5, vmY:0, vmZ:-1.5}, {vmFov:58, vmX:1, vmY:-2, vmZ:-1}, {vmFov:48, vmX:-1, vmY:.5, vmZ:1}];
+const OPT = Object.assign({sens:1, fov:78, sfx:.8, mus:.4, q:TOUCH ? 1 : 2, xh:'#5dff9e', name:'Você', mode:'bomb', side:'rnd', diff:1, size:5, mute:false}, XH_PRE[0], VM_PRE[0], store.get('Opt', {}));
 const saveOpt = () => store.set('Opt', OPT);
 document.documentElement.style.setProperty('--xh', OPT.xh);
+let XHV = 0; /* muda a cada ajuste da mira, para o HUD redesenhar */
+/* desenha a mira em el (o HUD ou a prévia) com o espaço central gap, em px */
+function drawXh(el, gap){
+  const L = OPT.xhLen, T = OPT.xhThick, h = Math.floor(T/2), c = el.children, sh = OPT.xhOut ? '0 0 0 1px rgba(0,0,0,.7)' : 'none';
+  const set = (e, w, hh, l, t, on) => { const s = e.style; s.width = w + 'px'; s.height = hh + 'px'; s.left = l + 'px'; s.top = t + 'px'; s.boxShadow = sh; s.display = on ? '' : 'none'; };
+  set(c[0], T, L, -h, -gap - L, L > 0); set(c[1], T, L, -h, gap, L > 0); set(c[2], L, T, -gap - L, -h, L > 0); set(c[3], L, T, gap, -h, L > 0);
+  set(c[4], T, T, -h, -h, !!OPT.xhDot);
+}
 
 /* ---------- renderizador ---------- */
 const cv = $('cv'), stage = $('stage');
@@ -471,7 +508,7 @@ const camera = new THREE.PerspectiveCamera(OPT.fov, 1, .05, 600);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 const vmScene = new THREE.Scene();
-const vmCam = new THREE.PerspectiveCamera(54, 1, .01, 10);
+const vmCam = new THREE.PerspectiveCamera(OPT.vmFov, 1, .01, 10);
 const hemi = new THREE.HemisphereLight(0xd3e3ff, 0x9c7a52, .66); scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff0d4, .98);
 const SUN_OFF = new THREE.Vector3(-46, 88, 34);
@@ -2500,11 +2537,14 @@ function onViewShot(w){
 }
 function onViewThrow(){ VM.throwK = 1; }
 function updateVM(dt){
-  const show = STATE === 'play' && player && player.alive && !player.scope && !cam.third;
+  const show = (STATE === 'play' || STATE === 'pause') && player && player.alive && !player.scope && !cam.third;
   VM.root.visible = show; if(!show || !VM.model) return;
-  const id = curId(player), w = W[id], k = w.kind, base = VMBASE[k] || VMBASE.rifle;
+  const id = curId(player), w = W[id], k = w.kind, b0 = VMBASE[k] || VMBASE.rifle;
+  /* posição escolhida nas opções (Arma na tela) */
+  const base = [b0[0] + OPT.vmX*.018, b0[1] + OPT.vmY*.016, b0[2] + OPT.vmZ*.03];
   VM.aimK += ((player.aim && k !== 'knife' && k !== 'nade' ? 1 : 0) - VM.aimK)*Math.min(1, dt*12);
-  const ads = [0, -(w.ads || .08), k === 'pistol' ? -.31 : -.36];
+  /* mirando: a arma chega mais perto do centro e abaixa um pouco, sem cobrir a mira (o zoom vem do campo de visão) */
+  const ads = [base[0]*.45, base[1] - .025, base[2]*.92];
   let x = lerp(base[0], ads[0], VM.aimK), y = lerp(base[1], ads[1], VM.aimK), z = lerp(base[2], ads[2], VM.aimK);
   let rx = 0, ry = k === 'sniper' ? .16*(1 - VM.aimK) : 0, rz = k === 'sniper' ? -.04*(1 - VM.aimK) : 0;
   /* balanço ao andar e inércia ao girar */
@@ -2847,7 +2887,8 @@ function updateRound(dt){
       if(b.timer <= 0) explodeBomb();
     }
   }
-  if(G.phase === 'end' && G.phaseT >= 5.5 && !(G.bomb.state === 'planted')){
+  /* a próxima rodada começa 5,5 s depois do fim, mesmo com a bomba ainda plantada (ex.: Força Tática eliminada) */
+  if(G.phase === 'end' && G.phaseT >= 5.5){
     if(G.winner) endMatch();
     else { if(G.swapPending) swapSides(); startRound(); }
   }
@@ -3028,9 +3069,8 @@ function hud(){
   setC('xh', 'hide', !player.alive || scoped || w.kind === 'sniper' && !player.aim && false);
   if(player.alive){
     const inacc = w.kind === 'knife' || w.kind === 'nade' ? .01 : inaccuracy(player, w) + player.recP*.15;
-    const gap = Math.round(clamp(inacc*(stage.clientHeight/(2*Math.tan(cam.fov*Math.PI/360))), 2, 70) + 3);
-    if(hc.gap !== gap){ hc.gap = gap; const x = $('xh').children;
-      x[0].style.top = (-gap - 9) + 'px'; x[1].style.top = gap + 'px'; x[2].style.left = (-gap - 9) + 'px'; x[3].style.left = gap + 'px'; }
+    const gap = Math.max(0, (OPT.xhDyn ? Math.round(clamp(inacc*(stage.clientHeight/(2*Math.tan(cam.fov*Math.PI/360))), 2, 70)) : 2) + 3 + OPT.xhGap);
+    const key = gap + ':' + XHV; if(hc.gap !== key){ hc.gap = key; drawXh($('xh'), gap); }
   }
   $('flashov').style.opacity = player.alive ? clamp(player.blind/1.6, 0, 1) : 0;
   /* espectador */
@@ -3265,6 +3305,25 @@ function syncOpts(){
   $('oSfx').value = Math.round(OPT.sfx*100); $('oSfxV').textContent = Math.round(OPT.sfx*100) + '%';
   $('oMus').value = Math.round(OPT.mus*100); $('oMusV').textContent = Math.round(OPT.mus*100) + '%';
   $('oQ').value = OPT.q; $('oXh').value = OPT.xh; $('oName').value = OPT.name;
+  const sg = v => (v > 0 ? '+' : '') + v;
+  $('oXhLen').value = OPT.xhLen; $('oXhLenV').textContent = OPT.xhLen; $('oXhThick').value = OPT.xhThick; $('oXhThickV').textContent = OPT.xhThick;
+  $('oXhGap').value = OPT.xhGap; $('oXhGapV').textContent = sg(OPT.xhGap);
+  $('oXhDot').value = OPT.xhDot ? 1 : 0; $('oXhOut').value = OPT.xhOut ? 1 : 0; $('oXhDyn').value = OPT.xhDyn ? 1 : 0;
+  $('oVmFov').value = OPT.vmFov; $('oVmFovV').textContent = OPT.vmFov + '°';
+  for(const k of ['X', 'Y', 'Z']){ $('oVm' + k).value = OPT['vm' + k]; $('oVm' + k + 'V').textContent = sg(OPT['vm' + k]); }
+  const same = (P, keys) => [...$(P).children].forEach(b => b.setAttribute('aria-pressed', String(keys[+b.dataset.p] && Object.keys(keys[+b.dataset.p]).every(k => +OPT[k] === keys[+b.dataset.p][k]))));
+  same('xhPre', XH_PRE); same('vmPre', VM_PRE);
+  XHV++; drawXh($('xhP'), 5 + OPT.xhGap);
+  if(vmCam.fov !== OPT.vmFov){ vmCam.fov = OPT.vmFov; vmCam.updateProjectionMatrix(); }
+}
+/* sliders e seletores da mira e da arma na tela */
+for(const [id, key, num] of [['oXhLen', 'xhLen'], ['oXhThick', 'xhThick'], ['oXhGap', 'xhGap'], ['oXhDot', 'xhDot'], ['oXhOut', 'xhOut'], ['oXhDyn', 'xhDyn'], ['oVmFov', 'vmFov'], ['oVmX', 'vmX'], ['oVmY', 'vmY'], ['oVmZ', 'vmZ']])
+  $(id).addEventListener($(id).tagName === 'SELECT' ? 'change' : 'input', e => { OPT[key] = +e.target.value; syncOpts(); saveOpt(); });
+for(const [P, list] of [['xhPre', XH_PRE], ['vmPre', VM_PRE]]) $(P).addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; Object.assign(OPT, list[+b.dataset.p]); syncOpts(); saveOpt(); });
+/* ao arrastar um ajuste da arma na pausa, a tela clareia para ver o resultado */
+for(const id of ['oVmFov', 'oVmX', 'oVmY', 'oVmZ', 'oFov']){
+  $(id).addEventListener('pointerdown', () => $('pause').classList.add('peek'));
+  for(const ev of ['pointerup', 'pointercancel', 'change']) $(id).addEventListener(ev, () => $('pause').classList.remove('peek'));
 }
 $('oSens').addEventListener('input', e => { OPT.sens = e.target.value/100; syncOpts(); });
 $('oFov').addEventListener('input', e => { OPT.fov = +e.target.value; cam.fov = OPT.fov; camera.fov = OPT.fov; camera.updateProjectionMatrix(); syncOpts(); });
@@ -3279,7 +3338,7 @@ $('btnPlay').addEventListener('click', () => { audioInit(); goFull(); startMatch
 $('btnAgain').addEventListener('click', () => { audioInit(); startMatch(); });
 $('btnMenu').addEventListener('click', toMenu);
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.3';
+const VERSION = '1.4';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); }
 $('newsVer').textContent = 'Versão ' + VERSION;
