@@ -82,10 +82,13 @@ Plataforma 2D em HTML5 Canvas e JavaScript puro, sem imagens nem arquivos de som
 - **Sem vidas:** ao cair ou tocar um perigo, volta ao último farol mantendo os itens.
 - **Estrelas:** concluir, coletar 80% dos cristais e pegar os 3 núcleos.
 - **Controles:** teclado (← → / A D, Espaço / ↑ / W pula — segure para ir mais alto, P/Esc pausa, R reinicia, M som), controle (direcional ou analógico, A pula e confirma, Start pausa, Select reinicia) e botões de toque no celular.
-- O menu de pausa tem **Voltar aos jogos**; na tela de título, o link **‹ Jogos** volta ao launcher.
+- **Abertura padrão Jovone Games** (`shared/menu.js`): título, menu principal (Jogar, Como jogar, Troféus), Som, Tela cheia e Novidades da versão (abre sozinha quando muda).
+- **Troféus (10):** Primeira missão, Garimpeiro, Trio de núcleos, Três estrelas, Pés firmes, Pisoteio, Caça-ácaros (25), Veloz (< 1:30), Veterano (5 missões) e Missão perfeita; recordes de tempo, missões, cristais, ácaros, partidas e quedas.
+- Vibração do controle nas pancadas, som desligado salvo, tecla `F` para tela cheia e aviso para deitar o celular.
+- O menu de pausa tem **Menu inicial** e **Voltar aos jogos**; no menu principal, o link **‹ Jogos** volta ao launcher.
 - Código em `space-explorer/js/` (`level.js` monta a fase; `config.js` ajusta a física). Detalhes em `space-explorer/README.md`.
 
-Salva o melhor tempo no `localStorage` (`spaceExplorer.best.saturn`).
+Salva no `localStorage` com o prefixo `spaceExplorer` (melhor tempo, estatísticas e troféus, som, versão vista). Código do menu em `space-explorer/js/front.js` e do progresso em `js/progress.js`.
 
 ## Como adicionar um jogo
 

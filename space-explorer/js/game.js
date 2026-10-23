@@ -34,11 +34,42 @@
   I.bindTouch(document);
   I.bindCanvas(canvas, toLogical);
 
-  // O áudio só pode começar depois de um gesto do usuário
-  I.onGesture(function () {
-    A.init();
-    A.startMusic();
-  });
+  // O áudio só pode começar depois de um gesto do usuário (inclusive nos menus HTML, que capturam as teclas)
+  function audioOn() { A.init(); A.startMusic(); }
+  I.onGesture(audioOn);
+  window.addEventListener('keydown', audioOn, true);
+  window.addEventListener('pointerdown', audioOn, true);
+
+  // Som desligado fica salvo
+  const MUTE_KEY = 'spaceExplorer.mute';
+  try { if (localStorage.getItem(MUTE_KEY) === '1') A.toggleMute(); } catch (e) {}
+  function toggleMute() { const m = A.toggleMute(); try { localStorage.setItem(MUTE_KEY, m ? '1' : '0'); } catch (e) {} return m; }
+
+  // Tela cheia (tecla F, menu ou pausa) e celular deitado
+  const stageEl = document.getElementById('stage');
+  function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      const el = document.documentElement;
+      const p = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen();
+      if (p && p.then) p.then(function () { try { screen.orientation.lock('landscape').catch(function () {}); } catch (e) {} }).catch(function () {});
+    } catch (e) {}
+  }
+  window.addEventListener('keydown', function (e) { if (e.code === 'KeyF' && !(window.JovoneFront && JovoneFront.active)) toggleFullscreen(); });
+
+  // Vibração do controle nos impactos
+  const RUMBLE = { hurt: [220, 0.9, 0.7], stomp: [90, 0.5, 0.4], core: [140, 0.3, 0.6], pad: [120, 0.4, 0.3], crumble: [70, 0.3, 0.2], win: [260, 0.4, 0.6] };
+  const playSfx = A.play;
+  A.play = function (name, arg) {
+    playSfx(name, arg);
+    const r = RUMBLE[name];
+    if (!r || !navigator.getGamepads) return;
+    try {
+      const gp = [].slice.call(navigator.getGamepads()).filter(Boolean)[0];
+      const va = gp && gp.vibrationActuator;
+      if (va && va.playEffect) { const q = va.playEffect('dual-rumble', { duration: r[0], strongMagnitude: r[1], weakMagnitude: r[2] }); if (q && q.catch) q.catch(function () {}); }
+    } catch (e) {}
+  };
 
   function loadBest() { try { const v = parseFloat(localStorage.getItem(BEST_KEY)); return isFinite(v) ? v : 0; } catch (e) { return 0; } }
   function saveBest(v) { try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) { /* sem armazenamento */ } }
@@ -50,6 +81,8 @@
   let record = false;
   let acc = 0;
   let pendingJump = false;
+  let novos = [];
+  const FRONT = !!window.JovoneFront;
 
   function toTitle() {
     P.clear();
@@ -59,7 +92,17 @@
     A.setMusicLevel(0.9);
   }
 
+  // Menu principal Jovone Games (title/hub/troféus em HTML por cima da fase animada)
+  function toFront() {
+    if (!FRONT) { toTitle(); return; }
+    if (SE.Progress) SE.Progress.abandon(world);
+    toTitle();
+    state = 'front';
+    JovoneFront.show('hub');
+  }
+
   function newGame() {
+    if (SE.Progress) { SE.Progress.abandon(world); SE.Progress.started(); }
     P.clear();
     world = SE.createWorld(LEVEL);
     state = 'playing';
@@ -84,9 +127,19 @@
   document.addEventListener('visibilitychange', function () { if (document.hidden) pause(); });
 
   toTitle();
+  if (FRONT) state = 'front';
 
   // Acesso para depuração pelo console do navegador
   SE.debug = { get world() { return world; }, get state() { return state; } };
+
+  // Usado pelo menu principal (js/front.js)
+  SE.Game = {
+    play: function () { if (state !== 'front') return; A.play('start'); UI.fadeTo(newGame); },
+    toggleMute: toggleMute,
+    toggleFullscreen: toggleFullscreen,
+    get muted() { return A.muted; },
+    get best() { return best; },
+  };
 
   const NEUTRAL = { move: 0, jumpHeld: false, jumpPressed: false, down: false };
 
@@ -107,10 +160,12 @@
     const dt = Math.min((now - last) / 1000, C.MAX_FRAME);
     last = now;
 
-    if (I.wasHit('mute')) A.toggleMute();
+    if (I.wasHit('mute')) toggleMute();
     UI.update(dt);
 
-    if (state === 'title') {
+    if (state === 'front') {
+      simulate(dt, NEUTRAL);
+    } else if (state === 'title') {
       simulate(dt, NEUTRAL);
       if (!UI.busy && (I.wasHit('confirm') || I.pointer)) {
         A.play('start');
@@ -136,6 +191,7 @@
           const t = world.stats.time;
           record = !best || t < best;
           if (record) { best = t; saveBest(t); }
+          novos = SE.Progress ? SE.Progress.complete(world, best) : [];
         }
       }
     } else if (state === 'paused') {
@@ -143,13 +199,13 @@
       if (I.wasHit('pause') && !UI.busy) pick = 0;
       if (pick === 0) { A.play('ui'); resume(); }
       else if (pick === 1) UI.fadeTo(newGame);
-      else if (pick === 2) UI.fadeTo(toTitle);
+      else if (pick === 2) UI.fadeTo(toFront);
       else if (pick === 3) UI.fadeTo(function () { location.href = '../'; });
     } else if (state === 'complete') {
       simulate(dt, NEUTRAL);
       const pick = UI.completeMenu();
       if (pick === 0) UI.fadeTo(newGame);
-      else if (pick === 1) UI.fadeTo(toTitle);
+      else if (pick === 1) UI.fadeTo(toFront);
     }
 
     // ---------- desenho ----------
@@ -157,13 +213,14 @@
     world.render(ctx);
     const touchOn = isTouch && state === 'playing';
     if (state === 'title') UI.drawTitle(ctx, world.time, best, isTouch);
-    else UI.drawHUD(ctx, world, touchOn);
+    else if (state !== 'front') UI.drawHUD(ctx, world, touchOn);
     if (state === 'paused') UI.drawPause(ctx, world.time);
-    if (state === 'complete') UI.drawComplete(ctx, world, world.time, record);
+    if (state === 'complete') UI.drawComplete(ctx, world, world.time, record, novos);
     UI.drawFade(ctx);
 
     touchEl.classList.toggle('on', state === 'playing');
-    if (voltarEl) voltarEl.classList.toggle('off', state !== 'title');
+    if (voltarEl) voltarEl.classList.toggle('off', !(state === 'title' || (state === 'front' && JovoneFront.active)));
+    document.body.dataset.st = state;
     I.endFrame();
     requestAnimationFrame(frame);
   }

@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Space Explorer — Saturno</title>
+  <meta name="theme-color" content="#07051a">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Chakra+Petch:wght@400;600;700&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -20,6 +22,54 @@
       </div>
       <button data-act="pause" class="tbtn small pause">II</button>
     </div>
+    <div class="girar" aria-hidden="true">↻ Deite o celular para jogar com a tela inteira</div>
+
+    <div class="dlg" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="news-title">
+      <div class="sheet">
+        <p class="kick" id="news-ver">Versão 1.1</p>
+        <h2 id="news-title">Agora no Jovone Games</h2>
+        <h3>Novo</h3>
+        <ul>
+          <li>Abertura padrão dos jogos: tela de título, menu principal (Jogar, Como jogar, Troféus) e Novidades.</li>
+          <li>Galeria com 10 troféus — Garimpeiro, Pés firmes, Pisoteio, Veloz, Missão perfeita e outros — e recordes.</li>
+          <li>Joga com controle: direcional ou analógico, A pula e confirma, Start pausa, Select reinicia; vibra nas pancadas.</li>
+          <li>Opções de som (fica salvo) e tela cheia (botão no menu ou tecla F), e volta ao launcher pelo menu de pausa.</li>
+        </ul>
+        <h3>Versão 1.0 · Lançamento</h3>
+        <ul>
+          <li>Fase 1 em Saturno: placas de gelo, gêiseres, plataformas móveis, espinhos, lasers e ácaros; 53 cristais, 3 núcleos e 3 estrelas.</li>
+        </ul>
+        <button class="ok" type="button" data-close>Entendido</button>
+      </div>
+    </div>
+
+    <div class="dlg" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="sheet">
+        <p class="kick">Manual de bordo</p>
+        <h2 id="help-title">Como jogar</h2>
+        <h3>Missão</h3>
+        <ul>
+          <li>Atravesse o Anel de Gelo até a Estação Anel-9 coletando cristais e os 3 núcleos dourados.</li>
+          <li>Não há vidas: ao cair ou tocar um perigo, o robô volta ao último farol e mantém o que coletou.</li>
+          <li>Estrelas: 1 por terminar, 1 por 80% dos cristais, 1 pelos 3 núcleos.</li>
+        </ul>
+        <h3>Perigos e ajudas</h3>
+        <ul>
+          <li>Espinhos magenta e lasers (espere desligar). Ácaros: pise em cima.</li>
+          <li>Gêiseres lançam para cima; placas de gelo rachadas desabam logo depois de pisar.</li>
+          <li>Bordas de gelo finas: ↓ + pular para descer.</li>
+        </ul>
+        <h3>Controles</h3>
+        <div class="keys">
+          <span>Mover</span><b>← → / A D · direcional · ◀ ▶</b>
+          <span>Pular (segure = mais alto)</span><b>Espaço / ↑ / W · A · ▲</b>
+          <span>Pausar</span><b>P / Esc · Start · II</b>
+          <span>Reiniciar</span><b>R · Select</b>
+          <span>Som · Tela cheia</span><b>M · F</b>
+        </div>
+        <button class="ok" type="button" data-close>Entendido</button>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts clássicos (sem módulos) para funcionar também abrindo o arquivo direto -->
@@ -34,6 +84,10 @@
   <script src="js/player.js"></script>
   <script src="js/world.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/progress.js"></script>
+  <!-- Abertura padrão Jovone Games (precisa vir antes do game.js) -->
+  <script src="../shared/menu.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/front.js"></script>
 </body>
 </html>

@@ -23,7 +23,7 @@ SE.createWorld = function (levelKey) {
     cores: L.cores.map(function (c) { return copy(c, { taken: false }); }),
     checkpoints: L.checkpoints.map(function (c) { return copy(c, { active: false }); }),
     signs: L.signs, decor: L.decor, goal: L.goal,
-    stats: { crystals: 0, cores: 0, falls: 0, time: 0 },
+    stats: { crystals: 0, cores: 0, falls: 0, time: 0, stomps: 0 },
     bump: { crystal: 0, core: 0 },
     respawn: { x: L.spawn.x, y: L.spawn.y },
     respawnT: 0, flash: 0, shake: 0,
@@ -171,6 +171,7 @@ SE.createWorld = function (levelKey) {
         player.jumping = false; player.ground = null;
         player.sx = 0.8; player.sy = 1.2;
         A.play('stomp');
+        W.stats.stomps++;
         P.fx.burst(m.x, m.y - 12, '#ff4d8d', 12, 240);
         P.fx.ring(m.x, m.y - 10, '#ff8ab4', 8, 0.35);
         W.shake = 0.12;

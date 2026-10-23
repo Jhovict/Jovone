@@ -71,3 +71,26 @@ html, body {
 }
 .voltar:hover, .voltar:focus-visible { color: #fff; border-color: #9feaff; outline: none; }
 .voltar.off { display: none; }
+
+/* Abertura Jovone Games (../shared/menu.js) e painéis Novidades / Como jogar */
+#stage { --display: 'Bungee', 'Impact', sans-serif; --body: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif; }
+.dlg { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(7, 5, 26, 0.82); font-family: var(--body); color: #e8fbff; }
+.dlg[hidden] { display: none; }
+.dlg .sheet { width: min(560px, 100%); max-height: 100%; overflow-y: auto; background: #140d33; border: 1px solid rgba(160, 220, 255, 0.35); border-radius: 16px; padding: 18px 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55); }
+.dlg .kick { margin: 0; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; color: #7ff6ff; }
+.dlg h2 { font-family: var(--display); font-weight: 400; margin: 4px 0 6px; font-size: 1.5rem; }
+.dlg h3 { margin: 14px 0 6px; font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: #9fb6d8; }
+.dlg ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.dlg li { position: relative; padding-left: 16px; font-size: 0.9rem; line-height: 1.45; }
+.dlg li::before { content: ""; position: absolute; left: 0; top: 0.5em; width: 7px; height: 7px; border-radius: 2px; background: #ff8a3d; }
+.dlg .keys { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 0.86rem; }
+.dlg .keys span { color: #9fb6d8; }
+.dlg .keys b { font-weight: 600; }
+.dlg .ok { display: block; margin: 16px auto 0; border: 0; border-radius: 999px; padding: 10px 30px; font: 700 0.9rem var(--body); letter-spacing: 0.1em; text-transform: uppercase; background: #7ff6ff; color: #07051a; cursor: pointer; }
+.dlg .ok:hover, .dlg .ok:focus-visible { background: #ffd27a; outline: none; }
+
+/* Dica para deitar o celular durante a partida */
+.girar { display: none; }
+@media (pointer: coarse) and (orientation: portrait) {
+  body[data-st=playing] .girar { display: block; position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6; padding: 6px 14px; border-radius: 999px; background: rgba(20, 13, 51, 0.85); border: 1px solid rgba(160, 220, 255, 0.4); color: #e8fbff; font: 600 13px system-ui, sans-serif; white-space: nowrap; pointer-events: none; }
+}

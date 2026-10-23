@@ -189,7 +189,7 @@ SE.UI = (function () {
     ctx.lineWidth = 3; ctx.strokeStyle = on ? '#8a5a1a' : 'rgba(255,255,255,0.3)'; ctx.stroke();
   }
 
-  function drawComplete(ctx, W, t, record) {
+  function drawComplete(ctx, W, t, record, novos) {
     const k = U.clamp(openT / 0.4, 0, 1);
     ctx.fillStyle = 'rgba(8,5,25,' + (0.6 * k).toFixed(3) + ')'; ctx.fillRect(0, 0, VW, VH);
     ctx.save();
@@ -220,7 +220,12 @@ SE.UI = (function () {
       text(ctx, r[0], VW / 2 - 200, y, 21, '#bcd6f2', 'left', 'normal');
       text(ctx, r[1], VW / 2 + 200, y, 22, '#ffffff', 'right');
     });
-    if (record && c >= 1) text(ctx, 'NOVO RECORDE!', VW / 2, 488, 20, '#7ff6ff');
+    if (c >= 1) {
+      const linhas = [];
+      if (record) linhas.push(['NOVO RECORDE!', '#7ff6ff']);
+      if (novos && novos.length) linhas.push(['🏆 ' + (novos.length === 1 ? 'Novo troféu: ' + novos[0] : novos.length + ' troféus novos — veja na galeria'), '#ffd27a']);
+      linhas.forEach(function (l, i) { text(ctx, l[0], VW / 2, (linhas.length === 2 ? 474 : 488) + i * 28, linhas.length === 2 && i === 1 ? 17 : 20, l[1]); });
+    }
     drawMenu(ctx, doneRects(), t);
     ctx.restore();
   }
