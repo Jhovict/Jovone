@@ -347,9 +347,16 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.6.1</div>
-      <h2 id="newsTitle">CONTROLES DO <span>CELULAR</span></h2>
+      <div class="ver" id="newsVer">Versão 1.7</div>
+      <h2 id="newsTitle">CENÁRIO <span>NOVO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Reta de largada</b> com bandeiras quadriculadas, torres de banner vermelhas e verdes, câmera de TV e radar.</li>
+        <li><b>Áreas do público</b> por fora do alambrado: tendas, bandeiras, luzes coloridas, cones e carros de corrida em exposição.</li>
+        <li><b>Outdoors</b> ao longo da pista e <b>árvores novas</b> nas pistas de campo.</li>
+        <li>Modelos 3D do <b>Racing Kit da Kenney</b> (kenney.nl, domínio público).</li>
+      </ul>
+      <h3>Versão 1.6 · Controles do celular</h3>
       <ul>
         <li><b>Corrigido:</b> bater num adversário não dá mais um "turbo". O empurrão lateral da batida era convertido em velocidade para frente; agora a batida só freia ou empurra até a velocidade máxima.</li>
         <li><b>Controles do celular</b> (no menu principal): arraste cada botão para onde quiser, ajuste o tamanho de cada um e a transparência de todos. Toque em Salvar para guardar ou em Padrão para voltar ao original.</li>
@@ -405,6 +412,7 @@ body.touch .keys{display:none}
   <div class="rotate"><b>Gire o celular</b><span>Pulse Kart se joga na horizontal.</span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -728,7 +736,8 @@ function bakeStatic(g){
   if(ms.length > 1){ const m = bakeMeshes(g, ms, g); m.material = SCENEMAT; m.receiveShadow = true; }
 }
 function box(g, w, h, d, mat, x, y, z, ry = 0){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = true; m.receiveShadow = true; g.add(m); return m; }
-function placeOnTrack(obj, i, d, y = 0){ tp(i, d, y, obj.position); obj.rotation.y = headingAt(i); scene.add(obj); return obj; }
+const PLACED = [];
+function placeOnTrack(obj, i, d, y = 0){ tp(i, d, y, obj.position); obj.rotation.y = headingAt(i); scene.add(obj); PLACED.push(obj); return obj; }
 const START_LIGHTS = [];
 function gantry(i, title, sub, withLights){
   const g = new THREE.Group(), steel = BM(0x9aa1a8), dark = BM(0x2a2e34), span = HW + 2.2;
@@ -892,6 +901,89 @@ const sparkTex0 = canvasTex(64, 64, (g) => { const gr = g.createRadialGradient(3
   }
   const hillM = new THREE.MeshPhongMaterial({color:TRK.ground === 'sand' ? 0x8f9a72 : 0x6f8f62, flatShading:true, shininess:0});
   for(let k = 0; k < 18; k++){ const a = k/18*TAU, r = rnd(520, 600), x = BOUNDS.cx + Math.cos(a)*r, z = BOUNDS.cz + Math.sin(a)*r; if(TRK.sea && z < seaZ) continue; const h = new THREE.Mesh(new THREE.ConeGeometry(rnd(80, 140), rnd(40, 90), 7), hillM); h.position.set(x, 0, z); scene.add(h); }
+})();
+
+/* ---------- cenário Kenney Racing Kit (CC0): modelos .glb carregados depois da pista montada ---------- */
+/* se o carregador ou os arquivos faltarem (ex.: aberto direto do disco), o jogo segue só com o cenário procedural */
+const KENNEY = {}, KYAW = {raceCarRed:Math.PI/2, raceCarWhite:Math.PI/2, raceCarGreen:Math.PI/2, raceCarOrange:Math.PI/2};
+/* modelo achatado em pares geometria+material, com a base no chão e a pegada centrada na origem */
+function kenneyPrep(root){
+  root.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(root), c = bb.getCenter(new THREE.Vector3()), off = new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z), parts = [];
+  root.traverse(o => {
+    if(!o.isMesh) return;
+    const src = Array.isArray(o.material) ? o.material[0] : o.material; if(src.map) src.map.encoding = THREE.LinearEncoding;
+    parts.push([o.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(off, o.matrixWorld)), new THREE.MeshLambertMaterial({color:src.color ? src.color.clone() : 0xffffff, map:src.map || null})]);
+  });
+  return parts;
+}
+function kenneyLoad(names){
+  if(!THREE.GLTFLoader) return Promise.resolve();
+  const ld = new THREE.GLTFLoader();
+  return Promise.all(names.map(n => new Promise(ok => ld.load('kenney/' + n + '.glb', g => { KENNEY[n] = kenneyPrep(g.scene); ok(); }, undefined, () => ok()))));
+}
+/* uma InstancedMesh por peça do modelo; lista de [x, z, giro, escala] */
+function kenneyPlace(name, list){
+  const parts = KENNEY[name]; if(!parts || !list.length) return;
+  const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), S = new THREE.Vector3(), V = new THREE.Vector3(), UP = new THREE.Vector3(0, 1, 0), yaw = KYAW[name] || 0;
+  for(const [g, mat] of parts){
+    const im = new THREE.InstancedMesh(g, mat, list.length);
+    list.forEach(([x, z, ry, s], k) => { M4.compose(V.set(x, 0, z), Q.setFromAxisAngle(UP, ry + yaw), S.set(s, s, s)); im.setMatrixAt(k, M4); });
+    im.castShadow = im.receiveShadow = true; im.frustumCulled = false; scene.add(im);
+  }
+}
+(function kenneyScenery(){
+  const PUT = {}, put = (n, x, z, ry, s) => (PUT[n] = PUT[n] || []).push([x, z, ry, s]);
+  /* área ocupada: construções já postas e o que for sendo colocado aqui */
+  const used = PLACED.map(o => new THREE.Box3().setFromObject(o)), seaZ = BOUNDS.z0 - 70;
+  /* fora do alambrado do próprio trecho (i) e sem invadir nenhum outro trecho da pista */
+  const free = (x, z, r, i) => {
+    for(let j = 0; j < N; j += 2){ const di = Math.abs(i - j), own = Math.min(di, N - di)*DS < 40; if(Math.hypot(PX[j] - x, PZ[j] - z) < WALL + (own ? .9 : 1 + r)) return false; }
+    if(TRK.sea && z < seaZ + 18) return false;
+    return !used.some(b => x > b.min.x - r && x < b.max.x + r && z > b.min.z - r && z < b.max.z + r);
+  };
+  const take = (x, z, r) => used.push(new THREE.Box3(new THREE.Vector3(x - r, 0, z - r), new THREE.Vector3(x + r, 1, z + r)));
+  /* ponto ao lado da pista: t metros ao longo, n metros para fora do alambrado no lado sd; giro com a frente virada para a pista */
+  const at = (i, sd, t, n) => { const x = PX[i] + TX[i]*t + RX[i]*sd*(WALL + 1.2 + n), z = PZ[i] + TZ[i]*t + RZ[i]*sd*(WALL + 1.2 + n); return [x, z]; };
+  const face = (i, sd) => Math.atan2(-sd*RX[i], -sd*RZ[i]);
+  const tryPut = (n, i, sd, t, d, s, r, ry = 0) => { const [x, z] = at(i, sd, t, d); if(!free(x, z, r, i)) return false; put(n, x, z, face(i, sd) + ry, s); take(x, z, r); return true; };
+
+  /* reta de largada: bandeira quadriculada, câmera de TV, radar e torres de banner alternando as cores */
+  const m = 1/DS, ix = mt => wrap(Math.round(mt*m));
+  for(const sd of [-1, 1]) tryPut('flagCheckers', 0, sd, 0, .4, 4, .8);
+  for(const sd of [-1, 1]) if(tryPut('camera_exclusive', ix(10), sd, 0, .6, 6, 1.2)) break;
+  for(const sd of [1, -1]) if(tryPut('radarEquipment', ix(-14), sd, 0, 1.5, 5, 2.5)) break;
+  for(let k = -3; k <= 3; k++) for(const sd of [-1, 1]) tryPut(k & 1 ? 'bannerTowerRed' : 'bannerTowerGreen', ix(k*15 + 5), sd, 0, .8, 6, 1.6);
+
+  /* áreas de público: tendas, bandeiras, luzes coloridas e carros de corrida em exposição */
+  const flags = ['flagRed', 'flagGreen', 'flagTankco'], cars = ['raceCarRed', 'raceCarWhite', 'raceCarGreen', 'raceCarOrange'];
+  let zones = 0;
+  for(let i0 = Math.round(N*.08); i0 < N*.94 && zones < 7; i0 += Math.round(70*m)){
+    for(const sd of (zones & 1 ? [1, -1] : [-1, 1])){
+      let ok = true; for(const t of [-15, 0, 15]) for(const n of [0, 9]){ const [x, z] = at(i0, sd, t, n); if(!free(x, z, 1, i0)) ok = false; }
+      if(!ok) continue;
+      const f = face(i0, sd), P = (n, t, d, s, ry = 0) => { const [x, z] = at(i0, sd, t, d); put(n, x, z, f + ry, s); };
+      P('tentLong', -3, 6, 5); P('tent', 7, 6, 5); P('tent', 13, 6, 5);
+      P(cars[zones & 3], -6, 1.6, 3); P(cars[(zones + 1) & 3], 2, 1.6, 3);
+      for(const t of [-13.5, 16]) P(flags[(zones + (t > 0)) % 3], t, 1, 4, rnd(-.4, .4));
+      for(const t of [-10, -8.5, 5.5, 7]) P('pylon', t, .4, 4);
+      for(const t of [-13, 10]) P('lightColored', t, 9, 5, Math.PI);
+      for(const t of [-15, 0, 15]) for(const n of [0, 4.5, 9]){ const [x, z] = at(i0, sd, t, n); take(x, z, 4); }
+      zones++; break;
+    }
+  }
+
+  /* outdoors por fora do alambrado */
+  let bb = 0; for(let i = Math.round(N*.03); i < N && bb < 8; i += Math.round(45*m)){ const sd = (i >> 4) & 1 ? 1 : -1; if(tryPut('billboard', i, sd, 0, 2, 8, 4.5) || tryPut('billboard', i, -sd, 0, 2, 8, 4.5)) bb++; }
+
+  /* árvores Kenney na faixa entre o alambrado e o mato, nas pistas de campo */
+  if(['trees', 'dry', 'pines', 'jungle'].includes(TRK.deco)) for(let i = 0; i < N; i += Math.round(9*m)) for(const sd of [-1, 1]){
+    if(Math.random() < .45) continue;
+    const big = Math.random() < .55, s = (big ? 6 : 5)*rnd(.85, 1.2)*(TRK.deco === 'dry' ? .8 : 1);
+    tryPut(big ? 'treeLarge' : 'treeSmall', i, sd, rnd(-3, 3), rnd(3, 12), s, 1.5, rnd(TAU));
+  }
+
+  kenneyLoad(Object.keys(PUT)).then(() => { for(const n in PUT) kenneyPlace(n, PUT[n]); });
 })();
 
 /* =====================================================================
@@ -1753,7 +1845,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.6.1';
+const VERSION = '1.7';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;

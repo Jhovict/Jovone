@@ -16,6 +16,7 @@ zona-quente/
   index.html          tiro tático em equipe (estilo CS / Critical Ops) contra bots
 pulse-kart/
   index.html          corrida de kart 3D no circuito Apex Loop
+  kenney/             modelos .glb do Racing Kit da Kenney (CC0)
 ```
 
 ## Pane Seca
@@ -60,6 +61,7 @@ Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) em 25 circu
 - **Kart Pulse:** chassi tubular cromado, para-choque e carenagem frontal com placa de número, sideboxes, banco envolvente, tanque, volante que gira, motor dois tempos com aletas, vela, carburador e caixa de ar, escapamento com câmara de expansão, corrente e coroa, eixo traseiro com freio a disco e pneus traseiros largos. Oito pinturas.
 - **Piloto:** macacão preto com faixas na cor do kart, luvas, botas e capacete com faixas e viseira escura. Ele se inclina e olha para dentro das curvas.
 - **Circuito:** asfalto, faixas brancas, zebras vermelhas e brancas nas curvas, caixas de brita e barreiras de pneus por fora das curvas fortes, alambrado com postes, placas de patrocínio, três pórticos (o da largada com as cinco luzes), muro dos boxes, prédio do paddock com boxes numerados, arquibancadas com torcida, postos de fiscais com bandeira, árvores e morros.
+- **Cenário Kenney:** modelos 3D do [Racing Kit da Kenney](https://kenney.nl/assets/racing-kit) (CC0) em `pulse-kart/kenney/`, carregados com o `GLTFLoader` depois que a pista é montada: bandeiras, torres de banner, câmera de TV e radar na largada, áreas do público com tendas, luzes e carros em exposição, outdoors e árvores. Ficam só por fora do alambrado. Se os `.glb` não carregarem (por exemplo, abrindo o arquivo direto do disco), o jogo segue com o cenário procedural.
 - **Corrida:** 3, 5 ou 8 voltas contra 7 pilotos em três níveis (Amador, Piloto, Profissional), largada com as cinco luzes vermelhas, posição ao vivo, torre de tempos, minimapa e resultado com pódio. Os bots seguem o traçado ideal, freiam antes das curvas, desviam e disputam posição.
 - **Contra o relógio:** voltas livres sozinho; o kart fantasma repete a melhor volta (salva no navegador).
 - **Pilotagem:** aderência limitada pela velocidade, drift (segure na curva para deslizar e fechar mais; não dá turbo), vácuo atrás de outro kart, grama e brita freiam, batidas no alambrado e entre karts (cada kart coberto por dois círculos; colisão entre karts pode ser desligada).
