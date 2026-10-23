@@ -97,7 +97,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   </div>
   <div class="menu" id="menu">
     <h1>PONG</h1>
-    <div class="row"><span class="label">Modo</span>
+    <div class="row" id="row-mode" hidden><span class="label">Modo</span>
       <div class="seg" data-key="mode">
         <button id="opt-mode-ai" data-val="ai">Jogador x CPU</button>
         <button id="opt-mode-two" data-val="two">Dois jogadores</button>
@@ -126,9 +126,14 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   </div>
   <div class="news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="news-title">
     <div class="sheet">
-      <p class="ver" id="news-ver">Versão 1.1</p>
-      <h2 id="news-title">Controle e celular</h2>
+      <p class="ver" id="news-ver">Versão 1.2</p>
+      <h2 id="news-title">Menu novo e troféus</h2>
       <h3>Novo</h3>
+      <ul>
+        <li>Tela de título com "aperte para começar" e menu principal: Contra a CPU, Dois jogadores, Troféus e Novidades.</li>
+        <li>Galeria de troféus: vencer cada dificuldade, partida sem levar ponto, vitória até 21, virada no limite, rali longo e partidas a dois.</li>
+      </ul>
+      <h3>Versão 1.1 · Controle e celular</h3>
       <ul>
         <li>Joga com controle (joypad): analógico ou direcional, Start pausa, Select volta ao menu e o menu inteiro se navega pelo controle.</li>
         <li>Vibração nas rebatidas e dois controles no modo de dois jogadores.</li>
@@ -143,6 +148,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   </div>
 </div>
 
+<script src="../shared/menu.js"></script>
 <script>
 (() => {
   // ---- Padrões. Troque mode para 'two' para começar em dois jogadores. ----
@@ -206,7 +212,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   const left = mkPaddle(PAD_X), right = mkPaddle(W - PAD_X - PAD_W);
   const ball = { x: W / 2, y: H / 2, vx: 0, vy: 0, speed: BASE_SPEED };
   const ai = { timer: 0, targetY: H / 2, errorOffset: 0 };
-  let score = [0, 0], state = 'menu', serveTimer = 0, serveDir = 1, rally = 0, winner = -1, flash = 0;
+  let score = [0, 0], state = 'menu', serveTimer = 0, serveDir = 1, rally = 0, winner = -1, flash = 0, maxRally = 0;
   const keys = {};
 
   function startGame() {
@@ -245,14 +251,13 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     state = 'menu'; menu.hidden = false; syncMenu();
   }
   // ---- Novidades da versão ----
-  const VERSION = '1.1';
+  const VERSION = '1.2';
   const news = document.getElementById('news');
   function openNews() { news.hidden = false; news.firstElementChild.scrollTop = 0; document.getElementById('news-close').focus({ preventScroll: true }); }
-  function closeNews() { news.hidden = true; try { localStorage.setItem('pong_seen', VERSION); } catch (e) {} document.getElementById('start').focus({ preventScroll: true }); }
+  function closeNews() { news.hidden = true; try { localStorage.setItem('pong_seen', VERSION); } catch (e) {} if (window.JovoneFront && JovoneFront.active) JovoneFront.show(JovoneFront.screen); else document.getElementById('start').focus({ preventScroll: true }); }
   document.getElementById('news-ver').textContent = 'Versão ' + VERSION;
   document.getElementById('news-open').addEventListener('click', openNews);
   document.getElementById('news-close').addEventListener('click', closeNews);
-  try { if (localStorage.getItem('pong_seen') !== VERSION) setTimeout(openNews, 400); } catch (e) {}
 
   addEventListener('keydown', e => {
     if (!news.hidden) { if (e.code === 'Escape' || e.code === 'Enter' || e.code === 'Space') { closeNews(); e.preventDefault(); } return; }
@@ -391,7 +396,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
       for (const k in now) pressed[k] = now[k] && !prev[k];
       padPrev[gp.index] = now;
       if (!news.hidden) { if (pressed.A || pressed.START || pressed.SELECT) closeNews(); }
-      else if (state === 'menu') menuStep(gp, pressed);
+      else if (state === 'menu' && !(window.JovoneFront && JovoneFront.active)) menuStep(gp, pressed);
       else if (state === 'win') { if (pressed.A || pressed.START) startGame(); else if (pressed.SELECT) toMenu(); }
       else { if (pressed.START) togglePause(); if (pressed.SELECT) toMenu(); }
       dirs.push({ index: gp.index, dir: padDir(gp) });
@@ -447,7 +452,7 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
     ball.vx = Math.cos(angle) * ball.speed * side;
     ball.vy = Math.sin(angle) * ball.speed + p.vy * 0.12; // a little "english" from paddle motion
     ball.x = side > 0 ? p.x + PAD_W : p.x - BALL;
-    rally++; flash = 0.12;
+    rally++; flash = 0.12; maxRally = Math.max(maxRally, rally);
     rumble(p.pad, false);
     if (side > 0) rollAiError(); // new aim error each time the ball heads to the AI
   }
@@ -477,6 +482,12 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
         const k = side === 0 ? 'pongVitorias' : 'pongDerrotas';
         try { localStorage.setItem(k, String((Number(localStorage.getItem(k)) || 0) + 1)); } catch (e) {}
       }
+      /* estatísticas para os troféus */
+      const S = pongStats();
+      if (settings.mode === 'ai' && side === 0) { S.w[settings.difficulty] = (S.w[settings.difficulty] || 0) + 1; if (score[1] === 0) S.shut = 1; if (settings.target === 21) S.w21 = 1; if (score[1] === settings.target - 1) S.close = 1; }
+      if (settings.mode === 'two') S.two = (S.two || 0) + 1;
+      S.rally = Math.max(S.rally || 0, maxRally);
+      try { localStorage.setItem('pongStats', JSON.stringify(S)); } catch (e) {}
       return;
     }
     serveDir = side === 0 ? 1 : -1; // serve toward the player who lost the point
@@ -560,6 +571,42 @@ body{padding-top:max(40px,env(safe-area-inset-top,0px))}</style>
   addEventListener('gamepaddisconnected', () => { padNames = '*'; });
   document.fonts?.ready.then(draw);
   requestAnimationFrame(frame);
+
+  /* ---- abertura, menu principal e troféus (módulo compartilhado ../shared/menu.js) ---- */
+  function pongStats() { try { return Object.assign({ w: {} }, JSON.parse(localStorage.getItem('pongStats') || '{}')); } catch (e) { return { w: {} }; } }
+  if (window.JovoneFront) {
+    const num = k => { try { return Number(localStorage.getItem(k)) || 0; } catch (e) { return 0; } };
+    const setMode = m => { settings.mode = m; try { localStorage.setItem('pongConfig', JSON.stringify(settings)); } catch (e) {} syncMenu(); };
+    const FR = JovoneFront.init({
+      id: 'pong', root: document.getElementById('cabinet'), cover: [menu], title: 'PONG', title2: '', tagline: 'o clássico das raquetes', accent: '#2ef2ff', version: 'versão ' + VERSION,
+      blockWhen: () => !news.hidden,
+      onStart: () => { try { if (localStorage.getItem('pong_seen') !== VERSION) setTimeout(openNews, 300); } catch (e) {} },
+      onHide: () => { const s = document.getElementById('start'); s && s.focus({ preventScroll: true }); },
+      stats: () => [`🏓 ${num('pongVitorias')} x ${num('pongDerrotas')} contra a CPU`],
+      tiles: () => [
+        { icon: '🤖', name: 'Contra a CPU', desc: 'fácil, médio ou difícil · até 11 ou 21', big: true, go: () => setMode('ai') },
+        { icon: '👥', name: 'Dois jogadores', desc: 'no mesmo teclado, controle ou celular', go: () => setMode('two') },
+        { icon: '🏆', name: 'Troféus', desc: 'galeria e recordes', trophies: true },
+        { name: '✦ Novidades', small: true, go: openNews }
+      ],
+      trophies: () => { const S = pongStats(), v = num('pongVitorias'); return [
+        { icon: '🥉', name: 'Primeira vitória', desc: 'vença a CPU', got: v >= 1 },
+        { icon: '🙂', name: 'Fácil', desc: 'vença a CPU no fácil', got: !!S.w.easy },
+        { icon: '😐', name: 'Médio', desc: 'vença a CPU no médio', got: !!S.w.medium },
+        { icon: '😈', name: 'Difícil', desc: 'vença a CPU no difícil', got: !!S.w.hard },
+        { icon: '🧱', name: 'Paredão', desc: 'vença sem levar nenhum ponto', got: !!S.shut },
+        { icon: '🏁', name: 'Maratona', desc: 'vença uma partida até 21', got: !!S.w21 },
+        { icon: '😅', name: 'No limite', desc: 'vença com o placar 1 ponto antes do fim para a CPU', got: !!S.close },
+        { icon: '🔁', name: 'Rali longo', desc: 'troque 20 rebatidas num só ponto', got: (S.rally || 0) >= 20, prog: 'recorde ' + (S.rally || 0) },
+        { icon: '👥', name: 'Dupla', desc: 'jogue 3 partidas a dois', got: (S.two || 0) >= 3, prog: (S.two || 0) + '/3' },
+        { icon: '🏆', name: 'Campeão', desc: 'vença a CPU 10 vezes', got: v >= 10, prog: v + '/10' }
+      ]; },
+      records: () => { const S = pongStats(); return { title: 'Recordes', list: [['Vitórias contra a CPU', String(num('pongVitorias'))], ['Derrotas', String(num('pongDerrotas'))], ['Maior rali', String(S.rally || 0)], ['Partidas a dois', String(S.two || 0)]] }; }
+    });
+    FR.el.style.setProperty('--display', 'var(--font-display)'); FR.el.style.setProperty('--body', 'var(--font-body)');
+    FR.backButton(menu);
+    FR.raise(news);
+  }
 })();
 </script>
 </body>

@@ -300,9 +300,14 @@ body.touch:not([data-st=menu]) .overlay{padding-top:44px}
 
   <div class="overlay sheetwrap" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="sheet">
-      <div class="ver" id="newsVer">Versão 1.3</div>
-      <h2 id="newsTitle">Movimento mais fluido</h2>
+      <div class="ver" id="newsVer">Versão 1.4</div>
+      <h2 id="newsTitle">Menu novo e troféus</h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Tela de título</b> com o logo e "aperte para começar", e <b>menu principal</b> com Continuar, Jogar, Como sobreviver, Troféus e Novidades.</li>
+        <li><b>Galeria de troféus:</b> noites sobrevividas, fugas do sertão, fuga rápida, fabricar tudo e espantar os cães, mais os seus recordes.</li>
+      </ul>
+      <h3>Versão 1.3 · Movimento mais fluido</h3>
       <ul>
         <li><b>Movimento mais fluido:</b> arranque macio e parada firme, degraus e ladeiras sem tranco, descida colada ao chão, pulo com tolerância na borda, deslize nas quinas das casas, leve abertura de campo ao correr e analógico do celular com zona morta e base que acompanha o dedo.</li>
       </ul>
@@ -357,6 +362,7 @@ body.touch:not([data-st=menu]) .overlay{padding-top:44px}
   </div>
 </div>
 
+<script src="../shared/menu.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -1660,7 +1666,7 @@ function pollPad(dt){
     cam.yaw -= pad.lx*2.6*sens*dt; cam.pitch = clamp(cam.pitch + pad.ly*1.8*sens*dt, -.55, 1.15);
     if(pressed(0)) doAction(); if(pressed(1)) input.jump = true; if(pressed(2)) quickHeal(); if(pressed(3)) openInv();
     if(pressed(4)) quickEat(); if(pressed(5)) quickDrink(); if(pressed(6)) toggleLamp(); if(pressed(9)) pauseOn(); if(pressed(8)) cycleCam();
-  } else if(state === 'menu'){ if(pressed(0) || pressed(9)) startGame(!!loadSave()); }
+  } else if(state === 'menu' && !(window.JovoneFront && JovoneFront.active)){ if(pressed(0) || pressed(9)) startGame(!!loadSave()); }
   else if(state === 'pause'){ if(pressed(0) || pressed(9)) pauseOff(); if(pressed(1)) toMenu(); }
   else if(state === 'inv'){ if(pressed(1) || pressed(3)) closeInv(); }
   else if(state === 'dead' || state === 'win'){ if(pressed(0)) startGame(false); if(pressed(1)) toMenu(); }
@@ -1711,7 +1717,7 @@ function doAction(){
       swingAnim(); P.stam = Math.max(0, P.stam - 7);
       const c = t.ref, dmg = DMG[weapon()] * (0.85 + Math.random()*0.3), dx = c.x - P.x, dz = c.z - P.z, l = Math.hypot(dx, dz) || 1;
       c.hp -= dmg; c.hit = .25; c.x += dx/l*.7; c.z += dz/l*.7; sfx('bite', .7); rumble(60, .3);
-      if(t.kind === 'dog'){ c.chase = 2; if(c.hp <= 0){ c.leaving = true; c.life = 12; stats.kills++; toast('O cão fugiu ganindo'); sfx('bark', .6); } }
+      if(t.kind === 'dog'){ c.chase = 2; if(c.hp <= 0){ c.leaving = true; c.life = 12; stats.kills++; store.set('Dogs', store.get('Dogs', 0) + 1); toast('O cão fugiu ganindo'); sfx('bark', .6); } }
       else { c.panic = 4; if(c.hp <= 0){ worldG.remove(c.obj); goats.splice(goats.indexOf(c), 1); give('carne', 2); stats.goats++; toast('+2 🥩 carne crua'); sfx('pick'); } }
       break; }
     case 'node': harvest(t.ref); break;
@@ -1778,6 +1784,7 @@ function canCraft(r){ if(r.once && has(r.id)) return false; return Object.entrie
 function craft(id){
   const r = RECIPES.find(x => x.id === id); if(!r || !canCraft(r)){ sfx('deny'); return; }
   Object.entries(r.req).forEach(([k, n]) => take(k, n));
+  { const made = store.get('Made', []); if(!made.includes(r.id)){ made.push(r.id); store.set('Made', made); } }
   if(r.place){
     const x = P.x - Math.sin(P.rot)*2.2, z = P.z - Math.cos(P.rot)*2.2;
     if(r.id === 'fogueira') addFire(x, z, clock + 10); else addShelter(x, z, P.rot);
@@ -1935,14 +1942,13 @@ $('againBtn').onclick = () => startGame(false); $('toMenuBtn').onclick = toMenu;
 $('resumeBtn').onclick = pauseOff; $('pauseMenu').onclick = toMenu;
 $('muteBtn').onclick = toggleMute; $('muteBtn').textContent = AUD.mute ? '🔇' : '🔊';
 function openHow(){ $('how').hidden = false; $('how').firstElementChild.scrollTop = 0; $('howClose').focus({preventScroll:true}); }
-function closeHow(){ $('how').hidden = true; }
+function closeHow(){ $('how').hidden = true; if(window.JovoneFront && JovoneFront.active) JovoneFront.show(JovoneFront.screen); }
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.3';
+const VERSION = '1.4';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
-function closeNews(){ $('news').hidden = true; try{ localStorage.setItem('pseca_seen', VERSION); }catch(e){} }
+function closeNews(){ $('news').hidden = true; try{ localStorage.setItem('pseca_seen', VERSION); }catch(e){} if(window.JovoneFront && JovoneFront.active) JovoneFront.show(JovoneFront.screen); }
 $('newsVer').textContent = 'Versão ' + VERSION;
 $('newsOpen').onclick = openNews; $('newsClose').onclick = closeNews;
-try{ if(localStorage.getItem('pseca_seen') !== VERSION) setTimeout(openNews, 400); }catch(e){}
 $('howBtn').onclick = openHow; $('pauseHow').onclick = openHow; $('howClose').onclick = closeHow;
 $('fsBtn').hidden = !TOUCH;
 $('fsBtn').onclick = async () => { try{ await document.documentElement.requestFullscreen(); }catch(e){ toast('Tela cheia indisponível aqui'); return; } try{ await screen.orientation.lock('landscape'); }catch(e){} setTimeout(resize, 300); };
@@ -2183,6 +2189,38 @@ if(/[?&]debug\b/.test(location.search)) window.__pseca = {P, cam, doAction, craf
   get inv(){ return inv; }, get clock(){ return clock; }, set clock(v){ clock = v; }, get state(){ return state; }, get nodes(){ return nodes; }, get houses(){ return houses; },
   get dogs(){ return dogs; }, get goats(){ return goats; }, get fires(){ return fires; }, get carP(){ return carP; }, CAR, addFire,
   sim(sec){ for(let t = 0; t < sec && state === 'play'; t += .05){ update(.05); if(state !== 'play') break; updateDogs(.05, isNight()); updateGoats(.05); } }};
+
+/* ---------- abertura, menu principal e troféus (módulo compartilhado ../shared/menu.js) ---------- */
+if(window.JovoneFront){
+  const dias = n => n + (n === 1 ? ' dia' : ' dias');
+  const FR = JovoneFront.init({
+    id:'pseca', root:$('stage'), cover:[$('menu')], title:'PANE', title2:'SECA', tagline:'sobrevivência no sertão · BR-316', accent:'#f2b632', version:'versão ' + VERSION,
+    blockWhen:() => !$('news').hidden || !$('how').hidden,
+    onStart:() => { try{ if(localStorage.getItem('pseca_seen') !== VERSION) setTimeout(openNews, 300); }catch(e){} },
+    stats:() => { const b = store.get('Best', 0), e = store.get('Esc', 0); return [b ? '🌙 recorde ' + dias(b) : '🌙 sem recorde', '🚗 ' + e + (e === 1 ? ' fuga' : ' fugas')]; },
+    tiles:() => { const sv = loadSave(); return [
+      {icon:'▶️', name:'Continuar', desc:sv ? 'volte ao dia ' + (sv.curDay || 1) + ' do jogo salvo' : 'nenhum jogo salvo', big:true, disabled:!sv, go:() => startGame(true)},
+      {icon:'🌵', name:'Jogar', desc:'novo jogo: conserte o carro e saia do sertão'},
+      {icon:'📖', name:'Como sobreviver', desc:'objetivo, necessidades, fabricação e controles', go:openHow},
+      {icon:'🏆', name:'Troféus', desc:'galeria e recordes', trophies:true},
+      {name:'✦ Novidades', small:true, go:openNews}
+    ]; },
+    trophies:() => { const b = store.get('Best', 0), e = store.get('Esc', 0), f = store.get('Fast', 0), made = store.get('Made', []), dogs = store.get('Dogs', 0); return [
+      {icon:'🌙', name:'Primeira noite', desc:'sobreviva até o segundo dia', got:b >= 2},
+      {icon:'🌗', name:'Sobrevivente', desc:'chegue ao 5º dia', got:b >= 5, prog:dias(b)},
+      {icon:'🏜️', name:'Lenda do sertão', desc:'chegue ao 10º dia', got:b >= 10, prog:dias(b)},
+      {icon:'🚗', name:'Saiu do sertão', desc:'conserte o carro e escape', got:e >= 1},
+      {icon:'⚡', name:'Fuga rápida', desc:'escape em até 3 dias', got:f > 0 && f <= 3, prog:f ? 'melhor ' + dias(f) : ''},
+      {icon:'🔁', name:'Três fugas', desc:'escape 3 vezes', got:e >= 3, prog:e + '/3'},
+      {icon:'🔥', name:'Fogo!', desc:'acenda uma fogueira', got:made.includes('fogueira')},
+      {icon:'🛠️', name:'Artesão', desc:'fabrique tudo pelo menos uma vez', got:RECIPES.every(r => made.includes(r.id)), prog:made.length + '/' + RECIPES.length},
+      {icon:'🐕', name:'Espanta-cão', desc:'faça 10 cães fugirem', got:dogs >= 10, prog:dogs + '/10'}
+    ]; },
+    records:() => ({title:'Recordes', list:[['🌙 Mais dias sobrevividos', store.get('Best', 0) ? dias(store.get('Best', 0)) : '—'], ['⚡ Fuga mais rápida', store.get('Fast', 0) ? dias(store.get('Fast', 0)) : '—'], ['🚗 Fugas', String(store.get('Esc', 0))], ['🐕 Cães espantados', String(store.get('Dogs', 0))]]})
+  });
+  FR.backButton($('menu').querySelector('.head') || $('menu'));
+  FR.raise($('news'), $('how'));
+}
 })();
 </script>
 </body>

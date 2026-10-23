@@ -316,8 +316,8 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
       <div>
         <h2>ZONA <span>QUENTE</span></h2>
         <p>Tiro tático em equipe: Força Tática contra Insurgentes no mapa <b>Mercado</b>. Plante ou desarme a bomba, compre armas a cada rodada e vença 7 rodadas.</p>
-        <h3>Modo</h3>
-        <div class="seg" id="optMode">
+        <h3 hidden>Modo</h3>
+        <div class="seg" id="optMode" hidden>
           <button data-v="bomb" aria-pressed="true">Desarme<small>rodadas · economia</small></button>
           <button data-v="tdm" aria-pressed="false">Mata-mata<small>equipes · renascer</small></button>
         </div>
@@ -418,9 +418,14 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.5</div>
-      <h2 id="newsTitle">ASSUMIR O <span>BOT</span></h2>
+      <div class="ver" id="newsVer">Versão 1.6</div>
+      <h2 id="newsTitle">MENU <span>NOVO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Tela de título</b> com "aperte para começar" e <b>menu principal</b>: Desarme, Mata-mata, Opções, Como jogar, Troféus e Novidades.</li>
+        <li><b>Galeria de troféus:</b> vitórias em cada modo e contra a Elite, plantar e desarmar, tiros na cabeça, abates com faca e o esquadrão limpo (5 na rodada), mais as suas estatísticas.</li>
+      </ul>
+      <h3>Versão 1.5 · Assumir o bot</h3>
       <ul>
         <li><b>Assumir o controle de um bot</b> no Desarme: morreu e está assistindo um bot do seu time? Aperte <b>E</b> (ou o botão <b>Assumir o controle</b> no celular, ou RB no controle) e continue a rodada no lugar dele, com a vida, as armas, as granadas e até a bomba que ele carregava. O bot fica fora até a próxima rodada.</li>
       </ul>
@@ -467,6 +472,7 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
   <div class="rotate"><div class="ph"></div><b>Gire o celular</b><span>Zona Quente se joga na horizontal.</span></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../shared/menu.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -2497,6 +2503,7 @@ function tryPlant(a, dt){
   return true;
 }
 function plantBomb(a, site){
+  if(a === player) zqStat('pl');
   a.hasBomb = false; const b = G.bomb;
   b.state = 'planted'; b.site = site; b.x = a.x; b.z = a.z; b.y = a.y; b.timer = BOMB_T; b.carrier = null; b.beep = 0; b.planter = a;
   b.mesh = cloneGun('bomb'); b.mesh.position.set(a.x, a.y + .01, a.z); b.mesh.rotation.y = a.yaw; scene.add(b.mesh);
@@ -2864,6 +2871,7 @@ function explodeBomb(){
   if(G.phase === 'planted') endRound('in', 'A bomba explodiu');
 }
 function defuseBomb(a){
+  if(a === player) zqStat('df');
   const b = G.bomb; b.state = 'defused'; a.score += 2; addMoney(a, 300);
   radio(a.name + ' desarmou a bomba!', 'all'); sfx('radio');
   if(b.mesh && b.mesh.parts.led) b.mesh.parts.led.visible = false;
@@ -2909,7 +2917,7 @@ function endMatch(){
   $('endStats').innerHTML = [['🎯', player.kills + ' abates'], ['☠', player.deaths + ' mortes'], ['⚖', 'K/D ' + kd], ['◎', hsP + '% na cabeça'], ['💥', player.dmg + ' de dano'], ['🏅', 'MVP: ' + ranked[0].name]].map(([i, t]) => `<span class="chip">${i} ${esc(t)}</span>`).join('');
   $('end').hidden = false;
   const S = store.get('Stats', {m:0, w:0, k:0, d:0});
-  S.m++; if(win) S.w++; S.k += player.kills; S.d += player.deaths; store.set('Stats', S);
+  S.m++; if(win){ S.w++; if(G.mode === 'tdm') S.wt = (S.wt || 0) + 1; else S.wb = (S.wb || 0) + 1; if(+G.diff >= 3) S.we = 1; } S.k += player.kills; S.d += player.deaths; store.set('Stats', S);
   sfx(win ? 'win' : 'lose');
   MUS.on = true;
 }
@@ -2958,7 +2966,7 @@ function onPlayerHit(b, zone){
   const h = $('hitm'); h.className = 'hitm on' + (b.alive ? '' : ' kill') + (zone === 'head' ? ' hs' : ''); clearTimeout(hitT); hitT = setTimeout(() => h.className = 'hitm', 120);
   if(b.alive) sfx(zone === 'head' ? 'helmet' : 'hit', undefined, undefined, zone === 'head' ? .4 : .6);
 }
-function onPlayerKill(v, head){ sfx('kill', undefined, undefined, .7); if(player.rk >= 3) toast(['', '', '', '🔥 Três na rodada!', '🔥 Quatro!', '💀 Esquadrão limpo!'][Math.min(5, player.rk)] || ''); }
+function onPlayerKill(v, head){ if(head) zqStat('hs'); if(curId(player) === 'faca') zqStat('kn'); if(player.rk >= 5) zqStat('ace', 1); sfx('kill', undefined, undefined, .7); if(player.rk >= 3) toast(['', '', '', '🔥 Três na rodada!', '🔥 Quatro!', '💀 Esquadrão limpo!'][Math.min(5, player.rk)] || ''); }
 function onPlayerDeath(att){
   cam.killer = att && att !== player ? att : null; cam.spec = null;
   $('hud').classList.add('dead'); unscope(); $('buy').hidden = true;
@@ -3308,7 +3316,7 @@ function pollPad(dt){
     if(pressed(9)) pauseOn(); if(pressed(8)) showBoard($('board').hidden); if(pressed(12)) $('buy').hidden ? openBuy() : closeBuy();
     if(player && !player.alive && pressed(0)) cycleSpec();
     if(player && !player.alive && pressed(5)) tryTakeOver();
-  } else if(STATE === 'menu'){ if(pressed(0) || pressed(9)) startMatch(); }
+  } else if(STATE === 'menu' && !(window.JovoneFront && JovoneFront.active)){ if(pressed(0) || pressed(9)) startMatch(); }
   else if(STATE === 'pause'){ if(pressed(0) || pressed(9)) pauseOff(); }
   else if(STATE === 'end'){ if(pressed(0)) startMatch(); if(pressed(1)) toMenu(); }
   pad.prev = g.buttons.map(b => b.value > .5 || b.pressed);
@@ -3368,12 +3376,11 @@ $('btnPlay').addEventListener('click', () => { audioInit(); goFull(); startMatch
 $('btnAgain').addEventListener('click', () => { audioInit(); startMatch(); });
 $('btnMenu').addEventListener('click', toMenu);
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.5';
+const VERSION = '1.6';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
-function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); }
+function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(window.JovoneFront && JovoneFront.active) JovoneFront.show(JovoneFront.screen); }
 $('newsVer').textContent = 'Versão ' + VERSION;
 $('newsOpen').addEventListener('click', openNews); $('newsClose').addEventListener('click', closeNews);
-if(store.get('Seen', '') !== VERSION) setTimeout(openNews, 400);
 $('btnHow').addEventListener('click', () => { $('how').hidden = false; });
 $('howClose').addEventListener('click', () => { $('how').hidden = true; });
 $('btnOpts').addEventListener('click', () => { const box = $('optsBox'), card = $('how').querySelector('.card'); $('how').hidden = false; syncOpts();
@@ -3415,6 +3422,46 @@ function frame(now){
 applyQuality(); refreshMenu(); MUS.on = true;
 requestAnimationFrame(frame);
 
+
+/* =====================================================================
+   ABERTURA, MENU PRINCIPAL E TROFÉUS (módulo compartilhado ../shared/menu.js)
+   ===================================================================== */
+function zqStat(k, set){ const S = store.get('Stats', {m:0, w:0, k:0, d:0}); S[k] = set ? set : (S[k] || 0) + 1; store.set('Stats', S); }
+if(window.JovoneFront){
+  const setMode = m => { OPT.mode = m; saveOpt(); $('optMode').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === m))); refreshMenu(); };
+  const ST = () => store.get('Stats', {m:0, w:0, k:0, d:0});
+  const FR = JovoneFront.init({
+    id:'zq', root:$('stage'), cover:[$('menu')], title:'ZONA', title2:'QUENTE', tagline:'tiro tático 5×5 · Força Tática × Insurgentes', accent:'#f2b632', version:'versão ' + VERSION,
+    blockWhen:() => !$('news').hidden || !$('how').hidden,
+    onStart:() => { if(store.get('Seen', '') !== VERSION) setTimeout(openNews, 300); },
+    onHide:() => $('btnPlay').focus({preventScroll:true}),
+    stats:() => { const S = ST(); return S.m ? [`🏆 ${S.w} vitórias em ${S.m}`, `🎯 ${S.k} abates`] : ['nenhuma partida ainda']; },
+    tiles:() => [
+      {icon:'💣', name:'Desarme', desc:'rodadas com bomba e economia · 7 vitórias', big:true, go:() => setMode('bomb')},
+      {icon:'⚔️', name:'Mata-mata', desc:'equipes, renascimento e compras grátis · 50 abates', go:() => setMode('tdm')},
+      {icon:'⚙️', name:'Opções', desc:'sensibilidade, gráficos, som, mira e nome', go:() => $('btnOpts').click()},
+      {icon:'🏆', name:'Troféus', desc:'galeria e estatísticas', trophies:true},
+      {name:'Como jogar', small:true, go:() => $('btnHow').click()},
+      {name:'✦ Novidades', small:true, go:openNews}
+    ],
+    trophies:() => { const S = ST(); return [
+      {icon:'🎖️', name:'Primeira vitória', desc:'vença uma partida', got:S.w >= 1},
+      {icon:'💣', name:'Especialista em bomba', desc:'vença no Desarme', got:(S.wb || 0) >= 1},
+      {icon:'⚔️', name:'Mata-mata', desc:'vença no Mata-mata', got:(S.wt || 0) >= 1},
+      {icon:'👑', name:'Contra a Elite', desc:'vença com os bots no nível Elite', got:!!S.we},
+      {icon:'🧨', name:'Plantador', desc:'plante a bomba 5 vezes', got:(S.pl || 0) >= 5, prog:(S.pl || 0) + '/5'},
+      {icon:'✂️', name:'Desarmador', desc:'desarme a bomba 3 vezes', got:(S.df || 0) >= 3, prog:(S.df || 0) + '/3'},
+      {icon:'🎯', name:'Mira na cabeça', desc:'50 abates com tiro na cabeça', got:(S.hs || 0) >= 50, prog:(S.hs || 0) + '/50'},
+      {icon:'🔪', name:'Na faca', desc:'elimine alguém com a faca', got:(S.kn || 0) >= 1},
+      {icon:'💀', name:'Esquadrão limpo', desc:'5 abates numa só rodada', got:!!S.ace},
+      {icon:'🏅', name:'Veterano', desc:'jogue 20 partidas', got:S.m >= 20, prog:S.m + '/20'},
+      {icon:'☠️', name:'Centurião', desc:'200 abates no total', got:S.k >= 200, prog:S.k + '/200'}
+    ]; },
+    records:() => { const S = ST(); return {title:'Estatísticas', list:[['Partidas', String(S.m)], ['Vitórias', String(S.w)], ['Abates', String(S.k)], ['Mortes', String(S.d)], ['K/D', (S.d ? S.k/S.d : S.k).toFixed(2)], ['Na cabeça', String(S.hs || 0)], ['Bombas plantadas', String(S.pl || 0)], ['Bombas desarmadas', String(S.df || 0)]]}; }
+  });
+  FR.backButton($('menu').querySelector('.menu-card > div'));
+  FR.raise($('news'), $('how'));
+}
 </script>
 </body>
 </html>

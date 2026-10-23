@@ -327,9 +327,14 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   </div>
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="sheet">
-      <div class="ver" id="newsVer">Versão 2.6</div>
-      <h2 id="newsTitle">Fusca e Kombi</h2>
+      <div class="ver" id="newsVer">Versão 2.7</div>
+      <h2 id="newsTitle">Menu novo</h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Tela de título</b> com o logo e "aperte para começar", e <b>menu principal</b> com Estrada livre, Contra o relógio, Garagem, Troféus e Novidades.</li>
+        <li><b>Galeria de troféus:</b> chegada em cada mapa, coleção de carros, contra o relógio e distância, mais o recorde de cada mapa.</li>
+      </ul>
+      <h3>Versão 2.6 · Fusca e Kombi</h3>
       <ul>
         <li><b>Fusca</b> (300 🪙) e <b>Kombi</b> (350 🪙) chegaram à garagem, com modelos 3D detalhados e troca de cor.</li>
         <li>Os dois são lentos, mas o Fusca faz curva bem e gasta pouco combustível.</li>
@@ -388,6 +393,7 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   <button class="pad big dir" id="padR" aria-label="Direita">▶</button>
 </div>
 
+<script src="../shared/menu.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
@@ -2813,12 +2819,12 @@ function finishTrial(){
 function syncTT(){ const g = loadGhost(); $('ttBtn').textContent = trial ? '⏱ Contra o relógio' + (g ? ' · melhor ' + fmtT(g.t) : '') : '⏱ Modo: Livre'; }
 $('ttBtn').onclick = () => { trial = !trial; try{ localStorage.setItem('br316tt', trial ? '1' : '0'); }catch(e){} syncTT(); sfx('click'); };
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.6';
+const VERSION = '2.7';
 function openNews(){ $('news').hidden = false; const sh = $('news').firstElementChild; sh.scrollTop = 0; $('newsClose').focus({preventScroll:true}); sh.scrollTop = 0; }
 function closeNews(){
   $('news').hidden = true;
   try{ localStorage.setItem('br316_seen', VERSION); }catch(e){}
-  if(state === 'menu') $('startBtn').focus();
+  if(window.JovoneFront && JovoneFront.active) JovoneFront.show(JovoneFront.screen); else if(state === 'menu') $('startBtn').focus();
 }
 $('newsVer').textContent = 'Versão ' + VERSION;
 $('muteBtn').onclick = toggleMute; $('muteBtn').textContent = AUD.mute ? '🔇' : '🔊'; $('muteBtn').setAttribute('aria-pressed', AUD.mute);
@@ -2827,7 +2833,6 @@ function syncWx(){ $('wxBtn').textContent = '☁ Clima: ' + WX_LABEL[weather]; }
 $('wxBtn').onclick = () => { weather = wxOrder[(wxOrder.indexOf(weather) + 1) % wxOrder.length]; try{ localStorage.setItem('br316wx', weather); }catch(e){} syncWx(); applyMode(mode); sfx('click'); };
 syncWx();
 $('newsOpen').onclick = openNews; $('newsClose').onclick = closeNews;
-try{ if(localStorage.getItem('br316_seen') !== VERSION) setTimeout(openNews, 400); }catch(e){}
 
 function start(){
   if(!$('news').hidden){ closeNews(); return; }
@@ -2954,7 +2959,7 @@ function pollPad(){
   let st = Math.abs(ax) > 0.12 ? Math.sign(ax) * (Math.abs(ax) - 0.12) / 0.88 : 0;
   if(btn(14)) st = -1; if(btn(15)) st = 1;
   pad.steer = (tilt.on && Math.abs(st) < 0.05) ? tilt.steer : st; pad.gas = btn(7); pad.brake = btn(6); pad.hand = state === 'play' && (btn(2) > 0.5 || btn(5) > 0.5);
-  if(state === 'menu'){
+  if(state === 'menu' && !(window.JovoneFront && JovoneFront.active)){
     if(pressed(14) || pressed(4)) selectCar(carIdx - 1);
     if(pressed(15) || pressed(5)) selectCar(carIdx + 1);
     const flick = Math.abs(ax) > 0.6 ? Math.sign(ax) : 0;
@@ -3206,6 +3211,42 @@ function loop(t){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+/* ---------- abertura, menu principal e troféus (módulo compartilhado ../shared/menu.js) ---------- */
+if(window.JovoneFront){
+  const LS = k => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+  const kmOf = m => parseFloat(LS(m.id === 'sertao' ? 'br316best' : 'br316best_' + m.id)) || 0;
+  const setTT = on => { trial = on; try{ localStorage.setItem('br316tt', on ? '1' : '0'); }catch(e){} syncTT(); };
+  const FR = JovoneFront.init({
+    id:'turbo', root:$('stage'), cover:[$('menu')], title:'TURBO', title2:'BR-316', tagline:CARS.length + ' carros · ' + MAPS.length + ' mapas · estradas do Brasil', accent:'#f2b632', version:'versão ' + VERSION,
+    blockWhen:() => !$('news').hidden,
+    onStart:() => { try{ if(localStorage.getItem('br316_seen') !== VERSION) setTimeout(openNews, 300); }catch(e){} },
+    onHide:() => { if(state === 'menu') $('startBtn').focus({preventScroll:true}); },
+    stats:() => [`🪙 ${coins} moedas`, `🚗 ${owned.length}/${CARS.length} carros`],
+    tiles:() => [
+      {icon:'🛣️', name:'Estrada livre', desc:'dirija, desvie do trânsito e chegue ao fim do trecho', big:true, go:() => setTT(false)},
+      {icon:'⏱', name:'Contra o relógio', desc:'percurso fixo com o carro fantasma', go:() => setTT(true)},
+      {icon:'🚗', name:'Garagem', desc:'carros, cores, mapas e clima'},
+      {icon:'🏆', name:'Troféus', desc:'galeria e recordes por mapa', trophies:true},
+      {name:'Tutorial', small:true, go:() => { tutOn = true; tutT = 0; try{ localStorage.removeItem('br316_tut'); }catch(e){} setTT(false); start(); }},
+      {name:'✦ Novidades', small:true, go:openNews}
+    ],
+    trophies:() => {
+      const fin = MAPS.filter(m => LS('br316time_' + m.id)).length, gh = MAPS.filter(m => LS('br316ghost_' + m.id)).length, far = Math.max(0, ...MAPS.map(kmOf));
+      return MAPS.map(m => ({icon:m.emoji, name:'Chegada: ' + m.name, desc:'complete o trecho em ' + m.name, got:!!LS('br316time_' + m.id)})).concat([
+        {icon:'🗺️', name:'Rodou o Brasil', desc:'chegue ao fim de todos os mapas', got:fin >= MAPS.length, prog:fin + '/' + MAPS.length},
+        {icon:'🛒', name:'Primeira compra', desc:'compre um carro na garagem', got:owned.length > 1},
+        {icon:'🚗', name:'Colecionador', desc:'tenha todos os carros', got:owned.length >= CARS.length, prog:owned.length + '/' + CARS.length},
+        {icon:'👻', name:'Fantasma', desc:'grave uma volta no contra o relógio', got:gh > 0},
+        {icon:'⏱', name:'Relógio afiado', desc:'contra o relógio em todos os mapas', got:gh >= MAPS.length, prog:gh + '/' + MAPS.length},
+        {icon:'📏', name:'Estradeiro', desc:'rode 5 km numa só corrida', got:far >= 5, prog:far.toFixed(1).replace('.', ',') + ' km'},
+        {icon:'🪙', name:'Mil moedas', desc:'junte 1.000 moedas', got:coins >= 1000}
+      ]);
+    },
+    records:() => ({title:'Recordes por mapa', list:MAPS.map(m => { const t = parseFloat(LS('br316time_' + m.id)); return [m.emoji + ' ' + m.name, (t > 0 ? fmtTime(t) + ' · ' : '') + fmtKm(kmOf(m))]; })})
+  });
+  FR.backButton($('menu').querySelector('.head'));
+  FR.raise($('news'));
+}
 })();
 </script>
 </body>
