@@ -1,0 +1,73 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #07051a;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #140d33 0%, #07051a 70%);
+}
+
+#game {
+  display: block;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+  outline: none;
+}
+
+/* Controles touch: só aparecem em telas de toque */
+#touch { display: none; }
+
+@media (pointer: coarse) {
+  #touch.on {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+}
+
+.tbtn {
+  pointer-events: auto;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 2px solid rgba(170, 230, 255, 0.55);
+  background: rgba(30, 20, 70, 0.45);
+  color: rgba(220, 245, 255, 0.9);
+  font: bold 28px sans-serif;
+  backdrop-filter: blur(3px);
+  -webkit-tap-highlight-color: transparent;
+}
+.tbtn.active { background: rgba(120, 210, 255, 0.45); }
+.tbtn.big { width: 104px; height: 104px; font-size: 36px; }
+.tbtn.small { width: 52px; height: 52px; font-size: 18px; }
+
+.pad-left { position: absolute; left: 24px; bottom: 24px; display: flex; gap: 18px; }
+.pad-right { position: absolute; right: 28px; bottom: 28px; }
+.pause { position: absolute; top: 16px; right: 16px; }
+
+/* Link de volta ao launcher (Jovone Games): aparece fora da partida */
+.voltar {
+  position: fixed;
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  z-index: 5;
+  font: 600 13px system-ui, sans-serif;
+  color: rgba(200, 225, 255, 0.8);
+  text-decoration: none;
+  padding: 5px 10px;
+  border: 1px solid rgba(160, 220, 255, 0.4);
+  border-radius: 999px;
+  background: rgba(20, 13, 51, 0.7);
+}
+.voltar:hover, .voltar:focus-visible { color: #fff; border-color: #9feaff; outline: none; }
+.voltar.off { display: none; }

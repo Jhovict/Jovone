@@ -250,6 +250,54 @@ const GAMES = [
       } catch (e) {}
       return out;
     }
+  },
+  {
+    id: 'space-explorer',
+    title: 'Space Explorer',
+    tag: 'Plataforma 2D',
+    desc: 'Um robô explorador atravessa o Anel de Gelo de Saturno: pule entre placas de gelo, gêiseres e plataformas móveis, fuja de espinhos e lasers, colete cristais e os 3 núcleos até a Estação Anel-9.',
+    cover: `<svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="se1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0726"/><stop offset=".6" stop-color="#2a1a5e"/><stop offset="1" stop-color="#5b3a8a"/></linearGradient>
+        <linearGradient id="se2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8c98a"/><stop offset="1" stop-color="#b98a4c"/></linearGradient>
+        <linearGradient id="se3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4d92"/><stop offset="1" stop-color="#1a1336"/></linearGradient>
+        <linearGradient id="se4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6f4ff"/><stop offset="1" stop-color="#8fd3f0"/></linearGradient>
+      </defs>
+      <rect width="320" height="180" fill="url(#se1)"/>
+      <g fill="#e6e0ff"><circle cx="22" cy="18" r="1.2"/><circle cx="64" cy="44" r="1"/><circle cx="110" cy="14" r="1.3"/><circle cx="150" cy="58" r="1"/><circle cx="292" cy="20" r="1.2"/><circle cx="306" cy="70" r="1"/><circle cx="40" cy="76" r="1"/><circle cx="182" cy="24" r="1"/></g>
+      <g transform="translate(232 54) rotate(-16)">
+        <ellipse rx="66" ry="13" fill="none" stroke="#d4a764" stroke-width="5" opacity=".55"/>
+        <circle r="32" fill="url(#se2)"/>
+        <path d="M-31 -6H31M-29 8H29" stroke="#c49a5a" stroke-width="3" opacity=".7"/>
+        <path d="M-66 0A66 13 0 0 0 66 0" fill="none" stroke="#f0dcae" stroke-width="5"/>
+      </g>
+      <circle cx="58" cy="34" r="6" fill="#bfb6e6" opacity=".8"/>
+      <path d="M0 132 L40 112 L84 124 L130 104 L180 122 L230 108 L280 120 L320 110 L320 140 L0 140Z" fill="#3a2f6a" opacity=".8"/>
+      <path d="M0 146H120V180H0Z" fill="url(#se3)"/><path d="M0 146H120V152H0Z" fill="url(#se4)"/>
+      <path d="M176 134H320V180H176Z" fill="url(#se3)"/><path d="M176 134H320V140H176Z" fill="url(#se4)"/>
+      <path d="M126 112H168V118H126Z" fill="url(#se4)"/>
+      <g fill="#ff4d8d"><path d="M196 134L202 122L208 134Z"/><path d="M208 134L214 120L220 134Z"/><path d="M220 134L226 124L232 134Z"/></g>
+      <g fill="#7ff6ff" stroke="#d6f4ff" stroke-width=".8"><path d="M147 92L152 100L147 108L142 100Z"/><path d="M264 110L268 116L264 122L260 116Z"/><path d="M286 104L290 110L286 116L282 110Z"/></g>
+      <g transform="translate(282 126)"><circle r="7" fill="#ffd27a"/><circle r="11" fill="none" stroke="#ffd27a" stroke-width="1.5" opacity=".5"/></g>
+      <g transform="translate(78 118)">
+        <path d="M-2 18L-10 26M6 18L12 26" stroke="#ff8a3d" stroke-width="3" opacity=".9"/>
+        <rect x="-11" y="2" width="22" height="18" rx="5" fill="#f4f6ff"/>
+        <rect x="-7" y="8" width="14" height="4" rx="2" fill="#ff8a3d"/>
+        <rect x="-13" y="-16" width="26" height="18" rx="7" fill="#f4f6ff"/>
+        <rect x="-8" y="-11" width="17" height="8" rx="4" fill="#4fd8ff"/>
+        <path d="M0 -16V-23" stroke="#c9cde6" stroke-width="2"/><circle cx="0" cy="-24" r="2.4" fill="#ff8a3d"/>
+        <path d="M-11 6L-18 0M11 6L18 -2" stroke="#f4f6ff" stroke-width="4" stroke-linecap="round"/>
+      </g>
+      <g fill="#ffb066" opacity=".75"><circle cx="70" cy="148" r="2"/><circle cx="84" cy="150" r="1.6"/></g>
+    </svg>`,
+    stats: () => {
+      const out = [];
+      try {
+        const b = parseFloat(localStorage.getItem('spaceExplorer.best.saturn'));
+        if (isFinite(b) && b > 0) { const m = Math.floor(b / 60), s2 = b - m * 60; out.push('⏱ ' + m + ':' + (s2 < 10 ? '0' : '') + s2.toFixed(2) + ' melhor tempo'); }
+      } catch (e) {}
+      return out;
+    }
   }
   /* , { id:'meu-fps, title:'...', tag:'FPS', desc:'...', cover:'...' } */
 ];

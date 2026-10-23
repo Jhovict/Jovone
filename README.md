@@ -18,6 +18,8 @@ zona-quente/
 pulse-kart/
   index.html          corrida de kart 3D no circuito Apex Loop
   kenney/             modelos .glb do Racing Kit da Kenney (CC0)
+space-explorer/
+  index.html          plataforma 2D em Saturno (canvas, scripts em js/ e estilo em css/)
 ```
 
 ## Pane Seca
@@ -71,6 +73,19 @@ Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) em 25 circu
 - **Controles:** teclado (setas/WASD, Espaço drift, V câmera, P pausa, M som), controle (RT/A acelera, LT/B freia, analógico, RB/X drift, Y câmera, Start pausa) e celular na horizontal (botões de direção, acelerador, freio e drift).
 
 Salva opções, melhor volta e fantasma (por pista) e estatísticas no `localStorage` com o prefixo `pkart`.
+
+## Space Explorer
+
+Plataforma 2D em HTML5 Canvas e JavaScript puro, sem imagens nem arquivos de som (tudo desenhado e sintetizado no código). Fase 1: o robô explorador atravessa o Anel de Gelo de Saturno até a Estação Anel-9.
+
+- **Fase:** placas de gelo que desabam, gêiseres, plataformas móveis, bordas de gelo atravessáveis (↓ + pular), espinhos de cristal, lasers intermitentes e ácaros (pise em cima).
+- **Sem vidas:** ao cair ou tocar um perigo, volta ao último farol mantendo os itens.
+- **Estrelas:** concluir, coletar 80% dos cristais e pegar os 3 núcleos.
+- **Controles:** teclado (← → / A D, Espaço / ↑ / W pula — segure para ir mais alto, P/Esc pausa, R reinicia, M som), controle (direcional ou analógico, A pula e confirma, Start pausa, Select reinicia) e botões de toque no celular.
+- O menu de pausa tem **Voltar aos jogos**; na tela de título, o link **‹ Jogos** volta ao launcher.
+- Código em `space-explorer/js/` (`level.js` monta a fase; `config.js` ajusta a física). Detalhes em `space-explorer/README.md`.
+
+Salva o melhor tempo no `localStorage` (`spaceExplorer.best.saturn`).
 
 ## Como adicionar um jogo
 

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Space Explorer — Saturno</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="voltar" id="voltar" href="../">‹ Jogos</a>
+  <div id="stage">
+    <canvas id="game" aria-label="Space Explorer"></canvas>
+    <div id="touch" aria-hidden="true">
+      <div class="pad-left">
+        <button data-act="left" class="tbtn">&#9664;</button>
+        <button data-act="right" class="tbtn">&#9654;</button>
+      </div>
+      <div class="pad-right">
+        <button data-act="jump" class="tbtn big">&#9650;</button>
+      </div>
+      <button data-act="pause" class="tbtn small pause">II</button>
+    </div>
+  </div>
+
+  <!-- Scripts clássicos (sem módulos) para funcionar também abrindo o arquivo direto -->
+  <script src="js/config.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
