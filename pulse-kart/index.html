@@ -353,6 +353,7 @@ body.touch .keys{display:none}
       <ul>
         <li><b>Reta de largada</b> com bandeiras quadriculadas, torres de banner vermelhas e verdes, câmera de TV e radar.</li>
         <li><b>Áreas do público</b> por fora do alambrado: tendas, bandeiras, luzes coloridas, cones e carros de corrida em exposição.</li>
+        <li><b>Vila das equipes</b> atrás do paddock, com garagens e carros de corrida na frente, e <b>arquibancada coberta</b> do lado de dentro da reta, em frente aos boxes. Cones nas pontas da faixa dos boxes.</li>
         <li><b>Outdoors</b> ao longo da pista e <b>árvores novas</b> nas pistas de campo.</li>
         <li>Modelos 3D do <b>Racing Kit da Kenney</b> (kenney.nl, domínio público).</li>
       </ul>
@@ -948,8 +949,17 @@ function kenneyPlace(name, list){
   const face = (i, sd) => Math.atan2(-sd*RX[i], -sd*RZ[i]);
   const tryPut = (n, i, sd, t, d, s, r, ry = 0) => { const [x, z] = at(i, sd, t, d); if(!free(x, z, r, i)) return false; put(n, x, z, face(i, sd) + ry, s); take(x, z, r); return true; };
 
-  /* reta de largada: bandeira quadriculada, câmera de TV, radar e torres de banner alternando as cores */
   const m = 1/DS, ix = mt => wrap(Math.round(mt*m));
+  /* vila das equipes atrás do paddock (o cenário procedural já deixa essa área livre): garagens com carros de exposição */
+  { const fr = face(0, 1), cs = ['raceCarRed', 'raceCarGreen', 'raceCarOrange', 'raceCarWhite'];
+    for(let k = 0; k < 6; k++){ const x = -34 + k*8; put('pitsGarage', x, 52, fr, 8); put(cs[k & 3], x, 44, fr + rnd(-.35, .35), 3.2); } }
+  /* cones nas duas pontas da faixa dos boxes */
+  for(const x of [-4, 92]) for(let z = 17; z <= 24; z += 1.75) put('pylon', x, z, 0, 5);
+  /* arquibancada coberta do lado de dentro da reta, em frente aos boxes (vem antes, para as torres desviarem dela) */
+  { const i = ix(28); let ok = true; for(const t of [-18, 0, 18]) for(const n of [1, 5, 9]){ const [x, z] = at(i, -1, t, n); if(!free(x, z, 1, i)) ok = false; }
+    if(ok) for(let s = -1.5; s <= 1.5; s++){ const [x, z] = at(i, -1, s*9, 5); put('grandStandCovered', x, z, face(i, -1), 9); take(x, z, 7); } }
+
+  /* reta de largada: bandeira quadriculada, câmera de TV, radar e torres de banner alternando as cores */
   for(const sd of [-1, 1]) tryPut('flagCheckers', 0, sd, 0, .4, 4, .8);
   for(const sd of [-1, 1]) if(tryPut('camera_exclusive', ix(10), sd, 0, .6, 6, 1.2)) break;
   for(const sd of [1, -1]) if(tryPut('radarEquipment', ix(-14), sd, 0, 1.5, 5, 2.5)) break;
