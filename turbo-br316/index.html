@@ -327,9 +327,14 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
   </div>
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="sheet">
-      <div class="ver" id="newsVer">Versão 2.5</div>
-      <h2 id="newsTitle">Centro da cidade</h2>
+      <div class="ver" id="newsVer">Versão 2.6</div>
+      <h2 id="newsTitle">Fusca e Kombi</h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Fusca</b> (300 🪙) e <b>Kombi</b> (350 🪙) chegaram à garagem, com modelos 3D detalhados e troca de cor.</li>
+        <li>Os dois são lentos, mas o Fusca faz curva bem e gasta pouco combustível.</li>
+      </ul>
+      <h3>Versão 2.5 · Centro da cidade</h3>
       <ul>
         <li><b>Mapa Centro:</b> ruas urbanas com curvas, prédios colados nas calçadas e uma pista só, sem mão contrária.</li>
         <li><b>Pedestres</b> caminham pelas calçadas e atravessam nas faixas. Reduza para passar com segurança e ganhe moedas; atropelar custa combustível (ou tempo no contra o relógio).</li>
@@ -384,6 +389,8 @@ canvas{display:block;width:100%;height:100%;touch-action:none}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -1240,8 +1247,121 @@ const CARS = [
       const plate = plateAt(g, 0, 0.54, 2.0, 0, -0.1); plate.position.z = -tub.fRear(0, 0.54) + 0.03;
       return wheelsPro(g, tub, {style:'mesh', rimMat:alloyPro, cal:new THREE.MeshPhongMaterial({color:0xf2a01c, shininess:80}), front:{f:1.30, R:0.335, hw:0.115, rim:0.255}, rear:{f:-1.22, R:0.335, hw:0.115, rim:0.255}});
     }
+  },
+  {
+    id:'fusca', name:'Fusca', cls:'Clássico popular', color:0x377e90, motor:'1.6L Boxer a ar', cv:65, trac:'Traseira',
+    tag:'O besouro de sempre: motor traseiro refrigerado a ar, leve e econômico. Pouca velocidade, mas faz curva e quase não bebe.',
+    top:44, accel:10, brake:28, turnRate:1.7, grip:7.5, resp:12, fuel:1.0,
+    bars:{Velocidade:3, Aceleração:3, Curva:7, Freio:5},
+    L:4.07, W:1.6, H:1.5, seat:[-0.33, 1.15, 0.2],
+    model:{mats:{'1':{t:'1001', paint:true}, '2':{t:'1002', paint:true, alpha:true}, '3':{t:'1003', paint:true, alpha:true}, '4':{t:'1004'}}},
+    build(g, p){ return buildModelCar(this, g, p); }
+  },
+  {
+    id:'kombi', name:'Kombi', cls:'Furgão clássico', color:0x2c79c9, motor:'1.6L Boxer a ar', cv:58, trac:'Traseira',
+    tag:'A perua de todas as viagens: cabe a família inteira e a bagagem. Lenta e alta, balança no vento e pede calma nas curvas.',
+    top:40, accel:8, brake:26, turnRate:1.3, grip:6.5, resp:9, fuel:1.2,
+    bars:{Velocidade:2, Aceleração:2, Curva:4, Freio:4},
+    L:4.5, W:1.8, H:1.95, seat:[-0.4, 1.6, -1.45],
+    // o .fbx vem de frente para +z, com as rodas grudadas no chassi ("Bottom") e a tampa do motor aberta; split separa as 4 rodas
+    // e fold fecha a tampa (medidas nas unidades do arquivo)
+    model:{yaw:Math.PI, mats:{PBR_MAT:{t:'block_lo_1001'}, Car_Paint_MAT:{t:'block_lo_1002', paint:true}, lambert2:{t:'chassis_lo_1001'}, headlight_glass:'lens', glass:'glass'},
+      split:{part:'Bottom', x:2.0, y:1.256, r:1.30, z:[-5.101, 4.388]},
+      fold:{part:'block', z:-8.25, y:[3.2, 3.55], hy:3.366, hz:-8.2726, ang:-Math.PI/2}},
+    build(g, p){ return buildModelCar(this, g, p); }
   }
 ];
+
+/* ---------- carros importados: modelo .fbx + texturas em modelos/<id>/ ----------
+   Carregados só quando aparecem na garagem; até lá fica uma silhueta simples. A pintura vem
+   desenhada na textura, então o shader troca só os pixels da cor original (def.color) pela cor escolhida. */
+const MODEL_CARS = {};
+const MODEL_TINT = `#include <map_fragment>
+  { float l = dot(diffuseColor.rgb, vec3(.299, .587, .114)), lr = dot(uRef, vec3(.299, .587, .114));
+    float k = l > .03 ? 1. - smoothstep(.08, .2, length(diffuseColor.rgb / l - uRef / lr)) : 0.;
+    diffuseColor.rgb = mix(diffuseColor.rgb, uPaint * (l / lr), k);
+    if(diffuseColor.a < .6){ diffuseColor.rgb = vec3(.04, .06, .08); diffuseColor.a = .55; } }`;
+function modelTex(def){
+  const TL = new THREE.TextureLoader(), dir = 'modelos/' + def.id + '/', out = {};
+  const ld = f => { const t = TL.load(dir + f); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+  for(const s of Object.values(def.model.mats)) if(s.t && !out[s.t]) out[s.t] = {map:ld(s.t + '_cor.' + (s.alpha ? 'png' : 'jpg')), normal:ld(s.t + '_normal.jpg')};
+  return out;
+}
+function modelMat(def, s, paint){
+  if(s === 'glass') return glassPro; if(s === 'lens') return lensPro;
+  const T = MODEL_CARS[def.id].tex[s.t];
+  const m = glossy(new THREE.MeshPhongMaterial({map:T.map, normalMap:T.normal, shininess:s.paint ? 90 : 30, specular:s.paint ? 0x777777 : 0x222222, transparent:!!s.alpha}), s.paint ? 0.12 : 0.04);
+  m.userData.car = true;
+  if(s.paint){ const ref = new THREE.Color(def.color);
+    m.onBeforeCompile = sh => { sh.uniforms.uPaint = {value:paint.color}; sh.uniforms.uRef = {value:ref};
+      sh.fragmentShader = 'uniform vec3 uPaint, uRef;\n' + sh.fragmentShader.replace('#include <map_fragment>', MODEL_TINT); }; }
+  return m;
+}
+/* separa os triângulos das rodas de uma malha não indexada: |x| >= sp.x e dentro do raio sp.r em torno de (sp.y, sp.z[k]) */
+function splitWheels(geo, sp){
+  if(geo.index) geo = geo.toNonIndexed();
+  const P = geo.attributes.position, W = sp.z.length*2, tri = Array.from({length:W+1}, () => []);
+  const which = i => { const x = P.getX(i), y = P.getY(i), z = P.getZ(i); if(Math.abs(x) < sp.x) return W;
+    for(let k=0;k<sp.z.length;k++) if(Math.hypot(y - sp.y, z - sp.z[k]) <= sp.r) return (x < 0 ? 0 : sp.z.length) + k; return W; };
+  for(let t=0;t<P.count;t+=3){ const a = which(t); tri[a === which(t+1) && a === which(t+2) ? a : W].push(t); }
+  const make = list => { const g = new THREE.BufferGeometry();
+    for(const [n, A] of Object.entries(geo.attributes)){ const s = A.itemSize, arr = new Float32Array(list.length*3*s);
+      list.forEach((t, j) => arr.set(A.array.subarray(t*s, (t+3)*s), j*3*s)); g.setAttribute(n, new THREE.BufferAttribute(arr, s)); }
+    return g; };
+  return {rest:make(tri[W]), wheels:tri.slice(0, W).map(make)};
+}
+/* gira em torno de uma dobradiça paralela a x (em hy/hz) os triângulos que estão inteiros na região z < f.z, f.y[0] < y < f.y[1] */
+function foldPart(geo, f){
+  if(geo.index) return;
+  const P = geo.attributes.position, N = geo.attributes.normal, c = Math.cos(f.ang), s = Math.sin(f.ang);
+  const inside = i => P.getZ(i) < f.z && P.getY(i) > f.y[0] && P.getY(i) < f.y[1];
+  const rot = (A, i, oy, oz) => { const y = A.getY(i) - oy, z = A.getZ(i) - oz; A.setY(i, oy + y*c - z*s); A.setZ(i, oz + y*s + z*c); };
+  for(let t=0;t<P.count;t+=3) if(inside(t) && inside(t+1) && inside(t+2)) for(let i=t;i<t+3;i++){ rot(P, i, f.hy, f.hz); if(N) rot(N, i, 0, 0); }
+}
+function loadModelCar(def){
+  if(MODEL_CARS[def.id] || !THREE.FBXLoader) return;
+  MODEL_CARS[def.id] = {};
+  const o = def.model, mgr = new THREE.LoadingManager();
+  // as texturas citadas dentro do .fbx não são usadas (o jogo aplica as de modelos/<id>/): troca por um GIF vazio para não gerar 404
+  mgr.setURLModifier(u => /\.(png|jpe?g|tga|tiff?)$/i.test(u) ? 'data:image/gif;base64,R0lGODlhAQABAAAAACwAAAAAAQABAAACAkQBADs=' : u);
+  new THREE.FBXLoader(mgr).load('modelos/' + def.id + '/' + def.id + '.fbx', root => {
+    // escala pelo comprimento, centraliza em x/z e apoia no chão; tudo vai assado nas geometrias
+    if(o.fold){ const f = root.getObjectByName(o.fold.part); if(f){ foldPart(f.geometry, o.fold); f.geometry.computeBoundingBox(); } }
+    root.rotation.y = o.yaw || 0; root.updateMatrixWorld(true);
+    const bb = new THREE.Box3().setFromObject(root), s = def.L / (bb.max.z - bb.min.z);
+    const T = new THREE.Matrix4().makeScale(s, s, s).multiply(new THREE.Matrix4().makeTranslation(-(bb.min.x + bb.max.x)/2, -bb.min.y, -(bb.min.z + bb.max.z)/2));
+    const body = [], wheels = [];
+    root.traverse(c => {
+      if(!c.isMesh) return;
+      const mats = [].concat(c.material).map(m => o.mats[m.name] || 'glass'), X = new THREE.Matrix4().multiplyMatrices(T, c.matrixWorld);
+      const add = (geo, wheel) => {
+        geo.applyMatrix4(X); geo.deleteAttribute('color');
+        if(!wheel){ body.push({geo, mats}); return; }
+        geo.computeBoundingBox(); const bx = geo.boundingBox, ctr = bx.getCenter(new THREE.Vector3()), r = (bx.max.y - bx.min.y)/2;
+        geo.translate(-ctr.x, -ctr.y, -ctr.z); wheels.push({geo, mats, c:ctr, r, front:ctr.z < 0});
+      };
+      if(o.split && o.split.part === c.name){ const sp = splitWheels(c.geometry, o.split); add(sp.rest, false); sp.wheels.forEach(w => add(w, true)); }
+      else add(c.geometry, /^Wheel_/.test(c.name));
+    });
+    MODEL_CARS[def.id] = {body, wheels, tex:modelTex(def)};
+    if(CAR === def) refreshPlayer();
+  }, undefined, () => { delete MODEL_CARS[def.id]; });
+}
+function buildModelCar(def, g, p){
+  const M = MODEL_CARS[def.id];
+  if(!M || !M.body){
+    loadModelCar(def);
+    box(g, def.W*0.92, def.H*0.55, def.L*0.94, p, 0, def.H*0.42, 0); box(g, def.W*0.8, def.H*0.3, def.L*0.55, glass, 0, def.H*0.8, 0.1);
+    return [];
+  }
+  const cache = new Map(), mat = s => { if(!cache.has(s)) cache.set(s, modelMat(def, s, p)); return cache.get(s); };
+  const mesh = (part, parent) => { const ms = part.mats.map(mat), m = new THREE.Mesh(part.geo, ms.length > 1 ? ms : ms[0]); m.castShadow = true; parent.add(m); };
+  M.body.forEach(b => mesh(b, g));
+  return M.wheels.map(w => {
+    const pivot = new THREE.Group(), spin = new THREE.Group(); pivot.add(spin); mesh(w, spin);
+    pivot.position.copy(w.c); pivot.userData = {spin, front:w.front, r:w.r}; g.add(pivot); return pivot;
+  });
+}
 
 /* player headlights (used at night) */
 const CAR_SCALE = 0.88;   // carro do jogador um pouco menor
@@ -2011,7 +2131,7 @@ const input = {left:false, right:false, gas:false, brake:false};
 let best = 0; try { best = parseFloat(localStorage.getItem('br316best')) || 0 } catch(e){}
 
 /* ---------- economia: moedas, postos de combustível e carros desbloqueáveis ---------- */
-const PRICE = {tufao:0, cangaco:400, faisca:700, sertanejo:900, carcara:1500, furia:2500};
+const PRICE = {tufao:0, cangaco:400, faisca:700, sertanejo:900, carcara:1500, furia:2500, fusca:300, kombi:350};
 let coins = 0, owned = ['tufao'], runCoins = 0, coinObjs = [], coinTimer = 200, postos = [], postoTimer = 700, payAcc = 0, tipTxt = '';
 try{
   const cc = localStorage.getItem('br316coins');
@@ -2165,6 +2285,8 @@ function selectCar(i){
   try{localStorage.setItem('br316car', CAR.id)}catch(e){}
   tintCockpit(); renderGarage();
 }
+// troca a silhueta provisória pelo modelo importado assim que ele termina de carregar
+function refreshPlayer(){ scene.remove(player); player = buildPlayer(CAR); scene.add(player); placePlayer(); setCam(camIdx); }
 $('gColors').onclick = e => { const b = e.target.closest('button'); if(!b) return; const h = +b.dataset.c;
   try{ localStorage.setItem('br316col_' + CAR.id, h) }catch(err){}
   player.userData.paint.color.setHex(h); tintCockpit(); renderGarage(); };
@@ -2691,7 +2813,7 @@ function finishTrial(){
 function syncTT(){ const g = loadGhost(); $('ttBtn').textContent = trial ? '⏱ Contra o relógio' + (g ? ' · melhor ' + fmtT(g.t) : '') : '⏱ Modo: Livre'; }
 $('ttBtn').onclick = () => { trial = !trial; try{ localStorage.setItem('br316tt', trial ? '1' : '0'); }catch(e){} syncTT(); sfx('click'); };
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.5';
+const VERSION = '2.6';
 function openNews(){ $('news').hidden = false; const sh = $('news').firstElementChild; sh.scrollTop = 0; $('newsClose').focus({preventScroll:true}); sh.scrollTop = 0; }
 function closeNews(){
   $('news').hidden = true;

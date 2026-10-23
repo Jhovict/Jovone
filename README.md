@@ -8,6 +8,7 @@ A página inicial (`index.html`) é o launcher, no estilo da tela inicial de con
 index.html          ← launcher
 turbo-br316/        ← cada jogo em sua pasta, com index.html próprio
   index.html          corrida 3D pelas estradas brasileiras
+  modelos/            Fusca e Kombi: .fbx + texturas reduzidas (cor com AO e normal, 1024 px)
 pane-seca/
   index.html          sobrevivência 3D no sertão (feito a partir do motor do Turbo BR-316)
 pong/
