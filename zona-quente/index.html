@@ -113,6 +113,8 @@ body[data-st=play] canvas#cv{cursor:none}
 .bombic{position:absolute;right:12px;top:50%;transform:translateY(-50%);padding:6px 10px;border-radius:10px;background:rgba(122,42,32,.75);font-weight:700;font-size:.78rem}
 .spec{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);padding:8px 16px;border-radius:12px;background:rgba(13,20,32,.75);text-align:center;pointer-events:auto;cursor:pointer}
 .spec small{display:block;color:var(--muted);font-size:.7rem}
+.specTake{display:block;margin:7px auto 0;border:0;border-radius:999px;padding:7px 16px;background:var(--stripe);color:var(--night);font:700 .78rem var(--body);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.specTake[hidden]{display:none}
 .scope{position:absolute;inset:0;background:radial-gradient(circle at center,transparent 0,transparent 32vmin,#000 32.3vmin)}
 .scope::before,.scope::after{content:"";position:absolute;background:#000}
 .scope::before{left:0;right:0;top:50%;height:2px;margin-top:-1px}
@@ -288,7 +290,7 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
     <div class="prog" id="prog" hidden><small id="progT">Plantando…</small><div><i id="progBar"></i></div></div>
     <div class="hint" id="hint"></div>
     <div class="banner" id="banner"></div>
-    <div class="spec" id="spec" hidden>Assistindo <b id="specN"></b><small id="specS">toque para trocar</small></div>
+    <div class="spec" id="spec" hidden>Assistindo <b id="specN"></b><small id="specS">toque para trocar</small><button type="button" class="specTake" id="specTake" hidden>Assumir o controle</button></div>
     <div class="flashov" id="flashov"></div>
   </div>
   <div class="toast" id="toast"></div>
@@ -416,9 +418,13 @@ body.touch .menu-card{grid-template-columns:1fr 1fr;max-width:820px}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.4</div>
-      <h2 id="newsTitle">MIRA E <span>ARMA</span></h2>
+      <div class="ver" id="newsVer">Versão 1.5</div>
+      <h2 id="newsTitle">ASSUMIR O <span>BOT</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Assumir o controle de um bot</b> no Desarme: morreu e está assistindo um bot do seu time? Aperte <b>E</b> (ou o botão <b>Assumir o controle</b> no celular, ou RB no controle) e continue a rodada no lugar dele, com a vida, as armas, as granadas e até a bomba que ele carregava. O bot fica fora até a próxima rodada.</li>
+      </ul>
+      <h3>Versão 1.4 · Mira e arma</h3>
       <ul>
         <li><b>Mira personalizada</b> nas Opções: cor, tamanho, espessura, espaço, ponto central, contorno e abertura dinâmica ou estática, com prévia e quatro modelos prontos.</li>
         <li><b>Arma na tela</b> como no CS: distância, para o lado, altura e para frente, com os modelos Padrão, Clássica, Baixa e Perto. Na pausa, a tela clareia enquanto você arrasta para ver a arma.</li>
@@ -3075,7 +3081,9 @@ function hud(){
   $('flashov').style.opacity = player.alive ? clamp(player.blind/1.6, 0, 1) : 0;
   /* espectador */
   const sp = !player.alive && cam.third && cam.spec;
-  $('spec').hidden = !sp; if(sp){ setT('specN', cam.spec.name + ' · ' + Math.ceil(cam.spec.hp) + ' ♥'); setT('specS', TOUCH ? 'toque para trocar' : 'clique para trocar'); }
+  const take = !!sp && canTakeOver();
+  $('spec').hidden = !sp; if(sp){ setT('specN', cam.spec.name + ' · ' + Math.ceil(cam.spec.hp) + ' ♥'); setT('specS', (take && !TOUCH ? 'E assume o controle · ' : '') + (TOUCH ? 'toque para trocar' : 'clique para trocar')); }
+  if($('specTake').hidden === take) $('specTake').hidden = !take;
   if(!player.alive && G.mode === 'tdm' && player.respawnT){ setT('specN', 'Renascendo em ' + Math.max(0, Math.ceil(player.respawnT - G.time)) + '…'); $('spec').hidden = false; setT('specS', TOUCH ? 'toque em LOJA ao renascer' : 'B na base para trocar de arma'); }
   /* lista de armas (PC) */
   if(!TOUCH){
@@ -3155,7 +3163,7 @@ addEventListener('keydown', e => {
     case 'Digit5': if(p.hasBomb){ toast('Leve a bomba ao ponto A ou B e segure E'); } break;
     case 'KeyQ': if(p.last) switchTo(p, p.last === p.cur ? bestSlot(p) : p.last); break;
     case 'KeyR': startReload(p); break;
-    case 'KeyE': input.use = true; input.usePressed = true; break;
+    case 'KeyE': if(tryTakeOver()) break; input.use = true; input.usePressed = true; break;
     case 'KeyB': $('buy').hidden ? openBuy() : closeBuy(); break;
     case 'KeyG': if(p.alive){ if(p.hasBomb && (p.cur === 'faca' || !curInst(p))) dropBomb(p); else dropCurrent(p); } break;
     case 'KeyM': toggleMute(); break;
@@ -3188,6 +3196,26 @@ function toggleAim(){
   else if(w.kind === 'knife'){ /* golpe forte */ if(G.time >= p.nextFire && playerCanAct()){ fireWeapon(p); p.nextFire = G.time + .9; } }
 }
 function cycleSpec(){ if(player && !player.alive && G.mode === 'bomb') nextSpec(1); }
+/* morto, assistindo um bot do próprio time: dá para assumir o controle dele, como no CS */
+function canTakeOver(){
+  const b = cam.spec;
+  return STATE === 'play' && G.mode === 'bomb' && G.phase !== 'end' && player && !player.alive && cam.third && b && b.alive && b.bot && b.team === player.team;
+}
+function takeOver(b){
+  const p = player, corpse = {x:p.x, y:p.y, z:p.z, yaw:p.yaw, deadT:p.deadT};
+  /* o jogador entra no corpo do bot (modelo, posição, vida, armas, granadas, bomba); o bot fica como o corpo caído do jogador */
+  [p.model, b.model] = [b.model, p.model]; [p.skin, b.skin] = [b.skin, p.skin];
+  for(const k of ['x', 'y', 'z', 'vx', 'vy', 'vz', 'ground', 'yaw', 'pitch', 'crouch', 'crouchT', 'hp', 'armor', 'helmet', 'kit', 'prim', 'sec', 'nades', 'cur', 'last', 'hasBomb', 'reload', 'reloadTotal', 'draw', 'blind', 'slow', 'walkPh', 'spd', 'nextFire']) p[k] = b[k];
+  Object.assign(p, {alive:true, plantT:0, defusing:false, defT:0, scope:0, aim:false, throwT:0, recP:0, recY:0, shotIdx:0});
+  Object.assign(b, corpse, {alive:false, prim:null, sec:null, nades:{he:0, flash:0, smoke:0}, hasBomb:false, armor:0, helmet:false, kit:false, plantT:0, defusing:false, defT:0});
+  if(b.tag) b.tag.visible = false;
+  if(p.hasBomb) G.bomb.carrier = p;
+  cam.spec = null; cam.killer = null; cam.third = false; cam.eyeY = p.eye - p.y;
+  $('hud').classList.remove('dead');
+  setVM(curId(p), p.team); VM.lyaw = p.yaw; VM.lpitch = p.pitch;
+  radio(p.name + ' assumiu o controle de ' + b.name, 'all');
+}
+const tryTakeOver = () => { if(!canTakeOver()) return false; takeOver(cam.spec); return true; };
 cv.addEventListener('mousedown', e => {
   audioInit();
   if(STATE !== 'play') return;
@@ -3206,6 +3234,7 @@ addEventListener('mousemove', e => {
 });
 cv.addEventListener('wheel', e => { if(STATE === 'play' && locked){ cycleWeapon(e.deltaY > 0 ? 1 : -1); e.preventDefault(); } }, {passive:false});
 $('spec').addEventListener('click', () => cycleSpec());
+$('specTake').addEventListener('click', e => { e.stopPropagation(); audioInit(); tryTakeOver(); });
 
 /* toque: joystick à esquerda, olhar à direita; o botão de fogo também gira a câmera */
 const joy = {id:null, ox:0, oy:0}, look = {id:null, x:0, y:0};
@@ -3278,6 +3307,7 @@ function pollPad(dt){
     input.use = btn(5) > .5 || input.use && !pad.useHeld; if(pressed(5)){ input.usePressed = true; pad.useHeld = true; } if(btn(5) <= .5 && pad.useHeld){ input.use = false; pad.useHeld = false; }
     if(pressed(9)) pauseOn(); if(pressed(8)) showBoard($('board').hidden); if(pressed(12)) $('buy').hidden ? openBuy() : closeBuy();
     if(player && !player.alive && pressed(0)) cycleSpec();
+    if(player && !player.alive && pressed(5)) tryTakeOver();
   } else if(STATE === 'menu'){ if(pressed(0) || pressed(9)) startMatch(); }
   else if(STATE === 'pause'){ if(pressed(0) || pressed(9)) pauseOff(); }
   else if(STATE === 'end'){ if(pressed(0)) startMatch(); if(pressed(1)) toMenu(); }
@@ -3338,7 +3368,7 @@ $('btnPlay').addEventListener('click', () => { audioInit(); goFull(); startMatch
 $('btnAgain').addEventListener('click', () => { audioInit(); startMatch(); });
 $('btnMenu').addEventListener('click', toMenu);
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.4';
+const VERSION = '1.5';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); }
 $('newsVer').textContent = 'Versão ' + VERSION;
