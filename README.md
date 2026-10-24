@@ -58,7 +58,7 @@ Salva opções e estatísticas no `localStorage` com o prefixo `zq`.
 
 ## Pulse Kart
 
-Corrida de kart 125cc em terceira pessoa (ou do capacete, tecla `V`) em 25 circuitos originais (5 campeonatos de 5 etapas: Copa Regional, Litoral, Metrópole, Natureza e Mundial Pulse, com temas de noite, chuva, neblina, praia, cidade, cânion, porto e mais). Entre eles: **Apex Loop** (1,3 km, reta dos boxes, esses, grampo e curvão), **Orla** (à beira-mar, com areia, coqueiros e mar) e **Centro** (de rua, entre prédios e muros de concreto). A pista é escolhida no menu (a página recarrega para montá-la).
+Corrida de kart 125cc na visão do piloto (volante de corrida com painel digital e luvas que giram junto; a tecla `V` troca para as câmeras de trás) em 25 circuitos originais (5 campeonatos de 5 etapas: Copa Regional, Litoral, Metrópole, Natureza e Mundial Pulse, com temas de noite, chuva, neblina, praia, cidade, cânion, porto e mais). Entre eles: **Apex Loop** (1,3 km, reta dos boxes, esses, grampo e curvão), **Orla** (à beira-mar, com areia, coqueiros e mar) e **Centro** (de rua, entre prédios e muros de concreto). A pista é escolhida no menu (a página recarrega para montá-la).
 
 - **Carreira:** campeonatos de 5 etapas com pontos estilo F1, classificação e troféu; pódio libera o próximo; moedas por corrida compram motor, pneus e embreagem (3 níveis); progresso salvo.
 - **Modo com itens** (opcional): caixas na pista dão turbo, óleo, míssil teleguiado ou escudo, com sorteio que favorece quem está atrás; os bots também usam.

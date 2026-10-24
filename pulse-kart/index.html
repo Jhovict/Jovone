@@ -347,9 +347,17 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.8</div>
-      <h2 id="newsTitle">SOBE E <span>DESCE</span></h2>
+      <div class="ver" id="newsVer">Versão 1.9</div>
+      <h2 id="newsTitle">VISÃO DO <span>PILOTO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Câmera do piloto refeita</b>, agora a padrão: você vê pelos olhos do piloto, um pouco de cima do volante, com a pista à frente e a frente do kart embaixo.</li>
+        <li><b>Volante de corrida</b> com pegas, raios e <b>painel digital</b> mostrando o tempo da volta, a volta, a posição e a velocidade.</li>
+        <li><b>Luvas e braços</b> no volante, que giram junto quando você vira.</li>
+        <li>A visão acompanha o kart nas subidas, descidas e curvas inclinadas, olha para dentro da curva, mergulha na freada e treme com o motor (mais na zebra e na grama).</li>
+        <li>A tecla <b>V</b> (ou o botão de câmera) continua trocando para as câmeras de trás.</li>
+      </ul>
+      <h3>Versão 1.8 · Sobe e desce</h3>
       <ul>
         <li><b>Relevo em todas as pistas:</b> subidas, cristas e descidas de até 11%, mais fortes na Serra da Neblina, no Cânion Vermelho e no Vale Verde, mais suaves nas pistas de cidade e de praia. A reta dos boxes continua plana.</li>
         <li><b>Física de ladeira:</b> o kart perde velocidade na subida e ganha na descida, passando um pouco do máximo. Em cristas rápidas ele pode tirar as rodas do chão por um instante e quica ao pousar.</li>
@@ -440,8 +448,10 @@ const store = {
 };
 const TOUCH = (matchMedia && matchMedia('(pointer:coarse)').matches) || ('ontouchstart' in window && navigator.maxTouchPoints > 0);
 document.body.classList.toggle('touch', TOUCH);
-const OPT = Object.assign({mode:'race', laps:3, diff:1, liv:0, cam:0, mute:false, track:0, items:0, coll:1}, store.get('Opt', {}));
+const OPT = Object.assign({mode:'race', laps:3, diff:1, liv:0, cam:2, mute:false, track:0, items:0, coll:1}, store.get('Opt', {}));
 const saveOpt = () => store.set('Opt', OPT);
+/* 1.9: a câmera do piloto (1ª pessoa) vira a padrão uma vez para todos; depois a tecla V continua trocando */
+if(!store.get('Fp19', false)){ OPT.cam = 2; store.set('Fp19', true); saveOpt(); }
 const TRACKS = [
   {id:'apex', n:'Apex Loop', d:'internacional', ctrl:[[0, 0], [70, 0], [140, 0], [195, -12], [228, -48], [232, -100], [204, -140], [146, -152], [104, -180], [106, -228], [152, -252], [214, -244], [258, -266], [262, -312], [226, -338], [168, -330], [112, -300], [62, -262], [22, -206], [-24, -156], [-58, -98], [-66, -46], [-46, -10]], ground:'grass', deco:'trees', walls:'fence', gravel:true},
   {id:'orla', n:'Orla', d:'à beira-mar', ground:'sand', deco:'palms', walls:'fence', gravel:true, sea:true,
@@ -1400,6 +1410,70 @@ function kartModel(L, num){
   root.userData = {body, upper, head, fl, fr, spin, swS};
   return root;
 }
+/* =====================================================================
+   CÂMERA DO PILOTO (1ª pessoa): volante de corrida com painel digital e luvas
+   peças só do kart do jogador, visíveis só nessa câmera; o volante fica mais alto e
+   maior que o do modelo para aparecer como na visão real do capacete
+   ===================================================================== */
+const FP_EYE = new THREE.Vector3(SX, .9, .05), FP_PITCH = -.26;
+function cockpitRig(L){
+  const rig = new THREE.Group(), grip = 0x1c1d21, alu = 0x8a9098, suit = L.suit, glove = 0x121316;
+  /* volante: aro com pegas em camurça, placa central, três raios, painel e botões */
+  const wheelG = new THREE.Group(); wheelG.position.set(SX, .655, -.3); wheelG.rotation.x = -.7; rig.add(wheelG);
+  const sw = new THREE.Group(); wheelG.add(sw);
+  sw.add(new THREE.Mesh(new THREE.TorusGeometry(.16, .018, 12, 48), cm(0x26282c)));
+  for(const s of [-1, 1]){ const t = new THREE.Mesh(new THREE.TorusGeometry(.16, .024, 12, 18, 1.15), cm(grip)); t.rotation.z = s > 0 ? -.58 : Math.PI - .58; sw.add(t); }
+  B(sw, .012, .03, .03, L.p, 0, .16, 0);
+  const plate = new THREE.Mesh(new THREE.ExtrudeGeometry(shapeOf([[-.13, .015], [-.09, .075], [.09, .075], [.13, .015], [.07, -.06], [-.07, -.06]]), {depth:.014, bevelEnabled:true, bevelThickness:.004, bevelSize:.004, bevelSegments:2}), cm(0x2a2c31)); plate.position.z = -.012; sw.add(plate);
+  for(const a of [Math.PI/2 - .05, -Math.PI/2 + .05, Math.PI]){ const sp = B(sw, .13, .022, .01, alu, Math.cos(a)*.095, Math.sin(a)*.095, -.004); sp.rotation.z = a; }
+  CYL(sw, .028, .03, 0x3a3d42, 0, 0, -.005, 'z', 18);
+  /* painel digital (tempo da volta, volta, posição e velocidade) */
+  B(sw, .16, .082, .03, 0x17181b, 0, .052, .006);
+  const dc = document.createElement('canvas'); dc.width = 256; dc.height = 128; const dash = new THREE.CanvasTexture(dc);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(.14, .068), new THREE.MeshBasicMaterial({map:dash})); scr.position.set(0, .052, .022); sw.add(scr);
+  for(const [x, y, c] of [[-.055, -.03, 0xc8352a], [.055, -.03, 0x2ed36a], [-.03, -.045, 0xe8e8e2], [.03, -.045, 0xe8e8e2]]) CYL(sw, .009, .012, c, x, y, .012, 'z', 10);
+  /* luvas no aro, nas "quinze para as três", com o logo branco do dorso; giram com o volante */
+  const hands = [];
+  for(const s of [-1, 1]){
+    const h = new THREE.Group(), a = s > 0 ? .3 : Math.PI - .3; h.position.set(Math.cos(a)*.16, Math.sin(a)*.16, .01); h.rotation.z = a - (s > 0 ? 0 : Math.PI); sw.add(h);
+    sphere(h, .038, glove, 0, 0, .012, 1.1, .85, .75); sphere(h, .026, glove, -s*.03, .026, .018, 1, .8, .8);
+    for(let f = 0; f < 4; f++) sphere(h, .015, glove, s*.012, .03 - f*.02, -.03, 1.3, .8, 1.2);
+    B(h, .045, .012, .004, 0xf2f2ee, -s*.005, .012, .053, 0, 0, s*.3); B(h, .02, .01, .004, 0xf2f2ee, s*.022, -.008, .05, 0, 0, s*.3);
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(.034, .038, .07, 12), cm(glove)); cuff.position.set(0, 0, .055); cuff.rotation.x = Math.PI/2; h.add(cuff);
+    hands.push(h);
+  }
+  /* antebraços: do punho (que gira com o volante) até o cotovelo fora da tela; atualizados a cada quadro */
+  const arms = [-1, 1].map(s => { const g = new THREE.Group(); rig.add(g);
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(.032, .042, 1, 14), cm(suit)); g.add(sleeve);
+    const stripe = new THREE.Mesh(new THREE.CylinderGeometry(.033, .043, 1, 14, 1, true, s > 0 ? 4.5 : 1.45, .3), cm(L.ss)); g.add(stripe);
+    return {g, elbow:new THREE.Vector3(SX + s*.3, .46, .16)}; });
+  rig.traverse(o => { if(o.isMesh){ o.castShadow = false; o.receiveShadow = true; } });
+  rig.visible = false;
+  return {rig, wheelG, sw, hands, arms, dc, dash, dashT:0};
+}
+const _w1 = new THREE.Vector3(), _w2 = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+/* posiciona os antebraços entre o cotovelo e o punho e redesenha o painel */
+function cockpitTick(k, dt){
+  const fp = k.model.userData.fp; if(!fp) return;
+  fp.sw.rotation.z = -k.steer*1.4;
+  fp.rig.updateMatrixWorld(true);
+  fp.arms.forEach((a, n) => {
+    fp.hands[n].localToWorld(_w1.set(0, 0, .09)); k.model.worldToLocal(_w1);
+    _w2.copy(_w1).sub(a.elbow); const len = _w2.length();
+    a.g.position.copy(a.elbow).addScaledVector(_w2, .5); a.g.quaternion.setFromUnitVectors(_up, _w2.normalize()); a.g.scale.set(1, len, 1);
+  });
+  fp.dashT -= dt; if(fp.dashT > 0) return; fp.dashT = .1;
+  const g = fp.dc.getContext('2d'), w = 256, h = 128;
+  g.fillStyle = '#b9c7b4'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.08)'; for(let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);
+  g.fillStyle = '#121a14'; g.textBaseline = 'middle';
+  g.font = '700 50px "Chakra Petch", monospace'; g.textAlign = 'center'; g.fillText(STATE === 'count' ? '0:00.00' : fmt(G.raceT - k.lapStart), w/2, 44);
+  g.font = '700 26px "Chakra Petch", monospace'; g.textAlign = 'left';
+  g.fillText((isRace() ? 'V' + Math.min(G.laps, k.laps + 1) + '/' + G.laps : 'V' + (k.laps + 1)), 10, 102);
+  g.textAlign = 'center'; if(isRace()) g.fillText('P' + placeOf(k), w/2, 102);
+  g.textAlign = 'right'; g.fillText(Math.round(Math.abs(k.vf)*3.6) + '', w - 10, 102);
+  g.fillRect(8, 74, w - 16, 3);
+  fp.dash.needsUpdate = true;
+}
 
 /* =====================================================================
    SOM (sintetizado)
@@ -1731,6 +1805,7 @@ function buildField(){
   KARTS.length = 0; if(ghost){ scene.remove(ghost.model); ghost = null; }
   const pl = OPT.liv;
   player = makeKart(pl, 7, OPT.name || 'Você', true); player.skill = 1; player.corner = 1; player.err = .4; player.lane = 0;
+  { const fp = cockpitRig(LIVERIES[pl]); player.model.add(fp.rig); player.model.userData.fp = fp; }
   if(G.mode === 'career'){ player.skill = 1 + CAR.up.eng*.022; player.gripM = 1 + CAR.up.tire*.045; player.accM = 1 + CAR.up.acc*.08; }
   if(isRace()){
     const others = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => i !== pl), nums = [3, 11, 22, 27, 44, 55, 88];
@@ -2014,7 +2089,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.8';
+const VERSION = '1.9';
 function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2064,9 +2139,11 @@ function hud(dt){
    CÂMERA E LAÇO PRINCIPAL
    ===================================================================== */
 let camSnap = true;
-const _cp = new THREE.Vector3(), _cl = new THREE.Vector3();
+const _cp = new THREE.Vector3(), _cl = new THREE.Vector3(), _fpE = new THREE.Euler(), _fpQ = new THREE.Quaternion();
+/* mostra o volante de corrida (câmera do piloto) ou o piloto inteiro */
+function fpShow(k, on){ const u = k.model.userData; u.head.visible = u.upper.visible = u.swS.parent.visible = !on; if(u.fp) u.fp.rig.visible = on; }
 function updateCamera(dt){
-  if(STATE === 'menu' || !player){
+  if(STATE === 'menu' || !player){ if(player) fpShow(player, false);
     cam.orbit += dt*.25; const k = player || {x:PX[0], y:0, z:PZ[0], h:0};
     const a = k.h + Math.PI*.8 + Math.sin(cam.orbit)*.9, r = 3.6;
     camera.position.set(k.x + Math.sin(a)*r, k.y + .9 + Math.sin(cam.orbit*.7)*.25, k.z + Math.cos(a)*r);
@@ -2074,18 +2151,26 @@ function updateCamera(dt){
     camera.fov = 52; camera.updateProjectionMatrix(); return;
   }
   const k = player, sh = Math.sin(k.h), ch = Math.cos(k.h), sp = Math.abs(k.vf);
-  if(STATE === 'end' || (STATE === 'done' && G.endT > 1.2)){
+  if(STATE === 'end' || (STATE === 'done' && G.endT > 1.2)){ fpShow(k, false);
     cam.orbit += dt*.35; const a = k.h + cam.orbit;
     _cp.set(k.x + Math.sin(a)*5, k.y + 1.8, k.z + Math.cos(a)*5); camera.position.lerp(_cp, Math.min(1, dt*3)); camera.lookAt(k.x, k.y + .5, k.z); return;
   }
   /* altura da pista um pouco à frente: a câmera olha morro acima e morro abaixo */
   const ahead = m => EL[wrap(k.idx + Math.round(m/DS))];
-  if(cam.mode === 2){
-    const u = k.model.userData; u.head.visible = false;
-    camera.position.set(k.x + (-sh*.12 + Math.cos(k.h)*SX), .98 + k.model.position.y, k.z + (-ch*.12 - Math.sin(k.h)*SX));
-    _cl.set(k.x - sh*12, .55 + Math.max(k.y - .5, ahead(12)), k.z - ch*12); camera.lookAt(_cl); camera.rotation.z += k.lean*.05 + k.roll*.6;
+  const fpOn = cam.mode === 2;
+  /* na câmera do piloto, o corpo e o volante do modelo dão lugar ao volante de corrida com as luvas */
+  fpShow(k, fpOn);
+  if(camera.near !== (fpOn ? .03 : .1)){ camera.near = fpOn ? .03 : .1; camera.updateProjectionMatrix(); }
+  if(fpOn){
+    /* olhos do piloto, presos ao kart (sobe, desce e inclina com ele), olhando um pouco para baixo como no capacete */
+    k.model.updateMatrixWorld(true); camera.position.copy(FP_EYE); k.model.localToWorld(camera.position);
+    const vib = (.0012 + (k.surf >= 1 ? .006 : 0))*Math.min(1, sp/8) + .0006, t = G.t;
+    cam.fpDive = lerp(cam.fpDive || 0, k.brk*.05 - k.thr*.015*(sp < 15 ? 1 : 0), Math.min(1, dt*5));
+    cam.fpLook = lerp(cam.fpLook || 0, -k.steer*.13*Math.min(1, sp/10), Math.min(1, dt*4));
+    _fpE.set(FP_PITCH - cam.fpDive + Math.sin(t*61)*vib + (k.air ? .03 : 0), cam.fpLook + Math.sin(t*47 + 1)*vib*.6, k.lean*.035 + Math.sin(t*53 + 2)*vib, 'YXZ');
+    camera.quaternion.copy(k.model.quaternion).multiply(_fpQ.setFromEuler(_fpE));
+    cockpitTick(k, dt);
   } else {
-    k.model.userData.head.visible = true;
     const dist = cam.mode === 0 ? 4.2 : 2.6, hgt = cam.mode === 0 ? 1.9 : 1.05;
     const ah = k.h + (k.drift ? k.drift*-.18 : 0);
     /* a câmera nunca fica abaixo do chão atrás do kart (topo de descida) */
@@ -2095,7 +2180,7 @@ function updateCamera(dt){
     _cl.set(k.x - sh*3, (cam.mode === 0 ? .55 : .5) + (k.y*.6 + ahead(6)*.4), k.z - ch*3); camera.lookAt(_cl);
   }
   if(cam.shake > 0){ cam.shake = Math.max(0, cam.shake - dt*1.5); camera.position.x += rnd(-1, 1)*cam.shake*.06; camera.position.y += rnd(-1, 1)*cam.shake*.06; }
-  const fov = (cam.mode === 2 ? 74 : 66) + clamp(sp/KART.vmax, 0, 1.3)*8 + (k.boost > 0 ? 5 : 0);
+  const fov = (cam.mode === 2 ? 72 : 66) + clamp(sp/KART.vmax, 0, 1.3)*(cam.mode === 2 ? 6 : 8) + (k.boost > 0 ? 5 : 0);
   camera.fov = lerp(camera.fov, fov, Math.min(1, dt*3)); camera.updateProjectionMatrix();
 }
 function step(dt){
