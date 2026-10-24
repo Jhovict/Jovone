@@ -365,9 +365,10 @@ body.touch .keys{display:none}
       <h2 id="newsTitle">PILOTOS <span>NOVOS</span></h2>
       <h3>Novo</h3>
       <ul>
+        <li><b>Câmera do piloto:</b> os braços agora são os do próprio boneco (macacão com volume, faixas e luvas), segurando o volante e virando com ele, no lugar dos braços lisos que pareciam adesivo.</li>
         <li><b>Pilotos novos</b> com o boneco do pacote Animated Characters da Kenney, vestidos de piloto de Fórmula 1: macacão na cor da equipe com faixas e patrocínios, luvas, sapatilhas, balaclava e capacete com viseira escura, faixa e aerofólio.</li>
         <li>Sentados de verdade no kart, com as <b>mãos no volante</b>: os braços acompanham o volante quando o piloto vira, e a cabeça inclina nas curvas.</li>
-        <li>Na câmera do piloto, o boneco some para não tapar a visão (o volante com as luvas continua).</li>
+        <li>Na câmera do piloto, só a cabeça e o capacete somem para não tapar a visão.</li>
       </ul>
       <h3>Versão 3.1 · Testes de contratação</h3>
       <ul>
@@ -1919,7 +1920,10 @@ function driverTick(k){
     const L = s > 0 ? 'Left' : 'Right', arm = B[L + 'Arm'], fa = B[L + 'ForeArm'], hd = B[L + 'Hand'];
     arm.quaternion.copy(arm.userData.q0); fa.quaternion.copy(fa.userData.q0); hd.quaternion.copy(hd.userData.q0); arm.updateMatrixWorld(true);
     /* pega no aro do volante (gira com ele); o boneco está virado para -z do kart, então a mão esquerda dele fica em -x */
-    u.swS.localToWorld(_G.set(-s*.125, .025, .012)); _T.copy(_G).addScaledVector(back, .07).addScaledVector(down, .015);
+    /* na câmera do piloto, as mãos vão no volante grande da cabine (fp.hands: [0] em -x, [1] em +x); senão, no volante do modelo */
+    const fpw = u.fp && u.fp.rig.visible;
+    if(fpw) u.fp.hands[s > 0 ? 0 : 1].localToWorld(_G.set(0, 0, 0)); else u.swS.localToWorld(_G.set(-s*.125, .025, .012));
+    _T.copy(_G).addScaledVector(back, fpw ? .06 : .07).addScaledVector(down, .015);
     arm.getWorldPosition(_S); const a = _S.distanceTo(fa.getWorldPosition(_P)), b = _P.distanceTo(hd.getWorldPosition(_E));
     _D.subVectors(_T, _S); const d = clamp(_D.length(), Math.abs(a - b) + 1e-4, a + b - 1e-4); _D.normalize();
     const pole = new THREE.Vector3().addScaledVector(down, .7).addScaledVector(right, -s*.75).addScaledVector(back, .25);
@@ -2925,7 +2929,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.2';
+const VERSION = '3.2.1';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2979,7 +2983,12 @@ function hud(dt){
 let camSnap = true;
 const _cp = new THREE.Vector3(), _cl = new THREE.Vector3(), _fpE = new THREE.Euler(), _fpQ = new THREE.Quaternion();
 /* mostra o volante de corrida (câmera do piloto) ou o piloto inteiro */
-function fpShow(k, on){ const u = k.model.userData, ch = !!u.char; u.head.visible = u.upper.visible = !on && !ch; u.swS.parent.visible = !on; if(u.legsG) u.legsG.visible = !ch; if(ch) u.char.visible = !on; if(u.fp) u.fp.rig.visible = on; }
+function fpShow(k, on){
+  const u = k.model.userData, ch = !!u.char; u.head.visible = u.upper.visible = !on && !ch; u.swS.parent.visible = !on; if(u.legsG) u.legsG.visible = !ch; if(u.fp) u.fp.rig.visible = on;
+  /* com o boneco Kenney, a câmera do piloto usa os braços dele (macacão de verdade): só a cabeça e o capacete somem;
+     os braços e as luvas feitos à parte para a cabine ficam escondidos */
+  if(ch){ u.char.visible = true; u.cB.Head.scale.setScalar(on ? 1e-3 : 1); if(u.fp){ u.fp.hands.forEach(h => h.visible = false); u.fp.arms.forEach(a => a.g.visible = false); } }
+}
 function updateCamera(dt){
   if(STATE === 'menu' || !player){ if(player) fpShow(player, false);
     cam.orbit += dt*.25; const k = player || {x:PX[0], y:0, z:PZ[0], h:0};
