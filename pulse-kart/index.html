@@ -361,9 +361,13 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.2</div>
-      <h2 id="newsTitle">PILOTOS <span>NOVOS</span></h2>
+      <div class="ver" id="newsVer">Versão 3.3</div>
+      <h2 id="newsTitle">BRAÇOS <span>DE VERDADE</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Braços realistas na câmera do piloto</b> (WRAD ARMS, de wriks): antebraços e mãos com esqueleto, vestidos com a manga do macacão na cor da equipe, faixa, punho e luvas. Os dedos fecham no aro e os braços acompanham o volante, entrando pelos cantos da tela como na visão do capacete.</li>
+      </ul>
+      <h3>Versão 3.2 · Pilotos novos</h3>
       <ul>
         <li><b>Câmera do piloto:</b> os braços agora são os do próprio boneco (macacão com volume, faixas e luvas), segurando o volante e virando com ele, no lugar dos braços lisos que pareciam adesivo.</li>
         <li><b>Pilotos novos</b> com o boneco do pacote Animated Characters da Kenney, vestidos de piloto de Fórmula 1: macacão na cor da equipe com faixas e patrocínios, luvas, sapatilhas, balaclava e capacete com viseira escura, faixa e aerofólio.</li>
@@ -1813,6 +1817,7 @@ function cockpitTick(k, dt){
     _w2.copy(_w1).sub(a.elbow); const len = _w2.length();
     a.g.position.copy(a.elbow).addScaledVector(_w2, .5); a.g.quaternion.setFromUnitVectors(_up, _w2.normalize()); a.g.scale.set(1, len, 1);
   });
+  fpArmsTick(k);
   fp.dashT -= dt; if(fp.dashT > 0) return; fp.dashT = .1;
   const g = fp.dc.getContext('2d'), w = 256, h = 128;
   g.fillStyle = '#b9c7b4'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(0,0,0,.08)'; for(let y = 0; y < h; y += 4) g.fillRect(0, y, w, 1);
@@ -1934,6 +1939,67 @@ function driverTick(k){
   }
   const up = new THREE.Vector3(-down.x, -down.y, -down.z), hb = B.Head; hb.quaternion.copy(hb.userData.q0); hb.updateMatrixWorld(true);
   aimBone(hb, B.Head_end, up.addScaledVector(right, -k.lean*.18).addScaledVector(back, -.06));
+}
+/* ---------- braços em primeira pessoa: WRAD ARMS (wriks, CC0), vestidos de piloto ----------
+   antebraços e mãos realistas com esqueleto; cada vértice é pintado pelo osso que o move (mão e dedos = luva,
+   antebraço = manga do macacão com faixa por cima) sobre o tom da textura original, que mantém dobras e sombra.
+   Os ombros ficam presos ao kart logo abaixo dos olhos e a IK leva as mãos ao volante da cabine. */
+const ARMS = {ready:false, src:null, gray:null, S:.105, ROOT:new THREE.Vector3(SX, .56, .12)};
+function loadArms(){
+  if(!THREE.GLTFLoader || !THREE.SkeletonUtils) return;
+  new THREE.GLTFLoader().load('wrad/arms.glb', g => {
+    let img = null; g.scene.traverse(o => { if(o.isMesh && o.material.map) img = o.material.map.image; });
+    if(img){ /* tom da pele em cinza, normalizado pela média: vira só sombreado e textura de tecido */
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height), p = d.data; let sum = 0; for(let i = 0; i < p.length; i += 4) sum += p[i]*.3 + p[i + 1]*.59 + p[i + 2]*.11;
+      const mean = sum/(p.length/4); for(let i = 0; i < p.length; i += 4){ const v = clamp((p[i]*.3 + p[i + 1]*.59 + p[i + 2]*.11)/mean, .55, 1.25)*200; p[i] = p[i + 1] = p[i + 2] = v; }
+      x.putImageData(d, 0, 0); ARMS.gray = new THREE.CanvasTexture(c); ARMS.gray.flipY = false;
+    }
+    ARMS.src = g.scene; ARMS.ready = true; if(player) attachFpArms(player.model);
+  }, undefined, () => {});
+}
+/* monta os braços no kart do jogador, com as cores da pintura */
+function attachFpArms(m){
+  const u = m.userData; if(!ARMS.ready || !u.fp || u.fpArms) return;
+  const a = THREE.SkeletonUtils.clone(ARMS.src), B = {}; a.traverse(o => { if(o.isBone) B[o.name] = o; });
+  const L = u.liv, col = c => new THREE.Color(c), suit = col(L.p), stripe = col(L.s), glove = col(0x2e323b), cuff = col(L.s === 0x14171c ? 0x2a2c30 : L.s);
+  a.traverse(o => {
+    if(!o.isSkinnedMesh) return;
+    const geo = o.geometry = o.geometry.clone(), si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, nr = geo.attributes.normal, n = geo.attributes.position.count, C = new Float32Array(n*3);
+    const hand = o.skeleton.bones.map(b => /^(wrist|finger|socket)/.test(b.name));
+    for(let i = 0; i < n; i++){
+      let hw = 0; for(let k = 0; k < 4; k++) if(hand[si.array[i*4 + k]]) hw += sw.array[i*4 + k];
+      const c = hw > .55 ? glove : hw > .12 ? cuff : nr.getY(i) > .72 ? stripe : suit; C.set([c.r, c.g, c.b], i*3);
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+    o.material = new THREE.MeshLambertMaterial({map:ARMS.gray, vertexColors:true, skinning:true}); o.frustumCulled = false; o.castShadow = false; o.receiveShadow = true;
+  });
+  /* mãos fechadas no aro: cada falange dobra no eixo x local */
+  for(const s of ['l', 'r']){ for(const f of ['index', 'middle', 'ring', 'pinky']) [.95, 1.0, .7].forEach((ang, k) => { const b = B[`finger_${f}${k + 1}${s}`]; if(b) b.rotateX(ang); });
+    for(const [k, ang] of [[1, .35], [2, .5], [3, .4]]){ const b = B[`finger_thumb${k}${s}`]; if(b) b.rotateX(ang); } }
+  /* ombros mais abertos que no modelo: os antebraços entram pelos cantos de baixo da tela, como na visão real do capacete */
+  for(const s of ['l', 'r']) if(B['bicep' + s]) B['bicep' + s].position.multiplyScalar(1.7);
+  a.scale.setScalar(ARMS.S); a.position.copy(ARMS.ROOT); a.visible = false; m.add(a); a.updateMatrixWorld(true);
+  for(const b of Object.values(B)) b.userData.q0 = b.quaternion.clone();
+  u.fpArms = a; u.fpB = B;
+}
+/* IK dos dois braços até as pegas do volante da cabine (que gira) */
+function fpArmsTick(k){
+  const u = k.model.userData, B = u.fpB; if(!u.fpArms || !u.fpArms.visible) return;
+  k.model.updateMatrixWorld(true);
+  const e = k.model.matrixWorld.elements, right = new THREE.Vector3(e[0], e[1], e[2]).normalize(), down = new THREE.Vector3(-e[4], -e[5], -e[6]).normalize(), back = new THREE.Vector3(e[8], e[9], e[10]).normalize();
+  for(const [s, side, hi] of [['l', -1, 0], ['r', 1, 1]]){
+    const up = B['bicep' + s], fa = B['forearm' + s], wr = B['wrist' + s], mid = B['finger_middle1' + s];
+    for(const b of [up, fa, wr]) b.quaternion.copy(b.userData.q0); up.updateMatrixWorld(true);
+    u.fp.hands[hi].localToWorld(_G.set(0, 0, 0));
+    _T.copy(_G).addScaledVector(back, .055).addScaledVector(down, .01);
+    up.getWorldPosition(_S); const a = _S.distanceTo(fa.getWorldPosition(_P)), b = _P.distanceTo(wr.getWorldPosition(_E));
+    _D.subVectors(_T, _S); const d = clamp(_D.length(), Math.abs(a - b) + 1e-4, a + b - 1e-4); _D.normalize();
+    const pole = new THREE.Vector3().addScaledVector(down, .4).addScaledVector(right, side*1.1).addScaledVector(back, .1); pole.addScaledVector(_D, -pole.dot(_D)).normalize();
+    const x = (a*a - b*b + d*d)/(2*d), h = Math.sqrt(Math.max(0, a*a - x*x));
+    _E.copy(_S).addScaledVector(_D, x).addScaledVector(pole, h);
+    aimBone(up, fa, _P.subVectors(_E, _S)); aimBone(fa, wr, _P.subVectors(_T, _E)); aimBone(wr, mid, _P.subVectors(_G, _T).addScaledVector(down, .015));
+  }
 }
 /* =====================================================================
    SOM (sintetizado)
@@ -2394,7 +2460,7 @@ function buildField(){
   if(G.mode === 'career' && CR && CR.phase === 'tryout' && CR.pend === 'tryout' && CR.tryouts[CR.tryIdx]){ buildTryoutField(); return; }
   const pl = OPT.liv;
   player = makeKart(pl, 7, OPT.name || 'Você', true); player.skill = 1; player.corner = 1; player.err = .4; player.lane = 0;
-  { const fp = cockpitRig(LIVERIES[pl]); player.model.add(fp.rig); player.model.userData.fp = fp; }
+  { const fp = cockpitRig(LIVERIES[pl]); player.model.add(fp.rig); player.model.userData.fp = fp; attachFpArms(player.model); }
   if(isRace()){
     const others = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => i !== pl), nums = [3, 11, 22, 27, 44, 55, 88];
     const D = DIFF[G.mode === 'career' ? (CR ? CR.diff : 1) : OPT.diff];
@@ -2513,7 +2579,7 @@ function buildCareerField(){
       player = k; k.corner = 1; k.err = .4; k.lane = 0;
       /* acerto pessoal (Garagem): pequeno, por cima do kart da equipe */
       k.skill *= 1 + CAR.up.eng*.008; k.gripM *= 1 + CAR.up.tire*.015; k.accM *= 1 + CAR.up.acc*.03;
-      const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp;
+      const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp; attachFpArms(k.model);
     } else {
       const a = d.a; k.drv = a;
       k.skill *= D.pow*(1 + (a.rit - 80)*.0003); k.corner = D.corner*(.975 + (a.rit - 80)*.0006); k.err = D.err*(100 - a.con)/20; k.lane = rnd(-1.6, 1.6);
@@ -2570,7 +2636,7 @@ function buildTryoutField(){
   const t = CR.tryouts[CR.tryIdx], T = CR.teams[t.team], d = CR.drivers[PLAYER_ID];
   /* o teste é com o kart da equipe como ela entrega: o acerto pessoal da Garagem não entra (a meta foi medida assim) */
   const k = makeKart(T.liv, d.num, d.n, true); k.did = PLAYER_ID; applyKart(k, T); k.corner = 1; k.err = .4; k.lane = 0;
-  const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp;
+  const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp; attachFpArms(k.model);
   player = k; KARTS.push(k); placeAt(k, wrap(-Math.round(60/DS)), 0);
 }
 const TRY_RES = {destaque:'APROVADO COM DESTAQUE', aprovado:'APROVADO', reprovado:'REPROVADO'};
@@ -2929,7 +2995,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.2.1';
+const VERSION = '3.3';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2985,9 +3051,11 @@ const _cp = new THREE.Vector3(), _cl = new THREE.Vector3(), _fpE = new THREE.Eul
 /* mostra o volante de corrida (câmera do piloto) ou o piloto inteiro */
 function fpShow(k, on){
   const u = k.model.userData, ch = !!u.char; u.head.visible = u.upper.visible = !on && !ch; u.swS.parent.visible = !on; if(u.legsG) u.legsG.visible = !ch; if(u.fp) u.fp.rig.visible = on;
-  /* com o boneco Kenney, a câmera do piloto usa os braços dele (macacão de verdade): só a cabeça e o capacete somem;
-     os braços e as luvas feitos à parte para a cabine ficam escondidos */
-  if(ch){ u.char.visible = true; u.cB.Head.scale.setScalar(on ? 1e-3 : 1); if(u.fp){ u.fp.hands.forEach(h => h.visible = false); u.fp.arms.forEach(a => a.g.visible = false); } }
+  /* câmera do piloto: braços WRAD (realistas, vestidos) se carregados; senão os braços do boneco Kenney (cabeça encolhida);
+     senão os braços simples da cabine */
+  const arms = !!u.fpArms; if(arms) u.fpArms.visible = on;
+  if(ch){ u.char.visible = !(on && arms); u.cB.Head.scale.setScalar(on ? 1e-3 : 1); }
+  if(u.fp && (ch || arms)){ u.fp.hands.forEach(h => h.visible = false); u.fp.arms.forEach(a => a.g.visible = false); }
 }
 function updateCamera(dt){
   if(STATE === 'menu' || !player){ if(player) fpShow(player, false);
@@ -3103,7 +3171,7 @@ $('titleVer').textContent = 'versão ' + VERSION; applyPads();
 let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
 if(store.get('Auto', 0)){ store.set('Auto', 0); show('Career'); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
 else show(scr0 && SCREENS.includes(scr0) ? scr0 : 'Title');
-resize(); requestAnimationFrame(frame); loadDriver();
+resize(); requestAnimationFrame(frame); loadDriver(); loadArms();
 </script>
 </body>
 </html>
