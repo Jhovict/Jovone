@@ -182,6 +182,7 @@ body.touch .keys{display:none}
 .crTabs{margin:8px 0 4px}.crTabs button{min-width:0;flex:1 1 30%;padding:7px 8px;font-size:.78rem}
 .tbadge{display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 5px;border-radius:6px;font:700 .68rem var(--body);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.45);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);vertical-align:middle}
 .ofr{background:var(--panel-2);border-radius:12px;padding:10px 12px;margin-top:8px}.ofr .btn{margin-top:6px;padding:8px 16px}
+.tryBtns{display:flex;gap:8px;flex-wrap:wrap}
 .ofrH{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}.ofrH b{font-family:var(--display);font-weight:400;font-size:1.05rem}
 .tier{font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(233,237,243,.1);color:#c7cfdc}
 .tier.t0{background:rgba(242,182,50,.25);color:var(--gold)}.tier.t1{background:rgba(74,163,255,.2);color:#9fd0ff}
@@ -360,9 +361,17 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.0</div>
-      <h2 id="newsTitle">CARREIRA <span>PRO</span></h2>
+      <div class="ver" id="newsVer">Versão 3.1</div>
+      <h2 id="newsTitle">TESTES DE <span>CONTRATAÇÃO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>A carreira começa sem equipe</b>, como na F1 2006: as três equipes de menor competitividade abrem testes para a sua primeira vaga profissional.</li>
+        <li><b>Cada teste é um contra o relógio</b> sozinho na pista da equipe, com o kart dela: 3 voltas lançadas, vale a melhor. A meta e a meta de destaque aparecem antes de você entrar na pista.</li>
+        <li><b>Avaliação</b> com o seu tempo, a meta, a diferença e o recado da equipe: aprovado com destaque (contrato de 2 temporadas e salário maior), aprovado ou reprovado. Só aprovado recebe proposta.</li>
+        <li>Duas tentativas por equipe. Dá para recusar uma proposta e testar outra equipe. Se todas as portas se fecharem, abre uma nova janela de testes.</li>
+        <li>Carreiras já começadas continuam como estavam.</li>
+      </ul>
+      <h3>Versão 3.0 · Carreira pro</h3>
       <ul>
         <li><b>Carreira profissional</b>: comece numa equipe iniciante, cumpra as metas do contrato, ganhe reputação e receba propostas das equipes de ponta. Várias temporadas seguidas, com histórico.</li>
         <li><b>8 equipes e 16 pilotos</b>: você ocupa uma das vagas e enfrenta 15 adversários. Cada equipe tem cores, reputação, orçamento e um kart com velocidade, aceleração, curvas, frenagem, aderência, estabilidade e consistência próprias, e isso muda o desempenho na pista.</li>
@@ -597,6 +606,26 @@ const DRIVER_DEF = [
 ];
 const PRIZE16 = [600, 420, 320, 240, 180, 140, 110, 90, 70, 60, 50, 40, 30, 25, 20, 15];
 const ptsFor = pos => POINTS[pos - 1] || 0;
+/* ---------- testes de contratação (início da carreira, como na F1 2006) ----------
+   o piloto começa sem equipe; as 3 equipes de menor competitividade oferecem um teste de contra o relógio
+   na pista delas, com o kart delas. A meta (definida antes da sessão) sai de uma volta de referência nesse
+   kart e nessa pista, ajustada pelo nível escolhido; vale a melhor de 3 voltas lançadas */
+const TRY_LAPS = 3, TRY_TRIES = 2, TRY_DIFF = [1.025, 1, .99], TRY_STAR = .985;
+/* ref = volta da IA andando no limite de aderência com o mesmo kart do jogador (sem bônus de dificuldade), medida no jogo, mais 2% de folga */
+const TRYOUT_DEF = {gvi:{track:'interior', ref:27.44}, rsc:{track:'fazenda', ref:33.76}, tqs:{track:'parque', ref:41.34}};
+const tryoutTeams = c => TEAM_DEF.map(t => t.id).sort((a, b) => c.teams[a].rep - c.teams[b].rep).slice(0, 3);
+function makeTryouts(c){
+  return tryoutTeams(c).map(id => { const def = TRYOUT_DEF[id] || TRYOUT_DEF.gvi, ti = TID(def.track), target = +(def.ref*TRY_DIFF[c.diff]).toFixed(2);
+    return {team:id, ti, track:def.track, target, star:+(target*TRY_STAR).toFixed(2), tries:0, extra:0, best:null, laps:[], res:null, offer:null, refused:false}; });
+}
+const tryLeft = t => TRY_TRIES + (t.extra || 0) - t.tries;
+const tryOpen = t => !t.refused && (t.offer || tryLeft(t) > 0);
+/* ninguém mais disponível (reprovado ou recusado em todas): abre uma nova janela com mais uma tentativa em cada */
+function checkTryouts(){
+  if(CR.tryouts.some(tryOpen)) return;
+  for(const t of CR.tryouts){ t.refused = false; t.extra = (t.extra || 0) + 1; t.offer = null; }
+  crNews('Nova janela de testes: as três equipes aceitam ver você na pista mais uma vez.');
+}
 const clampN = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : d;
 let CR = null, CR_MSG = '';
 
@@ -621,10 +650,17 @@ function validCR(c){
     c.reserve = Object.values(c.drivers).filter(d => !d.team).map(d => d.id);
   }
   c.round = clampN(c.round, 0, CR_ROUNDS, 0); c.season = clampN(c.season, 1, 999, 1); c.rep = clampN(c.rep, 0, 100, 20); c.diff = clampN(c.diff, 0, 2, 1);
-  if(!['race', 'offseason'].includes(c.phase)) c.phase = 'race';
   c.hist = Array.isArray(c.hist) ? c.hist : []; c.news = Array.isArray(c.news) ? c.news : []; c.offers = Array.isArray(c.offers) ? c.offers : [];
   c.raced = Array.isArray(c.raced) ? c.raced : []; c.chist = Array.isArray(c.chist) ? c.chist : []; c.interest = c.interest || {};
-  if(!c.contract || !c.teams[c.contract.team] || !c.teams[c.contract.team].seats.includes(PLAYER_ID)) return false;
+  if(!c.drivers[PLAYER_ID]) return false;
+  const seated = ids.some(id => c.teams[id].seats.includes(PLAYER_ID)), hasContract = c.contract && c.teams[c.contract.team] && c.teams[c.contract.team].seats.includes(PLAYER_ID);
+  /* sem contrato (carreira nova ou save sem vínculo): vai para os testes de contratação, sem apagar nada */
+  if(!hasContract){
+    if(seated) return false;
+    c.contract = null; c.phase = 'tryout';
+    if(!Array.isArray(c.tryouts) || c.tryouts.length !== 3 || c.tryouts.some(t => !t || !c.teams[t.team] || !TRACKS[t.ti])) c.tryouts = makeTryouts(c);
+    c.drivers[PLAYER_ID].team = null;
+  } else if(!['race', 'offseason'].includes(c.phase)) c.phase = 'race';
   for(const r of c.cal){ if(!r || !TRACKS[r.ti]) return false; if(!['pendente', 'grid', 'feito'].includes(r.st)) r.st = 'pendente'; if(r.st === 'feito' && !(r.res && Array.isArray(r.res.fin))) r.st = 'pendente'; }
   return true;
 }
@@ -654,7 +690,7 @@ function tierOf(c, id){ const rank = TEAM_DEF.map(t => t.id).sort((a, b) => c.te
 function crNews(txt){ CR.news.unshift({s:CR.season, r:CR.round, txt}); CR.news.length = Math.min(CR.news.length, 30); }
 /* base de uma carreira nova (antes de escolher a equipe) */
 function careerBase(name, diff){
-  const c = {v:CR_V, season:1, round:0, phase:'race', diff, seed:(Math.random()*1e9) >>> 0, rep:0, teams:{}, drivers:{}, reserve:[], cal:[], hist:[], news:[], offers:[], raced:[], chist:[], interest:{}};
+  const c = {v:CR_V, season:1, round:0, phase:'tryout', diff, seed:(Math.random()*1e9) >>> 0, rep:0, teams:{}, drivers:{}, reserve:[], cal:[], hist:[], news:[], offers:[], raced:[], chist:[], interest:{}, contract:null};
   for(const t of TEAM_DEF) c.teams[t.id] = {id:t.id, n:t.n, s:t.s, liv:t.liv, rep:t.rep, bud:t.bud, k:Object.assign({}, t.k), perfil:t.perfil, seats:[]};
   for(const [id, n, num, team, a] of DRIVER_DEF){ c.drivers[id] = {id, n, num, team, a:Object.assign({}, a)}; if(team) c.teams[team].seats.push(id); else c.reserve.push(id); }
   c.drivers[PLAYER_ID] = {id:PLAYER_ID, n:name, num:7, team:null, a:{rit:80, con:80, agr:70, ult:75, def:75, err:20, pre:80}};
@@ -662,6 +698,7 @@ function careerBase(name, diff){
   const old = (CAR.trophies || []).filter(t => t && t <= 3).length;
   c.rep = 20 + Math.min(20, old*4); c.oldBonus = old;
   c.cal = makeCalendar(1, c.seed);
+  c.tryouts = makeTryouts(c);
   return c;
 }
 /* propostas: equipe, vaga (piloto que sai), duração, objetivo, salário */
@@ -670,12 +707,6 @@ const drvValue = d => d.a.rit*.7 + d.a.con*.2 + (100 - d.a.err)*.1;
 function makeOffer(c, teamId, kind){
   const tr = TIER[tierOf(c, teamId)], out = c.teams[teamId].seats.includes(PLAYER_ID) ? null : weakestSeat(c, teamId);
   return {team:teamId, kind, len:tierOf(c, teamId) >= 2 ? 1 : 2, goal:tr.goal, goalTxt:tr.txt, pay:tr.pay, tier:tierOf(c, teamId), out};
-}
-function startingOffers(c){
-  const byTier = t => TEAM_DEF.map(x => x.id).filter(id => tierOf(c, id) === t);
-  const list = byTier(3).map(id => makeOffer(c, id, 'nova'));
-  if(c.rep >= TIER[2].minRep) list.unshift(makeOffer(c, byTier(2).sort((a, b) => c.teams[a].rep - c.teams[b].rep)[0], 'nova'));
-  return list;
 }
 /* aceita uma proposta: troca de vaga com o piloto que sai (16 vagas sempre ocupadas, ninguém duplicado) */
 function applyOffer(c, o, fromSeason){
@@ -691,10 +722,9 @@ function applyOffer(c, o, fromSeason){
   c.contract = {team:o.team, from:fromSeason, to:fromSeason + o.len - 1, status:'ativo', goal:o.goal, goalTxt:o.goalTxt, pay:o.pay, tier:o.tier};
   c.offers = [];
 }
-function newCareer(name, diff, offer){
+function newCareer(name, diff){
   const c = careerBase(name, diff);
-  applyOffer(c, offer, 1);
-  CR = c; crNews(`${name} assina com a ${c.teams[offer.team].n} para a temporada 1.`); saveCR();
+  CR = c; crNews(`${name} começa a carreira sem equipe: três equipes abriram testes para a primeira vaga profissional.`); saveCR();
 }
 
 /* ---------- classificação (derivada dos resultados confirmados: reprocessar não duplica nada) ---------- */
@@ -2039,7 +2069,7 @@ function stepKart(k, dt, others){
   const i = k.idx;
   if(i > N*.45 && i < N*.55) k.half = true;
   if(prevIdx > N*.85 && i < N*.15){
-    if(k.pre){ k.pre = false; if(G.sess === 'quali'){ k.lapStart = G.raceT; lapVariation(k); } }
+    if(k.pre){ k.pre = false; if(G.sess === 'quali' || G.sess === 'tryout'){ k.lapStart = G.raceT; lapVariation(k); } }
     else if(k.half){ k.half = false; onLap(k); }
   } else if(prevIdx < N*.15 && i > N*.85 && !k.pre && k.laps === 0 && !k.half) k.pre = true;
   k.prog = k.laps*N + (k.pre ? i - N : i);
@@ -2239,6 +2269,7 @@ function buildField(){
   KARTS.length = 0; if(ghost){ scene.remove(ghost.model); ghost = null; }
   /* carreira: as 8 equipes e os 16 pilotos inscritos (o jogador ocupa uma das vagas) */
   if(G.mode === 'career' && CR && CR.phase === 'race'){ buildCareerField(); return; }
+  if(G.mode === 'career' && CR && CR.phase === 'tryout' && CR.pend === 'tryout' && CR.tryouts[CR.tryIdx]){ buildTryoutField(); return; }
   const pl = OPT.liv;
   player = makeKart(pl, 7, OPT.name || 'Você', true); player.skill = 1; player.corner = 1; player.err = .4; player.lane = 0;
   { const fp = cockpitRig(LIVERIES[pl]); player.model.add(fp.rig); player.model.userData.fp = fp; }
@@ -2256,16 +2287,17 @@ function startRace(){
   audioInit(); SFX.start();
   G.mode = OPT.mode;
   /* carreira: a sessão pendente da etapa (classificação ou corrida); fora dela, corrida normal */
-  if(G.mode === 'career' && !(CR && CR.phase === 'race')){ toMenu(); return; }
-  G.sess = G.mode === 'career' ? (CR.pend === 'race' && CR.cal[CR.round].st === 'grid' ? 'race' : 'quali') : null;
+  if(G.mode === 'career' && !(CR && (CR.phase === 'race' || (CR.phase === 'tryout' && CR.pend === 'tryout' && CR.tryouts[CR.tryIdx])))){ toMenu(); return; }
+  G.sess = G.mode !== 'career' ? null : CR.phase === 'tryout' ? 'tryout' : CR.pend === 'race' && CR.cal[CR.round].st === 'grid' ? 'race' : 'quali'; G.ctry = CR && CR.phase === 'tryout' ? CR.tryIdx : null;
   if(G.mode === 'career'){ CR.pend = G.sess; G.cround = CR.round; G.cseason = CR.season; saveCR(); }
-  G.laps = G.mode === 'career' ? (G.sess === 'quali' ? 99 : CR_LAPS) : isRace() ? OPT.laps : 99;
+  G.laps = G.mode === 'career' ? (G.sess === 'race' ? CR_LAPS : 99) : isRace() ? OPT.laps : 99;
   buildField(); clearItems(); buildItemBoxes();
   ['menu', 'end', 'pause', 'how', 'news'].forEach(id => $(id).hidden = true); $('hud').hidden = false;
   STATE = 'count'; G.countT = 0; G.goAt = 3.2 + rnd(.3, 1.1); G.raceT = 0; G.results = null; G.ghostRec = []; G.ghostT = 0;
   $('lights').hidden = false; [...$('lights').children].forEach(l => l.className = ''); setStartLights(0);
   /* classificação: sem largada parada, todos saem para a volta de aquecimento */
   if(G.sess === 'quali'){ STATE = 'race'; $('lights').hidden = true; for(const k of KARTS) k.lapStart = 0; setTimeout(() => banner('CLASSIFICAÇÃO', 'duas voltas lançadas · a melhor define o grid', 3000), 300); }
+  if(G.sess === 'tryout'){ const t = CR.tryouts[G.ctry]; STATE = 'race'; $('lights').hidden = true; player.lapStart = 0; setTimeout(() => banner('TESTE · ' + CR.teams[t.team].n.toUpperCase(), TRY_LAPS + ' voltas lançadas · meta ' + fmt(t.target) + ' · destaque ' + fmt(t.star), 3500), 300); }
   $('tower').hidden = !isRace(); $('posBox').querySelector('.pos').hidden = !isRace();
   $('banner').hidden = true;
   cam.pos.set(0, 0, 0); camSnap = true;
@@ -2279,6 +2311,13 @@ function onLap(k){
   const t = G.raceT - k.lapStart; k.lapStart = G.raceT; k.lapTimes.push(t); k.laps++;
   if(k.best == null || t < k.best) k.best = t;
   lapVariation(k);
+  /* teste de contratação: cada volta comparada com a meta; acaba na terceira */
+  if(G.sess === 'tryout'){
+    if(k.isPlayer){ const tr = CR.tryouts[G.ctry], d = t - tr.target; if(G.bestLap == null || t < G.bestLap){ G.bestLap = t; store.set('Best' + TKEY, t); }
+      (d <= 0 ? SFX.best : SFX.lap)(); banner(fmt(t), `volta ${k.laps}/${TRY_LAPS} · ${d <= 0 ? '−' : '+'}${Math.abs(d).toFixed(2)} s da meta`, 2200);
+      if(k.laps >= TRY_LAPS && STATE === 'race'){ STATE = 'done'; G.endT = 0; setTimeout(() => banner('FIM DO TESTE', 'a equipe vai avaliar', 2400), 900); } }
+    return;
+  }
   /* classificação: duas voltas lançadas; a sessão acaba quando o jogador completa a segunda */
   if(G.sess === 'quali'){
     if(k.isPlayer){ if(G.bestLap == null || t < G.bestLap){ G.bestLap = t; store.set('Best' + TKEY, t); } const rk = KARTS.filter(o => o.best != null && o.best < k.best).length + 1; SFX.lap(); banner(fmt(t), `volta lançada ${k.laps}/2 · ${rk}º provisório`, 2000);
@@ -2308,6 +2347,7 @@ function order(){
 function placeOf(k){ return order().indexOf(k) + 1; }
 function endRace(){
   if(G.sess === 'quali'){ endQuali(); return; }
+  if(G.sess === 'tryout'){ endTryout(); return; }
   STATE = 'end';
   const ord = order(), rows = ord.map(k => {
     let t = k.finished ? k.finishT : G.raceT + ((G.laps*N - k.prog)*DS)/Math.max(12, Math.abs(k.vf) || 18);
@@ -2403,10 +2443,70 @@ function careerRaceEnd(rows){
   $('careerEnd').innerHTML = html;
   $('endStats').innerHTML = `<span class="chip">+${out.pts} pontos</span><span class="chip">${out.dRep >= 0 ? '▲' : '▼'} reputação ${out.dRep >= 0 ? '+' : ''}${out.dRep.toFixed(1)}</span><span class="chip">🪙 +${out.pay} salário +${out.prize} prêmio</span>` + $('endStats').innerHTML;
 }
+/* ---------- sessão de teste: sozinho na pista, kart da equipe avaliada, 3 voltas lançadas ---------- */
+function buildTryoutField(){
+  const t = CR.tryouts[CR.tryIdx], T = CR.teams[t.team], d = CR.drivers[PLAYER_ID];
+  /* o teste é com o kart da equipe como ela entrega: o acerto pessoal da Garagem não entra (a meta foi medida assim) */
+  const k = makeKart(T.liv, d.num, d.n, true); k.did = PLAYER_ID; applyKart(k, T); k.corner = 1; k.err = .4; k.lane = 0;
+  const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp;
+  player = k; KARTS.push(k); placeAt(k, wrap(-Math.round(60/DS)), 0);
+}
+const TRY_RES = {destaque:'APROVADO COM DESTAQUE', aprovado:'APROVADO', reprovado:'REPROVADO'};
+function tryMessage(t, res, best){
+  const T = CR.teams[t.team], d = best - t.target;
+  if(res === 'destaque') return `“Impressionante. ${fmt(best)} com o nosso kart é tempo de piloto de equipe grande. Queremos você por duas temporadas.”`;
+  if(res === 'aprovado') return `“Você bateu a nossa meta por ${(-d).toFixed(2)} s. Tem uma vaga na ${T.n} se quiser.”`;
+  return d < .4 ? `“Faltaram só ${d.toFixed(2)} s. Está perto: mais uma volta limpa e a vaga é sua.”` : `“Faltaram ${d.toFixed(2)} s para a meta. Precisamos de mais ritmo antes de oferecer a vaga.”`;
+}
+/* fim do teste: avalia com o critério definido antes da sessão (meta e meta de destaque) */
+function endTryout(){
+  STATE = 'end';
+  const t = CR.tryouts[G.ctry];
+  if(!t || CR.phase !== 'tryout' || G.ctry !== CR.tryIdx || tryLeft(t) <= 0 || t.refused){ toMenu(); return; }
+  const laps = player.lapTimes.slice(0, TRY_LAPS), best = laps.length ? Math.min(...laps) : null;
+  const res = best == null ? 'reprovado' : best <= t.star ? 'destaque' : best <= t.target ? 'aprovado' : 'reprovado';
+  t.tries++; t.laps = laps.map(x => +x.toFixed(3)); if(best != null && (t.best == null || best < t.best)) t.best = +best.toFixed(3);
+  const rank = {reprovado:0, aprovado:1, destaque:2};
+  if(!t.res || rank[res] > rank[t.res]) t.res = res;
+  if(t.res !== 'reprovado' && !t.offer){ const o = makeOffer(CR, t.team, 'teste'); if(t.res === 'destaque'){ o.len = 2; o.pay += 100; } t.offer = o; }
+  else if(t.res === 'destaque' && t.offer && t.offer.len < 2){ t.offer.len = 2; t.offer.pay += 100; }
+  const T = CR.teams[t.team];
+  crNews(`Teste na ${T.n} (${TRACKS[t.ti].n}): ${fmt(best)} para uma meta de ${fmt(t.target)} — ${TRY_RES[res].toLowerCase()}.`);
+  delete CR.pend; checkTryouts(); const ok = saveCR();
+  $('endK').textContent = `Teste de contratação · ${T.n} · ${TRACKS[t.ti].n}`;
+  $('endT').innerHTML = res === 'reprovado' ? 'REPRO<span>VADO</span>' : res === 'destaque' ? 'APROVADO <span>COM DESTAQUE</span>' : 'APRO<span>VADO</span>';
+  $('endTable').innerHTML = laps.map((x, i) => `<tr class="${x === best ? 'me' : ''}"><td>${i + 1}</td><td>Volta lançada ${i + 1}</td><td class="t">${fmt(x)}</td><td class="t">${x - t.target <= 0 ? '−' : '+'}${Math.abs(x - t.target).toFixed(2)}</td></tr>`).join('')
+    + `<tr><td></td><td>Meta da equipe</td><td class="t">${fmt(t.target)}</td><td class="t">destaque ${fmt(t.star)}</td></tr>`;
+  $('careerEnd').innerHTML = `<p class="cinfo"><b>Sua melhor volta: ${fmt(best)}</b> · meta ${fmt(t.target)} · diferença ${best == null ? '—' : (best - t.target > 0 ? '+' : '−') + Math.abs(best - t.target).toFixed(2) + ' s'}</p><p class="note">${esc(T.n)}: ${esc(tryMessage(t, res, best))}</p>`
+    + (res === 'reprovado' ? `<p class="note">${tryLeft(t) > 0 ? `Você ainda tem ${tryLeft(t)} tentativa nesta equipe.` : 'As tentativas nesta equipe acabaram; tente outra.'}</p>` : '<p class="note">A proposta de contrato está na tela da carreira.</p>') + (ok ? '' : `<p class="note warn">${esc(CR_MSG)}</p>`);
+  $('endStats').innerHTML = '';
+  $('btnAgain').textContent = t.offer ? 'Ver a proposta' : tryLeft(t) > 0 ? 'Tentar de novo' : 'Voltar aos testes'; $('btnMenu').textContent = 'Carreira';
+  if(res !== 'reprovado') SFX.win(); else SFX.lose();
+  $('end').hidden = false; $('hud').hidden = true; $('btnAgain').focus({preventScroll:true});
+}
+/* começa o teste numa equipe (recarrega se a pista do teste for outra) */
+function careerTry(i){
+  const t = CR && CR.phase === 'tryout' && CR.tryouts[i]; if(!t || t.offer || !tryOpen(t)) return;
+  CR.tryIdx = i; CR.pend = 'tryout'; saveCR(); OPT.mode = 'career';
+  if(t.ti !== (OPT.track || 0)){ OPT.track = t.ti; saveOpt(); store.set('Auto', 1); location.reload(); return; }
+  saveOpt(); startRace();
+}
+/* assina a primeira vaga: usa o mesmo sistema de contratos (troca de vaga com o piloto que sai) */
+function tryAccept(i){
+  const t = CR && CR.phase === 'tryout' && CR.tryouts[i]; if(!t || !t.offer || t.refused) return false;
+  const T = CR.teams[t.team]; if(!T.seats.some(d => d !== PLAYER_ID) || T.seats.includes(PLAYER_ID)) return false;
+  applyOffer(CR, t.offer, CR.season); CR.phase = 'race'; delete CR.tryIdx; delete CR.pend;
+  crNews(`${CR.drivers[PLAYER_ID].n} assina com a ${T.n} depois do teste: contrato até a temporada ${CR.contract.to}.`);
+  CR.rep = clamp(CR.rep + (t.res === 'destaque' ? 4 : 2), 0, 100); saveCR(); return true;
+}
+function tryRefuse(i){
+  const t = CR && CR.phase === 'tryout' && CR.tryouts[i]; if(!t || !t.offer) return;
+  t.refused = true; t.offer = null; crNews(`Você recusou a proposta da ${CR.teams[t.team].n}.`); checkTryouts(); saveCR();
+}
 /* botão principal da carreira: classificação, corrida ou janela de transferências.
    a pista é montada no carregamento: se a etapa é em outra pista, recarrega e começa sozinho */
 function careerGo(){
-  if(!CR) return;
+  if(!CR || CR.phase === 'tryout') return;
   if(CR.phase === 'offseason'){ if(CR.contract.to > CR.season && nextSeason()){ SFX.click(); crTab = 'resumo'; buildField(); } else crTab = 'mercado'; renderMenu(); return; }
   const cal = CR.cal[CR.round]; CR.pend = cal.st === 'grid' ? 'race' : 'quali'; saveCR();
   OPT.mode = 'career';
@@ -2432,13 +2532,29 @@ function renderCareer(){
   $('crMsg').innerHTML = CR_MSG ? `<p class="note warn">${esc(CR_MSG)}</p>` : '';
   if(!CR){
     tabs.hidden = true; skip.hidden = true; go.hidden = true;
-    const name = $('crName') ? $('crName').value : (OPT.name && OPT.name !== 'Você' ? OPT.name : ''), base = careerBase(name || 'Piloto', OPT.cdiff ?? 1), offs = startingOffers(base);
-    body.innerHTML = `<p>Comece numa equipe modesta, cumpra as metas, ganhe reputação e receba propostas das equipes de ponta. 8 equipes, 16 pilotos, ${CR_ROUNDS} etapas por temporada, classificação e corrida.</p>
+    const name = $('crName') ? $('crName').value : (OPT.name && OPT.name !== 'Você' ? OPT.name : ''), base = careerBase(name || 'Piloto', OPT.cdiff ?? 1);
+    body.innerHTML = `<p>Você começa sem equipe. Três equipes modestas abriram testes para a primeira vaga profissional: bata o tempo delas para receber uma proposta. Depois, cumpra as metas, ganhe reputação e chame a atenção das equipes de ponta. 8 equipes, 16 pilotos, ${CR_ROUNDS} etapas por temporada.</p>
       <h3>Seu nome</h3><input class="sel" id="crName" maxlength="16" placeholder="Nome do piloto" value="${esc(name)}">
-      <h3>Nível dos adversários</h3><div class="seg" id="crDiff">${['Amador', 'Piloto', 'Profissional'].map((n, i) => `<button data-v="${i}" aria-pressed="${(OPT.cdiff ?? 1) === i}" type="button">${n}</button>`).join('')}</div>
-      <h3>Propostas para a temporada 1 · reputação ${Math.round(base.rep)}</h3>${base.oldBonus ? `<p class="note">Suas ${base.oldBonus} copas no pódio da versão anterior valem reputação extra. Moedas, melhorias e troféus continuam.</p>` : ''}
-      ${offs.map((o, i) => offerCard(base, o, i, 'start')).join('')}`;
+      <h3>Nível dos adversários</h3><div class="seg" id="crDiff">${['Amador', 'Piloto', 'Profissional'].map((n, i) => `<button data-v="${i}" aria-pressed="${(OPT.cdiff ?? 1) === i}" type="button">${n}<small>meta dos testes ${i === 0 ? 'mais folgada' : i === 2 ? 'mais exigente' : 'padrão'}</small></button>`).join('')}</div>
+      ${base.oldBonus ? `<p class="note">Suas ${base.oldBonus} copas no pódio da versão anterior valem reputação extra (${Math.round(base.rep)}). Moedas, melhorias e troféus continuam.</p>` : ''}
+      <div class="row" style="position:static;margin:14px 0 0;padding:0;background:none"><button class="btn pri" data-cr="start" type="button">Começar a carreira</button></div>`;
     return;
+  }
+  /* testes de contratação: as três equipes de menor competitividade, cada uma com meta, pista e kart */
+  if(CR.phase === 'tryout'){
+    tabs.hidden = true; skip.hidden = true; go.hidden = true;
+    let h = `<div class="kick">Temporada 1 · sem equipe</div><p>Você está tentando conquistar sua primeira vaga profissional. Escolha uma equipe e mostre seu potencial: <b>${TRY_LAPS} voltas lançadas</b> sozinho na pista, com o kart dela; vale a sua melhor volta. Bater a meta rende uma proposta de contrato; bater a meta de destaque rende um contrato melhor.</p>`;
+    h += CR.tryouts.map((t, i) => { const T = CR.teams[t.team], left = tryLeft(t), status = t.refused ? 'proposta recusada' : t.offer ? (t.res === 'destaque' ? '✅ aprovado com destaque' : '✅ aprovado') : t.tries ? (left > 0 ? `❌ reprovado · melhor ${fmt(t.best)}` : '❌ reprovado, sem tentativas') : 'ainda não testado';
+      let act = '';
+      if(t.offer) act = `<p class="note">📄 Proposta: ${t.offer.len} temporada${t.offer.len > 1 ? 's' : ''} · 🪙 ${t.offer.pay} por etapa · 🎯 meta: ${esc(t.offer.goalTxt)} · vaga de ${esc(CR.drivers[t.offer.out].n)}</p><div class="tryBtns"><button class="btn pri" data-cr="tryAccept" data-i="${i}" type="button">Assinar com a ${esc(T.n)}</button><button class="btn" data-cr="tryRefuse" data-i="${i}" type="button">Recusar</button></div>`;
+      else if(tryOpen(t)) act = `<button class="btn pri" data-cr="try" data-i="${i}" type="button">${t.tries ? 'Tentar de novo' : 'Fazer o teste'} · ${left} tentativa${left > 1 ? 's' : ''}</button>`;
+      return `<div class="ofr"><div class="ofrH">${badge(T)}<b>${esc(T.n)}</b>${tierTag(CR, t.team)}<small class="tier">${esc(status)}</small></div>
+        <p class="note">${esc(T.perfil)} · pilotos: ${T.seats.map(id => esc(CR.drivers[id].n)).join(' e ')}</p>${bars(T.k)}
+        <p class="cinfo">📍 ${esc(TRACKS[t.ti].n)} · ⏱ meta <b>${fmt(t.target)}</b> · destaque <b>${fmt(t.star)}</b>${t.best != null ? ` · sua melhor <b>${fmt(t.best)}</b>` : ''}</p>${act}</div>`; }).join('');
+    const others = TEAM_DEF.map(t => t.id).filter(id => !CR.tryouts.some(t => t.team === id));
+    h += `<h3>As outras equipes do campeonato</h3><p class="note">Ainda não abrem vaga para estreantes: chegue a elas com resultados e reputação.</p><table class="res">` + others.map(id => { const T = CR.teams[id]; return `<tr><td>${badge(T)}</td><td>${esc(T.n)} ${tierTag(CR, id)}<br><small>${T.seats.map(d => esc(CR.drivers[d].n)).join(' · ')}</small></td><td class="t">rep. ${T.rep}</td></tr>`; }).join('') + '</table>';
+    h += '<h3>Notícias</h3><ul class="nlist">' + CR.news.slice(0, 4).map(n => `<li>${esc(n.txt)}</li>`).join('') + '</ul>';
+    body.innerHTML = h; return;
   }
   tabs.hidden = false;
   tabs.innerHTML = CR_TABS.map(([id, n]) => `<button data-crt="${id}" aria-pressed="${crTab === id}" type="button">${n}</button>`).join('');
@@ -2492,8 +2608,11 @@ $('scrCareer').addEventListener('click', e => {
   const dv = e.target.closest('#crDiff button'); if(dv){ OPT.cdiff = Number(dv.dataset.v); saveOpt(); SFX.toggle(); renderMenu(); return; }
   const a = e.target.closest('[data-cr]'); if(!a) return; const i = Number(a.dataset.i);
   if(a.dataset.cr === 'start'){
-    const name = ($('crName').value || '').trim().slice(0, 16) || 'Piloto', base = careerBase(name, OPT.cdiff ?? 1), o = startingOffers(base)[i]; if(!o) return;
-    OPT.name = name; saveOpt(); newCareer(name, OPT.cdiff ?? 1, o); SFX.coin(); crTab = 'resumo'; G.mode = 'career'; buildField(); renderMenu();
+    const name = ($('crName').value || '').trim().slice(0, 16) || 'Piloto';
+    OPT.name = name; saveOpt(); newCareer(name, OPT.cdiff ?? 1); SFX.click(); crTab = 'resumo'; G.mode = 'career'; buildField(); renderMenu();
+  } else if(a.dataset.cr === 'try'){ SFX.click(); careerTry(i);
+  } else if(a.dataset.cr === 'tryAccept'){ if(tryAccept(i)){ SFX.coin(); crTab = 'resumo'; buildField(); } else SFX.error(); renderMenu();
+  } else if(a.dataset.cr === 'tryRefuse'){ SFX.back(); tryRefuse(i); renderMenu();
   } else if(a.dataset.cr === 'sign'){
     const o = CR.offers[i]; if(!o || CR.phase !== 'offseason') return;
     applyOffer(CR, o, CR.season + 1); crNews(`${CR.drivers[PLAYER_ID].n} assina com a ${CR.teams[o.team].n} até a temporada ${CR.contract.to}.`); SFX.coin();
@@ -2626,7 +2745,7 @@ function pauseOff(){ if(STATE === 'pause') SFX.resume(); STATE = G.prevState || 
 $('btnResume').addEventListener('click', pauseOff);
 $('btnRestart').addEventListener('click', startRace);
 $('btnQuit').addEventListener('click', () => { SFX.back(); toMenu(); });
-$('btnAgain').addEventListener('click', () => { if(G.mode !== 'career') return startRace(); if(G.sess === 'quali') careerGo(); else { SFX.click(); toMenu(); } });
+$('btnAgain').addEventListener('click', () => { if(G.mode !== 'career') return startRace(); if(G.sess === 'quali') careerGo(); else if(G.sess === 'tryout' && CR && CR.phase === 'tryout' && !CR.tryouts[G.ctry].offer && tryOpen(CR.tryouts[G.ctry])) careerTry(G.ctry); else { SFX.click(); toMenu(); } });
 $('btnMenu').addEventListener('click', () => { SFX.back(); toMenu(); });
 $('btnHow').addEventListener('click', () => { SFX.click(); $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
 $('howClose').addEventListener('click', () => { SFX.back(); $('how').hidden = true; });
@@ -2668,7 +2787,7 @@ const bestOf = t => store.get('Best' + (t.id === 'apex' ? '' : '_' + t.id), null
 function renderMenu(){
   const st = store.get('Stats', {races:0, wins:0, pods:0}), champs = CAR.trophies.filter(t => t && t <= 3).length;
   $('hubStats').innerHTML = [`🪙 ${CAR.coins}`, `🏆 ${champs}/5 troféus`, `🏁 ${st.races} corridas`].map(t => `<span class="chip">${t}</span>`).join('');
-  $('hubCareer').textContent = CR ? CR.teams[CR.contract.team].n + ' · temporada ' + CR.season + (CR.phase === 'race' ? ' · etapa ' + (CR.round + 1) + '/' + CR_ROUNDS : ' · mercado aberto') : '8 equipes, 16 pilotos, contratos e temporadas';
+  $('hubCareer').textContent = CR && CR.phase === 'tryout' ? 'Testes de contratação: conquiste sua primeira vaga' : CR ? CR.teams[CR.contract.team].n + ' · temporada ' + CR.season + (CR.phase === 'race' ? ' · etapa ' + (CR.round + 1) + '/' + CR_ROUNDS : ' · mercado aberto') : '8 equipes, 16 pilotos, contratos e temporadas';
   /* carreira */
   renderCareer();
   /* corrida rápida e contra o relógio */
@@ -2688,7 +2807,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.0';
+const VERSION = '3.1';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2724,7 +2843,7 @@ function hud(dt){
   if(on){ const ic = P.itemRoll > 0 ? ITEM_ICON[['turbo', 'oleo', 'missil', 'escudo'][Math.floor(G.t*12) % 4]] : P.item ? ITEM_ICON[P.item] : ''; if($('itemIc').textContent !== ic) $('itemIc').textContent = ic; $('itemN').textContent = P.itemRoll > 0 ? '...' : P.item ? ITEM_NAME[P.item] : P.shield > 0 ? 'escudo ativo' : 'vazio'; }
   hudT -= dt; if(hudT > 0) return; hudT = .12;
   const lapNow = Math.min(G.laps, P.laps + 1);
-  $('lap').textContent = G.sess === 'quali' ? (P.pre ? 'aquec.' : 'Q' + Math.min(2, P.laps + 1) + '/2') : isRace() ? lapNow + '/' + G.laps : String(P.laps + 1);
+  $('lap').textContent = G.sess === 'tryout' ? (P.pre ? 'aquec.' : 'T' + Math.min(TRY_LAPS, P.laps + 1) + '/' + TRY_LAPS) : G.sess === 'quali' ? (P.pre ? 'aquec.' : 'Q' + Math.min(2, P.laps + 1) + '/2') : isRace() ? lapNow + '/' + G.laps : String(P.laps + 1);
   $('tCur').textContent = STATE === 'count' ? '0:00.00' : fmt(G.raceT - P.lapStart);
   $('tLast').textContent = fmt(P.lapTimes[P.lapTimes.length - 1]); $('tBest').textContent = fmt(G.bestLap);
   if(isRace()){
@@ -2850,7 +2969,7 @@ function frame(now){
   renderer.render(scene, camera);
 }
 /* ---------- início ---------- */
-if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CR && CR.phase === 'race' && CR.cal[CR.round].ti === OPT.track)){ OPT.track = 0; saveOpt(); location.reload(); }
+if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CR && ((CR.phase === 'race' && CR.cal[CR.round].ti === OPT.track) || (CR.phase === 'tryout' && CR.tryouts.some(t => t.ti === OPT.track))))){ OPT.track = 0; saveOpt(); location.reload(); }
 G.mode = OPT.mode; buildField(); setMute(!!OPT.mute); cam.mode = OPT.cam || 0;
 $('titleVer').textContent = 'versão ' + VERSION; applyPads();
 let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
