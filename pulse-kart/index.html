@@ -178,6 +178,19 @@ body.touch .keys{display:none}
 .trophy{display:flex;flex-direction:column;gap:2px;background:var(--panel-2);border-radius:12px;padding:10px 14px;margin-top:12px;font-size:1.6rem}.trophy b{font-size:1rem}.trophy span{font-size:.82rem;color:#c7cfdc}
 .sel{width:100%;background:var(--panel-2);color:var(--ink);border:0;border-radius:10px;padding:9px 10px;font:600 .86rem var(--body)}
 .cinfo{font-size:.84rem;color:#c7cfdc;line-height:1.5;margin-top:8px}.cinfo b{color:var(--ink)}
+/* carreira: equipes, karts, propostas */
+.crTabs{margin:8px 0 4px}.crTabs button{min-width:0;flex:1 1 30%;padding:7px 8px;font-size:.78rem}
+.tbadge{display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 5px;border-radius:6px;font:700 .68rem var(--body);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.45);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);vertical-align:middle}
+.ofr{background:var(--panel-2);border-radius:12px;padding:10px 12px;margin-top:8px}.ofr .btn{margin-top:6px;padding:8px 16px}
+.ofrH{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}.ofrH b{font-family:var(--display);font-weight:400;font-size:1.05rem}
+.tier{font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:rgba(233,237,243,.1);color:#c7cfdc}
+.tier.t0{background:rgba(242,182,50,.25);color:var(--gold)}.tier.t1{background:rgba(74,163,255,.2);color:#9fd0ff}
+.kbars{display:grid;grid-template-columns:84px 1fr 24px;gap:2px 8px;font-size:.7rem;color:#c7cfdc;align-items:center;margin:4px 0}
+.kbars i{height:6px;border-radius:3px;background:rgba(233,237,243,.1);overflow:hidden}.kbars i b{display:block;height:100%;background:var(--stripe)}.kbars em{font-style:normal;text-align:right}
+.rep{height:6px;border-radius:3px;background:rgba(233,237,243,.1);margin-top:8px;overflow:hidden}.rep i{display:block;height:100%;background:linear-gradient(90deg,var(--stripe),var(--gold))}
+.nlist{margin:0;padding-left:16px;font-size:.8rem;color:#c7cfdc;line-height:1.45}
+.note.warn{color:#ffb38a}
+.res small{color:var(--muted);font-size:.7rem}
 .news .ver{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--stripe);font-weight:700}
 .news ul,.how ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}
 .news li,.how li{position:relative;padding-left:20px;font-size:.88rem;line-height:1.45;color:#d7dde7}
@@ -232,7 +245,7 @@ body.touch .keys{display:none}
   <div class="overlay menu" id="menu">
     <!-- tela de título -->
     <section class="scr title" id="scrTitle">
-      <div class="logo"><small>Jovone Games apresenta</small><b>PULSE<span>KART</span></b><em>125cc · 25 pistas · 5 campeonatos</em></div>
+      <div class="logo"><small>Jovone Games apresenta</small><b>PULSE<span>KART</span></b><em>125cc · 25 pistas · 8 equipes na carreira</em></div>
       <button class="press" id="pressStart" type="button">Aperte para começar</button>
       <div class="ver2" id="titleVer"></div>
     </section>
@@ -240,7 +253,7 @@ body.touch .keys{display:none}
     <section class="scr hubScr" id="scrHub" hidden>
       <div class="hubHead"><h1>PULSE <span>KART</span></h1><div class="chips" id="hubStats"></div></div>
       <div class="hub">
-        <button class="tile big" data-go="Career" type="button"><i>🏆</i><b>Carreira</b><small id="hubCareer">5 campeonatos</small></button>
+        <button class="tile big" data-go="Career" type="button"><i>🏆</i><b>Carreira</b><small id="hubCareer">8 equipes, 16 pilotos</small></button>
         <button class="tile" data-go="Quick" type="button"><i>🏁</i><b>Corrida rápida</b><small>8 karts, com ou sem itens</small></button>
         <button class="tile" data-go="TT" type="button"><i>⏱</i><b>Contra o relógio</b><small>voltas livres com o kart fantasma</small></button>
         <button class="tile" data-go="Garage" type="button"><i>🔧</i><b>Garagem</b><small>pintura e melhorias</small></button>
@@ -250,15 +263,15 @@ body.touch .keys{display:none}
       </div>
     </section>
     <!-- carreira -->
-    <section class="scr" id="scrCareer" hidden><div class="card">
+    <section class="scr" id="scrCareer" hidden><div class="card wide">
       <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
       <div class="kick">Modo carreira</div><h2>CAR<span>REIRA</span></h2>
-      <h3>Campeonato</h3><div class="seg" id="optCup"></div>
-      <div class="cinfo" id="cInfo"></div>
-      <div id="cStand"></div>
+      <div id="crMsg"></div>
+      <div class="seg crTabs" id="crTabs"></div>
+      <div id="crBody"></div>
       <h3>Colisão entre karts</h3>
       <div class="seg" data-coll="1"><button data-v="1" aria-pressed="true">Ligada<small>karts batem e se empurram</small></button><button data-v="0" aria-pressed="false">Desligada<small>karts se atravessam</small></button></div>
-      <div class="row"><button class="btn pri" id="goCareer" type="button">Correr etapa 1</button><button class="btn" data-go="Garage" type="button">🔧 Garagem</button></div>
+      <div class="row"><button class="btn pri" id="goCareer" type="button">Classificação · etapa 1</button><button class="btn" id="crSkip" type="button" hidden>Pular classificação</button><button class="btn" data-go="Garage" type="button">🔧 Garagem</button></div>
     </div></section>
     <!-- corrida rápida -->
     <section class="scr" id="scrQuick" hidden><div class="card">
@@ -288,16 +301,16 @@ body.touch .keys{display:none}
       <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
       <div class="kick">Seu kart</div><h2>GARA<span>GEM</span></h2>
       <h3>Pintura</h3><div class="seg" id="optLiv"></div>
-      <h3>Melhorias da carreira · <span id="cCoins"></span></h3>
+      <h3>Acerto pessoal da carreira · <span id="cCoins"></span></h3>
       <div class="seg" id="optUp"></div>
-      <p class="note">As melhorias valem nas corridas da carreira. As moedas vêm das etapas: quanto melhor a posição, mais moedas.</p>
+      <p class="note">Na carreira você corre com o kart da sua equipe (as cores e o desempenho são dela). Este acerto pessoal (motor preparado, pneus e embreagem) vem por cima, em qualquer equipe. As moedas vêm do salário e dos prêmios de cada etapa. A pintura escolhida aqui vale na corrida rápida e no contra o relógio.</p>
       <div class="row"><button class="btn pri" data-go="Career" type="button">Ir para a carreira</button></div>
     </div></section>
     <!-- troféus -->
     <section class="scr" id="scrTrophies" hidden><div class="card wide">
       <button class="backBtn" data-go="Hub" type="button">‹ Voltar</button>
       <div class="kick">Galeria</div><h2>TRO<span>FÉUS</span></h2>
-      <div class="trophies" id="trophyCups"></div>
+      <h3>Copas da carreira antiga</h3><div class="trophies" id="trophyCups"></div>
       <h3>Estatísticas</h3><div class="chips" id="trophyStats"></div>
       <h3>Recordes por pista</h3><div class="recs" id="trophyRecs"></div>
     </div></section>
@@ -347,9 +360,19 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 2.0</div>
-      <h2 id="newsTitle">SOM DE <span>VERDADE</span></h2>
+      <div class="ver" id="newsVer">Versão 3.0</div>
+      <h2 id="newsTitle">CARREIRA <span>PRO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Carreira profissional</b>: comece numa equipe iniciante, cumpra as metas do contrato, ganhe reputação e receba propostas das equipes de ponta. Várias temporadas seguidas, com histórico.</li>
+        <li><b>8 equipes e 16 pilotos</b>: você ocupa uma das vagas e enfrenta 15 adversários. Cada equipe tem cores, reputação, orçamento e um kart com velocidade, aceleração, curvas, frenagem, aderência, estabilidade e consistência próprias, e isso muda o desempenho na pista.</li>
+        <li><b>Pilotos com personalidade</b>: ritmo, consistência, agressividade, ultrapassagem, defesa, erros e pressão mudam como cada um pilota. Os adversários não aceleram nem esperam você de propósito na carreira.</li>
+        <li><b>Fim de semana de corrida</b>: classificação com todos na pista (duas voltas lançadas definem o grid) e corrida de 3 voltas. Dá para pular a classificação e largar em último.</li>
+        <li><b>Campeonatos de pilotos e de equipes</b>, com rivais, companheiro de equipe, notícias do paddock, salário e prêmios em moedas.</li>
+        <li><b>Mercado de pilotos</b>: no fim da temporada, as equipes fazem propostas conforme sua reputação, resultados e vagas abertas. Renove, troque de equipe ou continue o contrato.</li>
+        <li>Seu progresso antigo continua: moedas, melhorias, troféus das copas e pistas liberadas. As copas no pódio viram reputação inicial na carreira nova.</li>
+      </ul>
+      <h3>Versão 2.0 · Som de verdade</h3>
       <ul>
         <li><b>Corrigido:</b> o controle (Xbox/PlayStation) agora despausa o jogo com Start. No menu de pausa, o direcional escolhe entre Continuar, Recomeçar e Menu, A confirma e B volta para a corrida.</li>
         <li><b>Motor dois tempos 125cc novo</b>, gerado em tempo real: cada explosão do cilindro, o ronco do escapamento que muda com o giro, a embreagem patinando na saída, o corte do limitador perto de 14.000 rpm e os estalos no escapamento quando você tira o pé.</li>
@@ -526,7 +549,282 @@ const POINTS = [25, 18, 15, 12, 10, 8, 6, 4], PRIZE = [600, 420, 320, 240, 180, 
 const UPG = [{k:'eng', n:'Motor', d:'velocidade final'}, {k:'tire', n:'Pneus', d:'aderência nas curvas'}, {k:'acc', n:'Embreagem', d:'arrancada'}], UPRICE = [700, 1500, 2600];
 const CAR = Object.assign({cup:0, race:0, pts:{}, coins:0, unlocked:1, trophies:[], up:{eng:0, tire:0, acc:0}}, store.get('Career', {}));
 const saveCar = () => store.set('Career', CAR);
-const trackUnlocked = i => i <= 2 || CUPS.some((c, ci) => ci < CAR.unlocked && c.ti.includes(i));
+/* =====================================================================
+   CARREIRA PROFISSIONAL: 8 equipes, 16 vagas, contratos, mercado e temporadas
+   salva em 'Career2'; o save antigo ('Career') continua valendo para moedas, melhorias,
+   troféus das copas antigas e pistas liberadas
+   ===================================================================== */
+const CR_V = 2, CR_ROUNDS = 8, CR_LAPS = 3, PLAYER_ID = 'P';
+/* atributos do kart, 0–100: vel (reta), acel, curva, freio, ader (aderência), estab, cons (consistência técnica) */
+const KSTAT = [['vel', 'Velocidade'], ['acel', 'Aceleração'], ['curva', 'Curvas'], ['freio', 'Frenagem'], ['ader', 'Aderência'], ['estab', 'Estabilidade'], ['cons', 'Consistência']];
+const TEAM_DEF = [
+  {id:'rsh', n:'Redshift Racing', s:'RR', liv:3, rep:92, bud:95, k:{vel:92, acel:84, curva:86, freio:85, ader:86, estab:82, cons:90}, perfil:'motor mais forte do grid: imbatível nas retas'},
+  {id:'apx', n:'Apex Motorsport', s:'AX', liv:1, rep:90, bud:92, k:{vel:85, acel:90, curva:92, freio:90, ader:91, estab:88, cons:88}, perfil:'melhor chassi: ganha tempo nas curvas e freadas'},
+  {id:'pfc', n:'Pulse Factory', s:'PF', liv:0, rep:76, bud:78, k:{vel:87, acel:85, curva:84, freio:82, ader:83, estab:80, cons:84}, perfil:'equipe de fábrica, forte nas pistas rápidas'},
+  {id:'vdm', n:'Verdemar Karting', s:'VK', liv:2, rep:72, bud:70, k:{vel:80, acel:83, curva:88, freio:86, ader:88, estab:87, cons:80}, perfil:'ótima nas pistas sinuosas, perde no fim das retas'},
+  {id:'sol', n:'Sol Nascente Racing', s:'SN', liv:4, rep:58, bud:56, k:{vel:85, acel:77, curva:78, freio:78, ader:77, estab:75, cons:76}, perfil:'rápida na reta, sofre nas curvas lentas'},
+  {id:'tqs', n:'Turquesa Kart Team', s:'TQ', liv:6, rep:55, bud:52, k:{vel:79, acel:82, curva:81, freio:80, ader:80, estab:83, cons:82}, perfil:'equilibrada e confiável, sem ponto forte'},
+  {id:'rsc', n:'Rosa Choque Kart', s:'RC', liv:7, rep:36, bud:34, k:{vel:74, acel:84, curva:77, freio:75, ader:77, estab:72, cons:70}, perfil:'arranca muito bem, falta motor no fim da reta'},
+  {id:'gvi', n:'Garagem Violeta', s:'GV', liv:5, rep:32, bud:30, k:{vel:78, acel:72, curva:73, freio:77, ader:73, estab:75, cons:73}, perfil:'motor razoável, chassi ainda imaturo'}
+];
+/* categoria pela reputação atual (muda entre temporadas): exp = posição média esperada numa corrida de 16 */
+const TIER = [
+  {n:'Elite', exp:3, minRep:72, pay:900, goal:'title', txt:'terminar o campeonato entre os 2 primeiros'},
+  {n:'Forte', exp:5.5, minRep:52, pay:650, goal:'top4', txt:'terminar o campeonato entre os 4 primeiros'},
+  {n:'Intermediária', exp:8.5, minRep:32, pay:450, goal:'top8', txt:'terminar o campeonato entre os 8 primeiros'},
+  {n:'Iniciante', exp:11.5, minRep:0, pay:300, goal:'points', txt:'marcar pontos em pelo menos 3 etapas'}
+];
+/* pilotos: nome, número e atributos 0–100: rit (ritmo de volta), con (consistência), agr (agressividade),
+   ult (ultrapassagem), def (defesa de posição), err (tendência a erros), pre (desempenho sob pressão) */
+const DRIVER_DEF = [
+  ['bia', 'Bia Torres', 3, 'rsh', {rit:91, con:88, agr:72, ult:86, def:84, err:16, pre:88}],
+  ['enz', 'Enzo Vale', 11, 'rsh', {rit:88, con:83, agr:82, ult:88, def:76, err:24, pre:78}],
+  ['cai', 'Caio Lima', 1, 'apx', {rit:92, con:90, agr:62, ult:84, def:88, err:12, pre:92}],
+  ['iar', 'Iara Campos', 2, 'apx', {rit:87, con:89, agr:58, ult:80, def:86, err:15, pre:84}],
+  ['dud', 'Duda Rocha', 27, 'pfc', {rit:86, con:79, agr:86, ult:90, def:74, err:30, pre:72}],
+  ['nic', 'Nico Barros', 22, 'pfc', {rit:83, con:85, agr:64, ult:76, def:82, err:19, pre:80}],
+  ['gab', 'Gabi Nunes', 44, 'vdm', {rit:84, con:87, agr:58, ult:74, def:85, err:17, pre:83}],
+  ['ott', 'Otto Brandão', 9, 'vdm', {rit:80, con:81, agr:75, ult:80, def:78, err:25, pre:71}],
+  ['raf', 'Rafa Melo', 55, 'sol', {rit:81, con:71, agr:90, ult:87, def:68, err:38, pre:64}],
+  ['lia', 'Lia Prado', 17, 'sol', {rit:78, con:81, agr:62, ult:71, def:79, err:25, pre:75}],
+  ['teo', 'Téo Sales', 88, 'tqs', {rit:79, con:85, agr:55, ult:69, def:83, err:19, pre:79}],
+  ['yar', 'Yara Lins', 14, 'tqs', {rit:77, con:77, agr:71, ult:77, def:73, err:28, pre:69}],
+  ['dav', 'Davi Furtado', 31, 'rsc', {rit:76, con:69, agr:84, ult:81, def:66, err:41, pre:58}],
+  ['mal', 'Malu Ferraz', 19, 'rsc', {rit:74, con:79, agr:60, ult:69, def:77, err:29, pre:73}],
+  ['bet', 'Beto Quintela', 66, 'gvi', {rit:72, con:73, agr:73, ult:72, def:71, err:35, pre:63}],
+  ['sof', 'Sofia Marçal', 21, 'gvi', {rit:73, con:81, agr:51, ult:65, def:79, err:26, pre:77}],
+  ['juc', 'Juca Teixeira', 77, null, {rit:75, con:76, agr:68, ult:72, def:72, err:30, pre:70}]
+];
+const PRIZE16 = [600, 420, 320, 240, 180, 140, 110, 90, 70, 60, 50, 40, 30, 25, 20, 15];
+const ptsFor = pos => POINTS[pos - 1] || 0;
+const clampN = (v, a, b, d) => typeof v === 'number' && isFinite(v) ? clamp(v, a, b) : d;
+let CR = null, CR_MSG = '';
+
+/* ---------- salvar e carregar, com validação ---------- */
+function saveCR(){
+  if(!CR) return true;
+  try{ localStorage.setItem('pkartCareer2', JSON.stringify(CR)); CR_MSG = CR_MSG.startsWith('⚠ Não foi possível salvar') ? '' : CR_MSG; return true; }
+  catch(e){ CR_MSG = '⚠ Não foi possível salvar a carreira (armazenamento do navegador cheio ou bloqueado). O progresso desta sessão pode se perder.'; return false; }
+}
+/* confere se cada equipe tem 2 vagas com pilotos que existem, sem ninguém repetido; tenta consertar a partir de drivers[].team */
+function validCR(c){
+  if(!c || typeof c !== 'object' || c.v !== CR_V || !c.teams || !c.drivers || !Array.isArray(c.cal) || c.cal.length !== CR_ROUNDS) return false;
+  const ids = TEAM_DEF.map(t => t.id); if(ids.some(id => !c.teams[id])) return false;
+  for(const d of Object.values(c.drivers)) if(!d || typeof d.n !== 'string' || !d.a) return false;
+  const seen = new Set(); let ok = true;
+  for(const id of ids){ const s = c.teams[id].seats; if(!Array.isArray(s) || s.length !== 2) ok = false; else for(const d of s){ if(!c.drivers[d] || seen.has(d) || c.drivers[d].team !== id) ok = false; seen.add(d); } }
+  if(!ok){ /* conserto: refaz as vagas pelas equipes registradas em cada piloto */
+    const by = {}; ids.forEach(id => by[id] = []);
+    for(const d of Object.values(c.drivers)) if(by[d.team]) by[d.team].push(d.id);
+    if(ids.some(id => by[id].length !== 2)) return false;
+    ids.forEach(id => c.teams[id].seats = by[id]);
+    c.reserve = Object.values(c.drivers).filter(d => !d.team).map(d => d.id);
+  }
+  c.round = clampN(c.round, 0, CR_ROUNDS, 0); c.season = clampN(c.season, 1, 999, 1); c.rep = clampN(c.rep, 0, 100, 20); c.diff = clampN(c.diff, 0, 2, 1);
+  if(!['race', 'offseason'].includes(c.phase)) c.phase = 'race';
+  c.hist = Array.isArray(c.hist) ? c.hist : []; c.news = Array.isArray(c.news) ? c.news : []; c.offers = Array.isArray(c.offers) ? c.offers : [];
+  c.raced = Array.isArray(c.raced) ? c.raced : []; c.chist = Array.isArray(c.chist) ? c.chist : []; c.interest = c.interest || {};
+  if(!c.contract || !c.teams[c.contract.team] || !c.teams[c.contract.team].seats.includes(PLAYER_ID)) return false;
+  for(const r of c.cal){ if(!r || !TRACKS[r.ti]) return false; if(!['pendente', 'grid', 'feito'].includes(r.st)) r.st = 'pendente'; if(r.st === 'feito' && !(r.res && Array.isArray(r.res.fin))) r.st = 'pendente'; }
+  return true;
+}
+function loadCR(){
+  let raw = null; try{ raw = localStorage.getItem('pkartCareer2'); }catch(e){}
+  if(!raw) return null;
+  let c = null; try{ c = JSON.parse(raw); }catch(e){}
+  if(validCR(c)) return c;
+  /* save danificado: guarda uma cópia e avisa, sem apagar em silêncio */
+  try{ localStorage.setItem('pkartCareer2_bad', raw); localStorage.removeItem('pkartCareer2'); }catch(e){}
+  CR_MSG = '⚠ O save da carreira estava danificado e não pôde ser recuperado. Uma cópia foi guardada; comece uma nova carreira (moedas, melhorias e troféus continuam).';
+  return null;
+}
+CR = loadCR();
+
+/* ---------- criação ---------- */
+function seededShuffle(arr, seed){ const a = arr.slice(); let s = seed >>> 0; for(let i = a.length - 1; i > 0; i--){ s = (Math.imul(s, 1664525) + 1013904223) >>> 0; const j = s % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+/* calendário de 8 etapas: pistas variadas, a final sempre num circuito do Mundial Pulse */
+function makeCalendar(season, seed){
+  const finals = ['apex', 'gp', 'noite', 'tempestade', 'redshift'].map(TID), pool = seededShuffle(TRACKS.map((t, i) => i).filter(i => !finals.includes(i)), seed + season*7919);
+  const fin = finals[(season - 1) % finals.length], pick = [];
+  for(const g of ['grass', 'sand', 'city', 'farm', 'dirt', 'dry']){ const i = pool.find(i => TRACKS[i].ground === g && !pick.includes(i)); if(i != null && pick.length < CR_ROUNDS - 1) pick.push(i); }
+  for(const i of pool) if(pick.length < CR_ROUNDS - 1 && !pick.includes(i)) pick.push(i);
+  return seededShuffle(pick, seed + season).concat([fin]).map(ti => ({ti, id:TRACKS[ti].id, st:'pendente'}));
+}
+function tierOf(c, id){ const rank = TEAM_DEF.map(t => t.id).sort((a, b) => c.teams[b].rep - c.teams[a].rep).indexOf(id); return Math.min(3, rank >> 1); }
+function crNews(txt){ CR.news.unshift({s:CR.season, r:CR.round, txt}); CR.news.length = Math.min(CR.news.length, 30); }
+/* base de uma carreira nova (antes de escolher a equipe) */
+function careerBase(name, diff){
+  const c = {v:CR_V, season:1, round:0, phase:'race', diff, seed:(Math.random()*1e9) >>> 0, rep:0, teams:{}, drivers:{}, reserve:[], cal:[], hist:[], news:[], offers:[], raced:[], chist:[], interest:{}};
+  for(const t of TEAM_DEF) c.teams[t.id] = {id:t.id, n:t.n, s:t.s, liv:t.liv, rep:t.rep, bud:t.bud, k:Object.assign({}, t.k), perfil:t.perfil, seats:[]};
+  for(const [id, n, num, team, a] of DRIVER_DEF){ c.drivers[id] = {id, n, num, team, a:Object.assign({}, a)}; if(team) c.teams[team].seats.push(id); else c.reserve.push(id); }
+  c.drivers[PLAYER_ID] = {id:PLAYER_ID, n:name, num:7, team:null, a:{rit:80, con:80, agr:70, ult:75, def:75, err:20, pre:80}};
+  /* experiência das copas antigas vira reputação inicial */
+  const old = (CAR.trophies || []).filter(t => t && t <= 3).length;
+  c.rep = 20 + Math.min(20, old*4); c.oldBonus = old;
+  c.cal = makeCalendar(1, c.seed);
+  return c;
+}
+/* propostas: equipe, vaga (piloto que sai), duração, objetivo, salário */
+function weakestSeat(c, teamId){ const s = c.teams[teamId].seats.filter(d => d !== PLAYER_ID); return s.sort((a, b) => drvValue(c.drivers[a]) - drvValue(c.drivers[b]))[0] || null; }
+const drvValue = d => d.a.rit*.7 + d.a.con*.2 + (100 - d.a.err)*.1;
+function makeOffer(c, teamId, kind){
+  const tr = TIER[tierOf(c, teamId)], out = c.teams[teamId].seats.includes(PLAYER_ID) ? null : weakestSeat(c, teamId);
+  return {team:teamId, kind, len:tierOf(c, teamId) >= 2 ? 1 : 2, goal:tr.goal, goalTxt:tr.txt, pay:tr.pay, tier:tierOf(c, teamId), out};
+}
+function startingOffers(c){
+  const byTier = t => TEAM_DEF.map(x => x.id).filter(id => tierOf(c, id) === t);
+  const list = byTier(3).map(id => makeOffer(c, id, 'nova'));
+  if(c.rep >= TIER[2].minRep) list.unshift(makeOffer(c, byTier(2).sort((a, b) => c.teams[a].rep - c.teams[b].rep)[0], 'nova'));
+  return list;
+}
+/* aceita uma proposta: troca de vaga com o piloto que sai (16 vagas sempre ocupadas, ninguém duplicado) */
+function applyOffer(c, o, fromSeason){
+  const me = c.drivers[PLAYER_ID], old = me.team, nt = c.teams[o.team];
+  if(c.contract){ const st = old === o.team ? 'renovado' : c.contract.to < fromSeason ? 'concluído' : 'rescindido'; c.contract.status = st; c.chist.push(Object.assign({}, c.contract)); }
+  if(old !== o.team){
+    const outId = o.out && nt.seats.includes(o.out) ? o.out : weakestSeat(c, o.team);
+    nt.seats[nt.seats.indexOf(outId)] = PLAYER_ID; me.team = o.team;
+    const od = c.drivers[outId];
+    if(old){ const ot = c.teams[old]; ot.seats[ot.seats.indexOf(PLAYER_ID)] = outId; od.team = old; }
+    else { od.team = null; c.reserve.push(outId); }
+  }
+  c.contract = {team:o.team, from:fromSeason, to:fromSeason + o.len - 1, status:'ativo', goal:o.goal, goalTxt:o.goalTxt, pay:o.pay, tier:o.tier};
+  c.offers = [];
+}
+function newCareer(name, diff, offer){
+  const c = careerBase(name, diff);
+  applyOffer(c, offer, 1);
+  CR = c; crNews(`${name} assina com a ${c.teams[offer.team].n} para a temporada 1.`); saveCR();
+}
+
+/* ---------- classificação (derivada dos resultados confirmados: reprocessar não duplica nada) ---------- */
+function standings(c = CR){
+  const D = {}, T = {};
+  for(const id of Object.keys(c.drivers)) D[id] = {id, pts:0, wins:0, pods:0, poles:0, fls:0, races:0, best:99, fin:Array(17).fill(0), pointsRaces:0};
+  for(const id of Object.keys(c.teams)) T[id] = {id, pts:0, wins:0, best:99};
+  for(const r of c.cal){ if(r.st !== 'feito') continue; const res = r.res;
+    res.fin.forEach((id, i) => { const p = i + 1, d = D[id]; if(!d) return; const pt = ptsFor(p); d.pts += pt; d.races++; d.fin[p]++; if(p === 1) d.wins++; if(p <= 3) d.pods++; if(pt) d.pointsRaces++; d.best = Math.min(d.best, p);
+      const tm = T[res.tm[id]]; if(tm){ tm.pts += pt; if(p === 1) tm.wins++; tm.best = Math.min(tm.best, p); } });
+    if(D[res.pole]) D[res.pole].poles++; if(res.fl && D[res.fl.id]) D[res.fl.id].fls++;
+  }
+  /* desempate: pontos, depois vitórias, segundos, terceiros… (contagem regressiva), depois nome */
+  const cmpD = (a, b) => b.pts - a.pts || (() => { for(let p = 1; p <= 16; p++) if(b.fin[p] !== a.fin[p]) return b.fin[p] - a.fin[p]; return 0; })() || c.drivers[a.id].n.localeCompare(c.drivers[b.id].n);
+  const inSeason = id => c.drivers[id].team || D[id].races;
+  const drivers = Object.values(D).filter(d => inSeason(d.id)).sort(cmpD), teams = Object.values(T).sort((a, b) => b.pts - a.pts || b.wins - a.wins || a.best - b.best);
+  return {drivers, teams, D, T};
+}
+const posOf = (st, id) => st.drivers.findIndex(d => d.id === id) + 1;
+/* objetivo do contrato: progresso atual */
+function goalStatus(c = CR){
+  const st = standings(c), me = st.D[PLAYER_ID], pos = posOf(st, PLAYER_ID), g = c.contract.goal, done = c.cal.filter(r => r.st === 'feito').length;
+  const mate = c.teams[c.contract.team].seats.find(d => d !== PLAYER_ID), mp = posOf(st, mate);
+  let ok, txt;
+  if(g === 'title'){ ok = pos <= 2; txt = `${pos}º no campeonato (meta: top 2)`; }
+  else if(g === 'top4'){ ok = pos <= 4; txt = `${pos}º no campeonato (meta: top 4)`; }
+  else if(g === 'top8'){ ok = pos <= 8; txt = `${pos}º no campeonato (meta: top 8)`; }
+  else { ok = me.pointsRaces >= 3; txt = `pontos em ${me.pointsRaces} de 3 etapas`; }
+  if(!done && g !== 'points'){ ok = false; txt = 'a temporada ainda não começou'; }
+  return {ok, txt, pos, mate, mateAhead:mp < pos, done};
+}
+/* rivais: quem anda perto de você nas corridas e na tabela */
+function rivals(c = CR){
+  if(!c.cal.some(r => r.st === 'feito')) return [];
+  const st = standings(c), me = st.D[PLAYER_ID], score = {};
+  for(const r of c.cal){ if(r.st !== 'feito') continue; const i = r.res.fin.indexOf(PLAYER_ID); for(const k of [-1, 1]){ const o = r.res.fin[i + k]; if(o) score[o] = (score[o] || 0) + 1; } }
+  return st.drivers.filter(d => d.id !== PLAYER_ID).map(d => ({id:d.id, s:(score[d.id] || 0)*2 + Math.max(0, 6 - Math.abs(d.pts - me.pts)/4) + (c.drivers[d.id].team === c.contract.team ? 1.5 : 0)}))
+    .sort((a, b) => b.s - a.s).slice(0, 2).filter(x => x.s > 1.5).map(x => x.id);
+}
+
+/* ---------- fim de etapa: grava o resultado real uma única vez ---------- */
+function finishRound(r, data){
+  const cal = CR.cal[r]; if(!cal || cal.st !== 'grid' || r !== CR.round || CR.phase !== 'race' || !Array.isArray(data.fin) || data.fin.length !== 16 || new Set(data.fin).size !== 16) return null;
+  const tm = {}; for(const id of data.fin) tm[id] = CR.drivers[id].team;
+  cal.res = {fin:data.fin, t:data.t, est:data.est, fl:data.fl, pole:cal.grid && !cal.gridSim ? cal.grid[0] : null, tm, gridSim:!!cal.gridSim};
+  cal.st = 'feito'; if(!CR.raced.includes(cal.id)) CR.raced.push(cal.id);
+  const p = data.fin.indexOf(PLAYER_ID) + 1, tierE = TIER[CR.contract.tier].exp;
+  /* reputação muda aos poucos: compara com o esperado para a equipe */
+  const mate = CR.teams[CR.contract.team].seats.find(d => d !== PLAYER_ID), beat = data.fin.indexOf(mate) > data.fin.indexOf(PLAYER_ID);
+  let dRep = clamp((tierE - p)*.55, -2.5, 3) + (p === 1 ? 2 : p <= 3 ? .8 : 0) + (cal.res.pole === PLAYER_ID ? .5 : 0) + (beat ? .4 : -.3);
+  if(CR.rep > 80 && dRep > 0) dRep *= .7;
+  CR.rep = clamp(CR.rep + dRep, 0, 100);
+  const pay = CR.contract.pay, prize = PRIZE16[p - 1] || 0; CAR.coins += pay + prize; saveCar();
+  const tr = CR.drivers[data.fin[0]];
+  crNews(`Etapa ${r + 1} (${TRACKS[cal.ti].n}): vitória de ${tr.n} (${CR.teams[tr.team] ? CR.teams[tr.team].n : 'reserva'}). Você terminou em ${p}º.`);
+  /* interesse do mercado (as propostas formais saem no fim da temporada) */
+  const form = recentForm();
+  for(const id of TEAM_DEF.map(t => t.id)){ if(id === CR.contract.team || CR.interest[CR.season + id]) continue; const t = tierOf(CR, id);
+    if(t < CR.contract.tier && CR.rep >= TIER[t].minRep - 6 && form <= TIER[t].exp + 2){ CR.interest[CR.season + id] = 1; crNews(`A ${CR.teams[id].n} (${TIER[t].n}) está de olho em você.`); } }
+  CR.round = r + 1; delete CR.pend;
+  if(CR.round >= CR_ROUNDS) endSeason();
+  saveCR();
+  return {p, pts:ptsFor(p), dRep, pay, prize, beat};
+}
+/* média de chegada nas últimas 4 etapas */
+function recentForm(c = CR){ const done = []; for(let s = c.cal.length - 1; s >= 0 && done.length < 4; s--) if(c.cal[s].st === 'feito') done.push(c.cal[s].res.fin.indexOf(PLAYER_ID) + 1); return done.length ? done.reduce((a, b) => a + b, 0)/done.length : 12; }
+
+/* ---------- fim de temporada: campeões, histórico, evolução das equipes, contratos e propostas ---------- */
+function endSeason(){
+  if(CR.phase === 'offseason') return;
+  const st = standings(), me = st.D[PLAYER_ID], pos = posOf(st, PLAYER_ID), champ = st.drivers[0], tch = st.teams[0], g = goalStatus();
+  const mine = st.teams.findIndex(t => t.id === CR.contract.team) + 1;
+  CR.hist.push({season:CR.season, team:CR.contract.team, teamN:CR.teams[CR.contract.team].n, pos, pts:me.pts, wins:me.wins, pods:me.pods, poles:me.poles, fls:me.fls, races:me.races, best:me.best < 99 ? me.best : null,
+    champ:CR.drivers[champ.id].n, champTeam:CR.teams[CR.drivers[champ.id].team] ? CR.teams[CR.drivers[champ.id].team].n : '', tchamp:CR.teams[tch.id].n, teamPos:mine, goalOk:g.ok, title:champ.id === PLAYER_ID, teamTitle:tch.id === CR.contract.team});
+  CR.rep = clamp(CR.rep + (g.ok ? 5 : -4) + (champ.id === PLAYER_ID ? 8 : 0) + (tch.id === CR.contract.team ? 2 : 0), 0, 100);
+  crNews(`Fim da temporada ${CR.season}: ${CR.drivers[champ.id].n} é campeão; a ${CR.teams[tch.id].n} leva o título de equipes. Você foi ${pos}º.`);
+  /* equipes evoluem: quem supera o esperado desenvolve o kart; o orçamento pesa */
+  st.teams.forEach((t, i) => { const T = CR.teams[t.id], exp = tierOf(CR, t.id)*2 + 1.5, dev = (exp - (i + 1))*.7 + (T.bud - 60)/40;
+    for(const [k] of KSTAT) T.k[k] = Math.round(clamp(T.k[k] + dev*rnd(.5, 1.1) + rnd(-1, 1), 66, 96));
+    T.rep = Math.round(clamp(T.rep + (exp - (i + 1))*2.2 + rnd(-1, 1), 20, 98)); T.bud = Math.round(clamp(T.bud + (8 - i)*1.2 - 4 + rnd(-2, 2), 20, 99)); });
+  /* pilotos da IA evoluem um pouco, conforme a temporada */
+  st.drivers.forEach((d, i) => { if(d.id === PLAYER_ID) return; const D = CR.drivers[d.id], exp = TEAM_DEF.findIndex(t => t.id === D.team);
+    const dv = clamp(((exp < 0 ? 12 : exp*2 + 1.5) - (i + 1))*.25, -1.5, 1.5);
+    for(const k of ['rit', 'con', 'ult', 'def', 'pre']) D.a[k] = Math.round(clamp(D.a[k] + dv + rnd(-1.2, 1.2), 50, 97)); D.a.err = Math.round(clamp(D.a.err - dv + rnd(-1.5, 1.5), 5, 60)); });
+  CR.offers = seasonOffers(st, pos, g);
+  CR.phase = 'offseason';
+}
+function seasonOffers(st, pos, g){
+  const me = st.D[PLAYER_ID], cur = CR.contract.team, expired = CR.contract.to <= CR.season, form = recentForm(), out = [];
+  for(const id of TEAM_DEF.map(t => t.id)){ if(id === cur) continue; const t = tierOf(CR, id), tr = TIER[t];
+    const wants = t === 0 ? CR.rep >= tr.minRep && (pos <= 4 || me.wins >= 2) : t === 1 ? CR.rep >= tr.minRep && (pos <= 7 || form <= 6) : t === 2 ? CR.rep >= tr.minRep && (pos <= 11 || form <= 9) : CR.rep < 70;
+    const out0 = weakestSeat(CR, id);
+    /* só oferece se houver vaga: o piloto mais fraco da equipe precisa valer menos que você */
+    if(wants && out0 && drvValue(CR.drivers[out0]) < 60 + CR.rep*.38) out.push(makeOffer(CR, id, 'nova'));
+  }
+  out.sort((a, b) => a.tier - b.tier); const best = out.slice(0, 3);
+  /* renovação: a equipe atual renova se a meta foi cumprida ou a reputação basta */
+  if(expired && (g.ok || CR.rep >= TIER[tierOf(CR, cur)].minRep)) best.push(makeOffer(CR, cur, 'renov'));
+  /* contrato vencido e ninguém interessado: a equipe iniciante mais fraca sempre oferece uma vaga */
+  if(expired && !best.length){ const fall = TEAM_DEF.map(t => t.id).filter(id => id !== cur).sort((a, b) => CR.teams[a].rep - CR.teams[b].rep)[0]; best.push(makeOffer(CR, fall, 'nova')); }
+  return best;
+}
+/* começa a próxima temporada (precisa ter contrato válido para ela) */
+function nextSeason(){
+  if(CR.phase !== 'offseason') return false;
+  const ns = CR.season + 1; if(CR.contract.to < ns) return false;
+  aiMarket();
+  CR.season = ns; CR.round = 0; CR.phase = 'race'; CR.cal = makeCalendar(ns, CR.seed); CR.offers = []; delete CR.pend;
+  crNews(`Começa a temporada ${ns}. Você corre pela ${CR.teams[CR.contract.team].n}.`);
+  saveCR(); return true;
+}
+/* mercado da IA entre temporadas: até 2 trocas entre equipes vizinhas e o reserva entra no lugar do pior; sempre trocas (16 vagas) */
+function aiMarket(){
+  const st = standings(), order = TEAM_DEF.map(t => t.id).sort((a, b) => CR.teams[b].rep - CR.teams[a].rep); let swaps = 0;
+  for(let i = 0; i < order.length - 1 && swaps < 2; i++){
+    const up = CR.teams[order[i]], dn = CR.teams[order[i + 1]];
+    const wu = up.seats.filter(d => d !== PLAYER_ID).sort((a, b) => posOf(st, b) - posOf(st, a))[0], bd = dn.seats.filter(d => d !== PLAYER_ID).sort((a, b) => posOf(st, a) - posOf(st, b))[0];
+    if(wu && bd && posOf(st, bd) + 2 < posOf(st, wu) && Math.random() < .7){ up.seats[up.seats.indexOf(wu)] = bd; dn.seats[dn.seats.indexOf(bd)] = wu; CR.drivers[bd].team = up.id; CR.drivers[wu].team = dn.id; swaps++; crNews(`${CR.drivers[bd].n} sobe para a ${up.n}; ${CR.drivers[wu].n} vai para a ${dn.n}.`); }
+  }
+  if(CR.reserve.length){ const worst = st.drivers.filter(d => d.id !== PLAYER_ID && CR.drivers[d.id].team).pop(); if(worst && Math.random() < .6){ const rid = CR.reserve.shift(), T = CR.teams[CR.drivers[worst.id].team];
+    T.seats[T.seats.indexOf(worst.id)] = rid; CR.drivers[rid].team = T.id; CR.drivers[worst.id].team = null; CR.reserve.push(worst.id); crNews(`${CR.drivers[rid].n} volta ao grid pela ${T.n}; ${CR.drivers[worst.id].n} vira reserva.`); } }
+}
+/* estatísticas da carreira inteira: histórico + temporada em andamento (tudo derivado, nada duplicado) */
+function careerStats(){
+  const s = {races:0, wins:0, pods:0, poles:0, fls:0, pts:0, best:null, titles:0, tTitles:0, seasons:CR.hist.length};
+  for(const h of CR.hist){ s.races += h.races; s.wins += h.wins; s.pods += h.pods; s.poles += h.poles; s.fls += h.fls; s.pts += h.pts; if(h.best && (!s.best || h.best < s.best)) s.best = h.best; if(h.title) s.titles++; if(h.teamTitle) s.tTitles++; }
+  if(CR.phase === 'race'){ const d = standings().D[PLAYER_ID]; s.races += d.races; s.wins += d.wins; s.pods += d.pods; s.poles += d.poles; s.fls += d.fls; s.pts += d.pts; if(d.best < 99 && (!s.best || d.best < s.best)) s.best = d.best; }
+  return s;
+}
+const trackUnlocked = i => i <= 2 || CUPS.some((c, ci) => ci < CAR.unlocked && c.ti.includes(i)) || !!(CR && CR.raced.includes(TRACKS[i].id));
 const TRK = TRACKS[OPT.track] || TRACKS[0], TKEY = TRK.id === 'apex' ? '' : '_' + TRK.id;
 const fmt = t => { if(t == null || !isFinite(t)) return '—'; const m = Math.floor(t/60), s = t - m*60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(t < 600 ? 2 : 1); };
 
@@ -1666,9 +1964,8 @@ function makeKart(livIdx, num, name, isPlayer){
     idx:0, d:0, surf:0, slip:0, laps:0, pre:true, half:false, lapStart:0, lapTimes:[], best:null, finished:false, finishT:0, prog:0, wheel:0, lean:0, skill:1, lane:0, wrong:0, ai:{off:0, t:0}};
 }
 function placeOnGrid(k, slot){
-  const i = wrap(-Math.round((8 + slot*5.2)/DS)), d = slot % 2 ? 2.6 : -2.6;
-  k.x = PX[i] + RX[i]*d; k.z = PZ[i] + RZ[i]*d; k.y = trackY(i, d); k.vy = 0; k.air = false; k.h = headingAt(i); k.vx = k.vz = k.vf = k.vr = 0; k.idx = i; k.steer = k.inSteer = 0;
-  k.drift = 0; k.driftT = 0; k.boost = 0; k.laps = 0; k.pre = true; k.half = false; k.lapTimes = []; k.best = null; k.finished = false; k.finishT = 0; k.thr = k.brk = 0; k.wrong = 0; k.item = null; k.itemRoll = 0; k.shield = 0; k.spinT = 0;
+  /* 16 karts (carreira): grid um pouco mais justo, ainda dentro da reta plana dos boxes */
+  const sp = KARTS.length > 8 ? 4.6 : 5.2; placeAt(k, wrap(-Math.round((8 + slot*sp)/DS)), slot % 2 ? 2.6 : -2.6);
 }
 function trackInfo(k){
   k.idx = nearestIdx(k.x, k.z, k.idx);
@@ -1686,15 +1983,16 @@ function stepKart(k, dt, others){
   const gF = GR[k.idx]*(fx*TX[k.idx] + fz*TZ[k.idx]);
   if(!k.air){ vf -= 9.8*gF*.9*dt; if(gF < 0) vmax *= 1 - gF*1.6; }
   if(k.slip > .5) vmax *= 1.075;
+  vmax *= k.lapVar || 1;
   if(k.boost > 0){ vmax *= k.boostLvl > 1 ? 1.24 : 1.16; k.boost -= dt; }
   /* acelerador, freio e ré */
   if(k.thr > 0 && vf < vmax) vf += (KART.acc*(k.accM || 1)*k.thr*(1 - Math.max(0, vf)/vmax) + (k.boost > 0 ? 9 : 0))*dt;
   if(vf > vmax) vf = Math.max(vmax, vf - (k.surf >= 2 ? 22 : 9)*dt);
-  if(k.brk > 0){ if(vf > .3) vf = Math.max(0, vf - KART.brake*k.brk*dt); else vf = Math.max(-6, vf - 8*k.brk*dt); }
+  if(k.brk > 0){ if(vf > .3) vf = Math.max(0, vf - KART.brake*(k.brakeM || 1)*k.brk*dt); else vf = Math.max(-6, vf - 8*k.brk*dt); }
   if(!(k.thr > 0) && !(k.brk > 0)) vf -= Math.sign(vf)*Math.min(Math.abs(vf), (k.surf >= 2 ? 6 : 2.2)*dt);
   k.vx = fx*vf + rx*vr; k.vz = fz*vf + rz*vr;
   /* direção: raio mínimo limitado pela aderência lateral */
-  k.steer += clamp(k.inSteer - k.steer, -5.5*dt, 5.5*dt);
+  k.steer += clamp(k.inSteer - k.steer, -5.5*(k.stabM || 1)*dt, 5.5*(k.stabM || 1)*dt);
   const sp = Math.abs(vf), R = Math.max(2.9, sp*sp/(KART.lat*(k.gripM || 1))*(k.surf >= 2 ? 1.6 : 1));
   let yaw;
   if(k.drift){ yaw = k.drift*(.68 + .55*k.steer*k.drift)*sp/(R*.86); if(sp > 8) k.driftT += dt; }
@@ -1703,7 +2001,7 @@ function stepKart(k, dt, others){
   /* aderência: a velocidade lateral some rápido (ou desliza, no drift) */
   sh = Math.sin(k.h); ch = Math.cos(k.h); fx = -sh; fz = -ch; rx = ch; rz = -sh;
   vf = k.vx*fx + k.vz*fz; vr = k.vx*rx + k.vz*rz;
-  const grip = k.drift ? 2.4 : k.surf >= 2 ? 4 : 10, nvr = vr*Math.exp(-grip*dt);
+  const grip = k.drift ? 2.4 : k.surf >= 2 ? 4 : 10*(k.gripR || 1), nvr = vr*Math.exp(-grip*dt);
   /* a velocidade lateral perdida na curva volta para a frente, mas nunca a de uma batida e nunca acima do máximo */
   if(k.hitT > 0) k.hitT -= dt;
   else if(vf > 0 && vf < vmax) vf = Math.min(vmax, vf + Math.abs(vr - nvr)*(k.drift ? .75 : .45));
@@ -1741,7 +2039,7 @@ function stepKart(k, dt, others){
   const i = k.idx;
   if(i > N*.45 && i < N*.55) k.half = true;
   if(prevIdx > N*.85 && i < N*.15){
-    if(k.pre) k.pre = false;
+    if(k.pre){ k.pre = false; if(G.sess === 'quali'){ k.lapStart = G.raceT; lapVariation(k); } }
     else if(k.half){ k.half = false; onLap(k); }
   } else if(prevIdx < N*.15 && i > N*.85 && !k.pre && k.laps === 0 && !k.half) k.pre = true;
   k.prog = k.laps*N + (k.pre ? i - N : i);
@@ -1778,18 +2076,36 @@ function driveAI(k, dt){
   /* desvia de quem está à frente */
   let block = null;
   for(const o of KARTS){ if(o === k) continue; const ahead = (o.prog - k.prog); if(ahead > 0 && ahead < 16/DS && Math.abs(o.d - k.d) < 1.8){ if(!block || o.prog < block.prog) block = o; } }
-  if(block){ const side = block.d > 0 ? -1 : 1, room = side > 0 ? HW - block.d : HW + block.d; off = block.d + side*Math.min(2.4, Math.max(1.6, room - .6)); }
+  const A = k.drv;
+  if(block){
+    /* bom ultrapassador escolhe o lado de dentro da próxima curva; os outros vão pelo lado com mais espaço */
+    let side = block.d > 0 ? -1 : 1; if(A && A.ult > 78){ const inside = Math.sign(KS[wrap(k.idx + Math.round(25/DS))]) || side; if(Math.abs(KS[wrap(k.idx + Math.round(25/DS))]) > .01) side = inside; }
+    const room = side > 0 ? HW - block.d : HW + block.d; off = block.d + side*Math.min(2.4, Math.max(1.6, room - .6));
+  }
+  if(A){
+    /* defesa: alguém colado atrás na reta faz o defensor fechar a linha dele */
+    let att = null; for(const o of KARTS){ if(o === k) continue; const g = k.prog - o.prog; if(g > 0 && g < 9/DS && Math.abs(o.d - k.d) < 3.5){ att = o; break; } }
+    ai.press = !!att;
+    if(att && !block && Math.abs(KL[j]) < .004) off = lerp(off, att.d, A.def/100*.55);
+    /* erros: sai da linha e alivia por um instante; sob pressão, quem lida mal com ela erra mais */
+    ai.misT = Math.max(0, (ai.misT || 0) - dt);
+    const pr = ai.press ? 1 + (100 - A.pre)/100*1.6 : 1;
+    if(!ai.misT && STATE === 'race' && Math.random() < (.003 + A.err/100*.016)*pr*dt){ ai.misT = rnd(.5, 1.1); ai.misS = Math.random() < .5 ? -1 : 1; }
+    if(ai.misT) off += ai.misS*2.4;
+  }
   ai.off = lerp(ai.off, clamp(off, -HW + .8, HW - .8), Math.min(1, dt*2.5));
   const tx = PX[j] + RX[j]*ai.off, tz = PZ[j] + RZ[j]*ai.off;
   const sh = Math.sin(k.h), ch = Math.cos(k.h), dx = tx - k.x, dz = tz - k.z, lf = -dx*sh - dz*ch, lr = dx*ch - dz*sh;
   k.inSteer = clamp(Math.atan2(lr, Math.max(.1, lf))*2.6, -1, 1);
   /* velocidade alvo: o menor limite nos próximos metros */
-  let vt = 99; for(let s = 0; s <= look + 8; s += 3) vt = Math.min(vt, VLIM[wrap(k.idx + s)]);
+  /* velocidade alvo: o menor limite nos próximos metros; freio melhor deixa frear mais tarde */
+  let vt = 99; for(let s = 0; s <= (look + 8)/(k.brakeM || 1); s += 3) vt = Math.min(vt, VLIM[wrap(k.idx + s)]);
   /* pelotão junto: quem fica muito atrás do jogador ganha um pouco, quem dispara à frente alivia */
   if(k.base && player && STATE === 'race'){ const gap = (k.prog - player.prog)*DS, rb = gap < -35 ? Math.min(1.03, 1 + (-gap - 35)*.0004) : gap > 70 ? Math.max(.985, 1 - (gap - 70)*.0003) : 1; k.skill = k.base*rb; k.corner = k.corner0*rb; }
-  vt *= k.corner;
+  vt *= k.corner*Math.sqrt(k.gripM || 1)*(ai.misT > 0 ? .82 : 1);
   /* disputa: só alivia se estiver colado e sem espaço para passar; senão tenta a ultrapassagem */
-  if(block && block.prog - k.prog < 2.6/DS && Math.abs(block.d - k.d) < 1.2) vt = Math.min(vt, Math.abs(block.vf) + .2);
+  /* colado sem espaço: alivia; agressivos e bons de ultrapassagem forçam mais (e às vezes batem) */
+  if(block && block.prog - k.prog < 2.6/DS && Math.abs(block.d - k.d) < (A ? 1.2 - (A.agr - 70)/100 : 1.2)) vt = Math.min(vt, Math.abs(block.vf) + .2 + (A ? (A.ult - 70)/100*1.2 + (A.agr - 70)/100*.8 : 0));
   if(k.surf >= 2) vt = Math.min(vt, 30);
   if(sp > vt + .8){ k.thr = 0; k.brk = clamp((sp - vt)/4, .2, 1); } else { k.thr = 1; k.brk = 0; }
   k.driftHeld = false;
@@ -1921,13 +2237,14 @@ const cam = {mode:OPT.cam, shake:0, pos:new THREE.Vector3(), look:new THREE.Vect
 function buildField(){
   for(const k of KARTS) scene.remove(k.model);
   KARTS.length = 0; if(ghost){ scene.remove(ghost.model); ghost = null; }
+  /* carreira: as 8 equipes e os 16 pilotos inscritos (o jogador ocupa uma das vagas) */
+  if(G.mode === 'career' && CR && CR.phase === 'race'){ buildCareerField(); return; }
   const pl = OPT.liv;
   player = makeKart(pl, 7, OPT.name || 'Você', true); player.skill = 1; player.corner = 1; player.err = .4; player.lane = 0;
   { const fp = cockpitRig(LIVERIES[pl]); player.model.add(fp.rig); player.model.userData.fp = fp; }
-  if(G.mode === 'career'){ player.skill = 1 + CAR.up.eng*.022; player.gripM = 1 + CAR.up.tire*.045; player.accM = 1 + CAR.up.acc*.08; }
   if(isRace()){
     const others = [0, 1, 2, 3, 4, 5, 6, 7].filter(i => i !== pl), nums = [3, 11, 22, 27, 44, 55, 88];
-    const cup = CUPS[CAR.cup], D = G.mode === 'career' ? Object.assign({}, DIFF[cup.diff], {pow:DIFF[cup.diff].pow + cup.pow, corner:DIFF[cup.diff].corner + cup.pow}) : DIFF[OPT.diff];
+    const D = DIFF[G.mode === 'career' ? (CR ? CR.diff : 1) : OPT.diff];
     others.forEach((li, n) => { const b = makeKart(li, nums[n], BOT_NAMES[n], false); b.skill = b.base = D.pow*(1 - n*.004) + rnd(-.008, .008); b.corner = b.corner0 = D.corner*(1 - n*.004); b.err = D.err*rnd(.8, 1.2); b.lane = rnd(-1.6, 1.6); KARTS.push(b); });
     KARTS.splice(5, 0, player);
   } else KARTS.push(player);
@@ -1937,11 +2254,18 @@ function buildField(){
 const GHOSTM = new THREE.MeshLambertMaterial({color:0x9fd8ff, transparent:true, opacity:.32, depthWrite:false});
 function startRace(){
   audioInit(); SFX.start();
-  G.mode = OPT.mode; G.laps = G.mode === 'career' ? 3 : isRace() ? OPT.laps : 99;
+  G.mode = OPT.mode;
+  /* carreira: a sessão pendente da etapa (classificação ou corrida); fora dela, corrida normal */
+  if(G.mode === 'career' && !(CR && CR.phase === 'race')){ toMenu(); return; }
+  G.sess = G.mode === 'career' ? (CR.pend === 'race' && CR.cal[CR.round].st === 'grid' ? 'race' : 'quali') : null;
+  if(G.mode === 'career'){ CR.pend = G.sess; G.cround = CR.round; G.cseason = CR.season; saveCR(); }
+  G.laps = G.mode === 'career' ? (G.sess === 'quali' ? 99 : CR_LAPS) : isRace() ? OPT.laps : 99;
   buildField(); clearItems(); buildItemBoxes();
   ['menu', 'end', 'pause', 'how', 'news'].forEach(id => $(id).hidden = true); $('hud').hidden = false;
   STATE = 'count'; G.countT = 0; G.goAt = 3.2 + rnd(.3, 1.1); G.raceT = 0; G.results = null; G.ghostRec = []; G.ghostT = 0;
   $('lights').hidden = false; [...$('lights').children].forEach(l => l.className = ''); setStartLights(0);
+  /* classificação: sem largada parada, todos saem para a volta de aquecimento */
+  if(G.sess === 'quali'){ STATE = 'race'; $('lights').hidden = true; for(const k of KARTS) k.lapStart = 0; setTimeout(() => banner('CLASSIFICAÇÃO', 'duas voltas lançadas · a melhor define o grid', 3000), 300); }
   $('tower').hidden = !isRace(); $('posBox').querySelector('.pos').hidden = !isRace();
   $('banner').hidden = true;
   cam.pos.set(0, 0, 0); camSnap = true;
@@ -1954,6 +2278,13 @@ function setStartLights(n, go){
 function onLap(k){
   const t = G.raceT - k.lapStart; k.lapStart = G.raceT; k.lapTimes.push(t); k.laps++;
   if(k.best == null || t < k.best) k.best = t;
+  lapVariation(k);
+  /* classificação: duas voltas lançadas; a sessão acaba quando o jogador completa a segunda */
+  if(G.sess === 'quali'){
+    if(k.isPlayer){ if(G.bestLap == null || t < G.bestLap){ G.bestLap = t; store.set('Best' + TKEY, t); } const rk = KARTS.filter(o => o.best != null && o.best < k.best).length + 1; SFX.lap(); banner(fmt(t), `volta lançada ${k.laps}/2 · ${rk}º provisório`, 2000);
+      if(k.laps >= 2 && STATE === 'race'){ STATE = 'done'; G.endT = 0; setTimeout(() => banner('FIM DA CLASSIFICAÇÃO', 'grid definido', 2400), 900); } }
+    return;
+  }
   if(k.isPlayer){
     const rec = G.bestLap == null || t < G.bestLap;
     if(rec){ G.bestLap = t; store.set('Best' + TKEY, t); }
@@ -1971,10 +2302,12 @@ function onLap(k){
   }
 }
 function order(){
+  if(G.sess === 'quali') return KARTS.slice().sort((a, b) => (a.best ?? 1e9) - (b.best ?? 1e9));
   return KARTS.slice().sort((a, b) => (a.finished && b.finished) ? a.finishT - b.finishT : a.finished ? -1 : b.finished ? 1 : b.prog - a.prog);
 }
 function placeOf(k){ return order().indexOf(k) + 1; }
 function endRace(){
+  if(G.sess === 'quali'){ endQuali(); return; }
   STATE = 'end';
   const ord = order(), rows = ord.map(k => {
     let t = k.finished ? k.finishT : G.raceT + ((G.laps*N - k.prog)*DS)/Math.max(12, Math.abs(k.vf) || 18);
@@ -1982,43 +2315,192 @@ function endRace(){
   });
   rows.sort((a, b) => a.t - b.t);
   const lead = rows[0].t, p = rows.findIndex(r => r.k === player) + 1;
-  $('endK').textContent = TRK.n + ' · ' + G.laps + ' voltas · ' + (G.mode === 'career' ? CUPS[CAR.cup].n + ' · etapa ' + (CAR.race + 1) + '/5' : ['Amador', 'Piloto', 'Profissional'][OPT.diff]);
+  $('endK').textContent = TRK.n + ' · ' + G.laps + ' voltas · ' + (G.mode === 'career' ? 'temporada ' + CR.season + ' · etapa ' + (CR.round + 1) + '/' + CR_ROUNDS : ['Amador', 'Piloto', 'Profissional'][OPT.diff]);
   $('endT').innerHTML = p === 1 ? 'VITÓRIA <span>· 1º LUGAR</span>' : p + 'º <span>LUGAR</span>';
   $('endTable').innerHTML = rows.map((r, i) => `<tr class="${r.k === player ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${r.k.css}"></i>${esc(r.k.name)}</td><td class="t">${i === 0 ? fmt(r.t) : '+' + (r.t - lead).toFixed(2) + 's'}</td><td class="t">${r.k.best ? fmt(r.k.best) : '—'}</td></tr>`).join('');
   const st = store.get('Stats', {races:0, wins:0, pods:0});
   st.races++; if(p === 1) st.wins++; if(p <= 3) st.pods++; store.set('Stats', st);
   $('endStats').innerHTML = `<span class="chip">🏁 ${st.races} corridas</span><span class="chip">🏆 ${st.wins} vitórias</span><span class="chip">🥉 ${st.pods} pódios</span>` + (G.bestLap ? `<span class="chip">⏱ recorde ${fmt(G.bestLap)}</span>` : '');
-  $('careerEnd').innerHTML = ''; $('btnAgain').textContent = 'Correr de novo';
-  if(G.mode === 'career') careerResult(rows.map(r => r.k), p);
+  $('careerEnd').innerHTML = ''; $('btnAgain').textContent = 'Correr de novo'; $('btnMenu').textContent = 'Menu';
+  if(G.mode === 'career') careerRaceEnd(rows);
   $('end').hidden = false; $('hud').hidden = true; $('btnAgain').focus({preventScroll:true});
 }
-/* pontos, prêmio e fim de campeonato */
-function careerResult(ord, p){
-  const cup = CUPS[CAR.cup];
-  ord.forEach((k, i) => { CAR.pts[k.name] = (CAR.pts[k.name] || 0) + POINTS[i]; });
-  const prize = PRIZE[p - 1]; CAR.coins += prize; CAR.race++;
-  const tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você', pos = tab.findIndex(e => e[0] === me) + 1;
-  const css = n => (KARTS.find(k => k.name === n) || {}).css || '#888';
-  let html = `<h3>${esc(cup.n)} · classificação após a etapa ${CAR.race}/5</h3><table class="res">` + tab.map((e, i) => `<tr class="${e[0] === me ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${css(e[0])}"></i>${esc(e[0])}</td><td class="t">${e[1]} pts</td></tr>`).join('') + '</table>';
-  let chips = `<span class="chip">🪙 +${prize} moedas (total ${CAR.coins})</span><span class="chip">+${POINTS[p - 1]} pontos</span>`;
-  if(CAR.race >= 5){
-    const t = CAR.trophies[CAR.cup]; if(!t || pos < t) CAR.trophies[CAR.cup] = pos;
-    const next = pos <= 3 && CAR.cup + 1 < CUPS.length;
-    if(next && CAR.unlocked < CAR.cup + 2) CAR.unlocked = CAR.cup + 2;
-    html = `<div class="trophy">${pos === 1 ? '🏆' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '🏁'} <b>${esc(cup.n)}: ${pos}º no campeonato</b><span>${pos <= 3 ? (next ? 'Próximo campeonato liberado: ' + esc(CUPS[CAR.cup + 1].n) + '!' : CAR.cup + 1 >= CUPS.length ? 'Você é campeão do Mundial Pulse!' : 'Pódio no campeonato!') : 'Termine no pódio (top 3) para liberar o próximo campeonato.'}</span></div>` + html;
-    if(pos === 1) SFX.win();
-    CAR.race = 0; CAR.pts = {}; if(next) CAR.cup++;
-    $('btnAgain').textContent = next ? 'Próximo campeonato' : 'Recomeçar campeonato';
-  } else $('btnAgain').textContent = 'Próxima etapa';
-  saveCar();
-  $('careerEnd').innerHTML = html; $('endStats').innerHTML = chips + $('endStats').innerHTML;
+/* =====================================================================
+   CARREIRA NA PISTA: atributos dos karts e dos pilotos, classificação e resultados
+   ===================================================================== */
+/* atributos 0–100 viram multiplicadores pequenos e limitados da física existente */
+const kartMult = k => ({vmax:1 + (k.vel - 80)*.0009, acc:1 + (k.acel - 80)*.0035, grip:1 + (k.curva - 80)*.0017, brake:1 + (k.freio - 80)*.005, gripR:1 + (k.ader - 80)*.008, stab:1 + (k.estab - 80)*.008, cons:k.cons});
+function applyKart(k, T){ const m = kartMult(T.k); k.skill = m.vmax; k.accM = m.acc; k.gripM = m.grip; k.brakeM = m.brake; k.gripR = m.gripR; k.stabM = m.stab; k.consK = m.cons; k.team = T.id; }
+/* variação de uma volta para outra: kart pouco consistente e piloto irregular oscilam mais */
+function lapVariation(k){ k.lapVar = 1 - Math.random()*((100 - (k.consK || 100))/100*.03 + (k.drv ? (100 - k.drv.con)/100*.025 : 0)); }
+function placeAt(k, i, d){
+  k.x = PX[i] + RX[i]*d; k.z = PZ[i] + RZ[i]*d; k.y = trackY(i, d); k.vy = 0; k.air = false; k.h = headingAt(i); k.vx = k.vz = k.vf = k.vr = 0; k.idx = i; k.steer = k.inSteer = 0;
+  k.drift = 0; k.driftT = 0; k.boost = 0; k.laps = 0; k.pre = true; k.half = false; k.lapTimes = []; k.best = null; k.finished = false; k.finishT = 0; k.thr = k.brk = 0; k.wrong = 0; k.item = null; k.itemRoll = 0; k.shield = 0; k.spinT = 0; k.lapVar = 1;
 }
-/* a pista é montada no carregamento: se a etapa é em outra pista, recarrega e começa sozinho */
+/* classificação: todos na pista ao mesmo tempo, espaçados antes da linha (o jogador por último) */
+function placeSpread(k, s, n){ const gap = Math.min(34, TL*.42/n); placeAt(k, wrap(-Math.round((24 + s*gap)/DS)), 0); }
+function buildCareerField(){
+  const cal = CR.cal[CR.round], sess = CR.pend || 'race', D = DIFF[CR.diff], ids = TEAM_DEF.flatMap(t => CR.teams[t.id].seats);
+  let ord = ids;
+  if(sess === 'race' && cal && cal.grid) ord = cal.grid.filter(id => ids.includes(id)).concat(ids.filter(id => !cal.grid.includes(id)));
+  else if(sess === 'quali') ord = ids.filter(id => id !== PLAYER_ID).sort(() => Math.random() - .5).concat([PLAYER_ID]);
+  for(const id of ord){
+    const d = CR.drivers[id], T = CR.teams[d.team], k = makeKart(T.liv, d.num, d.n, id === PLAYER_ID);
+    k.did = id; applyKart(k, T);
+    if(id === PLAYER_ID){
+      player = k; k.corner = 1; k.err = .4; k.lane = 0;
+      /* acerto pessoal (Garagem): pequeno, por cima do kart da equipe */
+      k.skill *= 1 + CAR.up.eng*.008; k.gripM *= 1 + CAR.up.tire*.015; k.accM *= 1 + CAR.up.acc*.03;
+      const fp = cockpitRig(LIVERIES[T.liv]); k.model.add(fp.rig); k.model.userData.fp = fp;
+    } else {
+      const a = d.a; k.drv = a;
+      k.skill *= D.pow*(1 + (a.rit - 80)*.0003); k.corner = D.corner*(.975 + (a.rit - 80)*.0006); k.err = D.err*(100 - a.con)/20; k.lane = rnd(-1.6, 1.6);
+    }
+    KARTS.push(k);
+  }
+  KARTS.forEach((k, s) => sess === 'quali' ? placeSpread(k, s, KARTS.length) : placeOnGrid(k, s));
+}
+/* grid sem classificação jogada: estimativa pelos atributos (marcada como estimada); o jogador larga em último */
+function simGrid(){
+  const cal = CR.cal[CR.round], ids = TEAM_DEF.flatMap(t => CR.teams[t.id].seats).filter(id => id !== PLAYER_ID);
+  const pace = id => { const d = CR.drivers[id], k = CR.teams[d.team].k; return (k.vel*.3 + k.curva*.3 + k.acel*.15 + k.freio*.1 + k.ader*.15)*.55 + d.a.rit*.45 + rnd(-2.5, 2.5)*(100 - d.a.con)/25; };
+  const sc = {}; ids.forEach(id => sc[id] = pace(id));
+  cal.grid = ids.sort((a, b) => sc[b] - sc[a]).concat([PLAYER_ID]); cal.q = null; cal.gridSim = true; cal.st = 'grid'; CR.pend = 'race';
+  crNews(`Etapa ${CR.round + 1}: você não fez a classificação e larga em último. Grid dos demais estimado pelo ritmo.`); saveCR();
+}
+/* fim da classificação: o grid sai das melhores voltas de verdade */
+function endQuali(){
+  STATE = 'end';
+  const cal = CR.cal[CR.round], rows = KARTS.map(k => ({k, t:k.best})).sort((a, b) => (a.t ?? 1e9) - (b.t ?? 1e9));
+  /* só grava se ainda é a etapa em que a classificação começou */
+  if(G.cround !== CR.round || G.cseason !== CR.season || cal.st === 'feito'){ toMenu(); return; }
+  cal.grid = rows.map(r => r.k.did); cal.q = {}; rows.forEach(r => cal.q[r.k.did] = r.t); cal.gridSim = false; cal.st = 'grid'; CR.pend = 'race';
+  const p = cal.grid.indexOf(PLAYER_ID) + 1, pole = rows[0];
+  crNews(`Classificação da etapa ${CR.round + 1}: pole de ${pole.k.name} (${fmt(pole.t)}). Você larga em ${p}º.`);
+  const ok = saveCR();
+  $('endK').textContent = TRK.n + ' · classificação · etapa ' + (CR.round + 1) + '/' + CR_ROUNDS;
+  $('endT').innerHTML = p === 1 ? 'POLE <span>POSITION!</span>' : p + 'º <span>NO GRID</span>';
+  const lead = rows[0].t;
+  $('endTable').innerHTML = rows.map((r, i) => `<tr class="${r.k === player ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${r.k.css}"></i>${esc(r.k.name)}</td><td class="t">${esc(CR.teams[r.k.team].s)}</td><td class="t">${r.t == null ? 'sem volta' : i === 0 ? fmt(r.t) : '+' + (r.t - lead).toFixed(3)}</td></tr>`).join('');
+  $('careerEnd').innerHTML = ok ? '' : `<p class="note">${esc(CR_MSG)}</p>`; $('endStats').innerHTML = `<span class="chip">⏱ sua melhor: ${fmt(player.best)}</span>`;
+  $('btnAgain').textContent = 'Largar a corrida'; $('btnMenu').textContent = 'Carreira';
+  $('end').hidden = false; $('hud').hidden = true; $('btnAgain').focus({preventScroll:true});
+}
+/* fim da corrida da carreira: grava o resultado real e mostra o resumo */
+function careerRaceEnd(rows){
+  const fls = KARTS.filter(k => k.best != null).sort((a, b) => a.best - b.best)[0];
+  const data = {fin:rows.map(r => r.k.did), t:rows.map(r => r.est ? null : +r.t.toFixed(3)), est:rows.map(r => !!r.est), fl:fls ? {id:fls.did, t:+fls.best.toFixed(3)} : null};
+  const r0 = G.cround, out = G.cseason === CR.season ? finishRound(r0, data) : null;
+  $('btnAgain').textContent = 'Continuar'; $('btnMenu').textContent = 'Menu';
+  if(!out){ $('careerEnd').innerHTML = '<p class="note">Este resultado já tinha sido registrado.</p>'; return; }
+  const st = standings(), pos = posOf(st, PLAYER_ID), g = goalStatus(), riv = rivals().map(id => CR.drivers[id].n);
+  const pts = st.D[PLAYER_ID].pts, top = st.drivers.slice(0, 5);
+  let html = `<h3>Campeonato após a etapa ${r0 + 1}/${CR_ROUNDS}</h3><table class="res">` + top.map((d, i) => `<tr class="${d.id === PLAYER_ID ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${LIVERIES[CR.teams[CR.drivers[d.id].team].liv].css}"></i>${esc(CR.drivers[d.id].n)}</td><td class="t">${d.pts} pts</td></tr>`).join('') + (pos > 5 ? `<tr class="me"><td>${pos}</td><td>${esc(CR.drivers[PLAYER_ID].n)}</td><td class="t">${pts} pts</td></tr>` : '') + '</table>';
+  html += `<p class="note">🎯 Meta da equipe: ${esc(g.txt)} ${g.ok ? '✅' : '⏳'} · ${out.beat ? 'você terminou à frente do companheiro' : 'o companheiro terminou à frente'}${riv.length ? ' · rival: ' + esc(riv.join(', ')) : ''}</p>`;
+  if(CR.phase === 'offseason'){ const h = CR.hist[CR.hist.length - 1];
+    html = `<div class="trophy">${h.title ? '🏆' : h.pos <= 3 ? '🥈' : '🏁'} <b>Temporada ${h.season} encerrada: você foi ${h.pos}º</b><span>Campeão: ${esc(h.champ)} · equipes: ${esc(h.tchamp)} · meta ${h.goalOk ? 'cumprida ✅' : 'não cumprida ❌'}. Veja as propostas no mercado.</span></div>` + html; if(h.title) SFX.win(); }
+  if(CR_MSG) html += `<p class="note">${esc(CR_MSG)}</p>`;
+  $('careerEnd').innerHTML = html;
+  $('endStats').innerHTML = `<span class="chip">+${out.pts} pontos</span><span class="chip">${out.dRep >= 0 ? '▲' : '▼'} reputação ${out.dRep >= 0 ? '+' : ''}${out.dRep.toFixed(1)}</span><span class="chip">🪙 +${out.pay} salário +${out.prize} prêmio</span>` + $('endStats').innerHTML;
+}
+/* botão principal da carreira: classificação, corrida ou janela de transferências.
+   a pista é montada no carregamento: se a etapa é em outra pista, recarrega e começa sozinho */
 function careerGo(){
-  const ti = CUPS[CAR.cup].ti[CAR.race];
-  if(ti !== (OPT.track || 0)){ OPT.track = ti; OPT.mode = 'career'; saveOpt(); store.set('Auto', 1); location.reload(); return; }
-  startRace();
+  if(!CR) return;
+  if(CR.phase === 'offseason'){ if(CR.contract.to > CR.season && nextSeason()){ SFX.click(); crTab = 'resumo'; buildField(); } else crTab = 'mercado'; renderMenu(); return; }
+  const cal = CR.cal[CR.round]; CR.pend = cal.st === 'grid' ? 'race' : 'quali'; saveCR();
+  OPT.mode = 'career';
+  if(cal.ti !== (OPT.track || 0)){ OPT.track = cal.ti; saveOpt(); store.set('Auto', 1); location.reload(); return; }
+  saveOpt(); startRace();
 }
+/* ---------- telas da carreira ---------- */
+let crTab = 'resumo';
+const CR_TABS = [['resumo', 'Resumo'], ['calendario', 'Calendário'], ['pilotos', 'Pilotos'], ['equipes', 'Equipes'], ['mercado', 'Mercado'], ['historico', 'Histórico']];
+const badge = T => `<span class="tbadge" style="background:${LIVERIES[T.liv].css}">${esc(T.s)}</span>`;
+const bars = k => '<div class="kbars">' + KSTAT.map(([key, n]) => `<span>${n}</span><i><b style="width:${clamp((k[key] - 60)/38*100, 4, 100)}%"></b></i><em>${k[key]}</em>`).join('') + '</div>';
+const tierTag = (c, id) => `<small class="tier t${tierOf(c, id)}">${TIER[tierOf(c, id)].n}</small>`;
+const roundState = r => r.st === 'feito' ? '✔' : r.st === 'grid' ? '▶ grid definido' : '·';
+function offerCard(c, o, i, act){
+  const T = c.teams[o.team], seat = o.out ? `vaga de ${esc(c.drivers[o.out].n)}` : 'vaga atual';
+  return `<div class="ofr"><div class="ofrH">${badge(T)}<b>${esc(T.n)}</b>${tierTag(c, o.team)}${o.kind === 'renov' ? '<small class="tier">renovação</small>' : ''}</div>
+    <p class="note">${esc(T.perfil)} · ${seat}</p>${bars(T.k)}
+    <p class="note">📄 ${o.len} temporada${o.len > 1 ? 's' : ''} · 🪙 ${o.pay} por etapa · 🎯 meta: ${esc(o.goalTxt)}</p>
+    <button class="btn pri" data-cr="${act}" data-i="${i}" type="button">Assinar com a ${esc(T.n)}</button></div>`;
+}
+function renderCareer(){
+  const body = $('crBody'), tabs = $('crTabs'), go = $('goCareer'), skip = $('crSkip');
+  $('crMsg').innerHTML = CR_MSG ? `<p class="note warn">${esc(CR_MSG)}</p>` : '';
+  if(!CR){
+    tabs.hidden = true; skip.hidden = true; go.hidden = true;
+    const name = $('crName') ? $('crName').value : (OPT.name && OPT.name !== 'Você' ? OPT.name : ''), base = careerBase(name || 'Piloto', OPT.cdiff ?? 1), offs = startingOffers(base);
+    body.innerHTML = `<p>Comece numa equipe modesta, cumpra as metas, ganhe reputação e receba propostas das equipes de ponta. 8 equipes, 16 pilotos, ${CR_ROUNDS} etapas por temporada, classificação e corrida.</p>
+      <h3>Seu nome</h3><input class="sel" id="crName" maxlength="16" placeholder="Nome do piloto" value="${esc(name)}">
+      <h3>Nível dos adversários</h3><div class="seg" id="crDiff">${['Amador', 'Piloto', 'Profissional'].map((n, i) => `<button data-v="${i}" aria-pressed="${(OPT.cdiff ?? 1) === i}" type="button">${n}</button>`).join('')}</div>
+      <h3>Propostas para a temporada 1 · reputação ${Math.round(base.rep)}</h3>${base.oldBonus ? `<p class="note">Suas ${base.oldBonus} copas no pódio da versão anterior valem reputação extra. Moedas, melhorias e troféus continuam.</p>` : ''}
+      ${offs.map((o, i) => offerCard(base, o, i, 'start')).join('')}`;
+    return;
+  }
+  tabs.hidden = false;
+  tabs.innerHTML = CR_TABS.map(([id, n]) => `<button data-crt="${id}" aria-pressed="${crTab === id}" type="button">${n}</button>`).join('');
+  const st = standings(), me = st.D[PLAYER_ID], pos = posOf(st, PLAYER_ID), T = CR.teams[CR.contract.team], cal = CR.cal[CR.round], g = goalStatus(), off = CR.phase === 'offseason';
+  const tpos = st.teams.findIndex(t => t.id === T.id) + 1, mate = CR.drivers[g.mate], riv = rivals();
+  /* botões principais conforme o estado */
+  skip.hidden = off || !cal || cal.st !== 'pendente'; go.hidden = false;
+  go.textContent = off ? (CR.contract.to > CR.season ? 'Começar a temporada ' + (CR.season + 1) : 'Ver propostas') : cal.st === 'grid' ? `Largar · etapa ${CR.round + 1} (${cal.grid.indexOf(PLAYER_ID) + 1}º no grid)` : `Classificação · etapa ${CR.round + 1}`;
+  let h = '';
+  if(crTab === 'resumo'){
+    h += `<div class="ofrH">${badge(T)}<b>${esc(T.n)}</b>${tierTag(CR, T.id)}</div>
+      <div class="chips"><span class="chip">Temporada ${CR.season}</span><span class="chip">${g.done ? pos + "º · " + me.pts + " pts" : "0 pts"}</span><span class="chip">equipes: ${g.done ? tpos + "º" : "—"}</span><span class="chip">⭐ reputação ${Math.round(CR.rep)}</span><span class="chip">🪙 ${CAR.coins}</span></div>
+      <div class="rep"><i style="width:${CR.rep}%"></i></div>`;
+    h += off ? `<p class="cinfo"><b>Temporada ${CR.season} encerrada.</b> ${CR.contract.to > CR.season ? 'Seu contrato continua; você pode ficar ou aceitar outra proposta no mercado.' : 'Seu contrato terminou: escolha uma proposta no mercado para continuar.'}</p>`
+      : `<p class="cinfo">Próxima: <b>etapa ${CR.round + 1}/${CR_ROUNDS} · ${esc(TRACKS[cal.ti].n)}</b> (${esc(TRACKS[cal.ti].d)}) · ${CR_LAPS} voltas · ${cal.st === 'grid' ? (cal.gridSim ? 'grid estimado, você larga em último' : `classificação feita: ${cal.grid.indexOf(PLAYER_ID) + 1}º no grid`) : 'classificação e corrida'}</p>`;
+    h += `<p class="cinfo">📄 Contrato até a temporada <b>${CR.contract.to}</b> · 🪙 ${CR.contract.pay} por etapa<br>🎯 Meta: ${esc(CR.contract.goalTxt)} — <b>${esc(g.txt)}</b> ${g.ok ? '✅' : '⏳'}<br>👥 Companheiro: <b>${esc(mate.n)}</b>${g.done ? ` (${posOf(st, mate.id)}º) — ${g.mateAhead ? "está à sua frente" : "você está à frente"}` : ""}${riv.length ? '<br>⚔️ Rival: <b>' + riv.map(id => esc(CR.drivers[id].n)).join(', ') + '</b>' : ''}</p>`;
+    h += '<h3>Notícias do paddock</h3><ul class="nlist">' + CR.news.slice(0, 5).map(n => `<li>T${n.s}: ${esc(n.txt)}</li>`).join('') + '</ul>';
+  } else if(crTab === 'calendario'){
+    h += `<h3>Temporada ${CR.season} · ${CR_ROUNDS} etapas · ${CR_LAPS} voltas</h3><table class="res">` + CR.cal.map((r, i) => { const res = r.res, my = res ? res.fin.indexOf(PLAYER_ID) + 1 : 0;
+      return `<tr class="${i === CR.round && !off ? 'me' : ''}"><td>${i + 1}</td><td>${esc(TRACKS[r.ti].n)}<br><small>${esc(TRACKS[r.ti].d)}</small></td><td class="t">${res ? `🏆 ${esc(CR.drivers[res.fin[0]].n)}<br>você ${my}º${res.gridSim ? ' (grid estimado)' : ''}` : roundState(r)}</td></tr>`; }).join('') + '</table>';
+  } else if(crTab === 'pilotos'){
+    h += `<h3>Pilotos · temporada ${CR.season}</h3><table class="res">` + st.drivers.map((d, i) => { const D = CR.drivers[d.id], TT = CR.teams[D.team];
+      return `<tr class="${d.id === PLAYER_ID ? 'me' : ''}"><td>${i + 1}</td><td><i style="background:${TT ? LIVERIES[TT.liv].css : '#666'}"></i>#${D.num} ${esc(D.n)}${riv.includes(d.id) ? ' ⚔️' : ''}<br><small>${TT ? esc(TT.n) : 'reserva'}</small></td><td class="t">${d.wins ? d.wins + '🏆 ' : ''}${d.pts} pts</td></tr>`; }).join('') + '</table>';
+  } else if(crTab === 'equipes'){
+    h += `<h3>Equipes · temporada ${CR.season}</h3><table class="res">` + st.teams.map((t, i) => { const TT = CR.teams[t.id];
+      return `<tr class="${t.id === T.id ? 'me' : ''}"><td>${i + 1}</td><td>${badge(TT)} ${esc(TT.n)} ${tierTag(CR, t.id)}<br><small>${TT.seats.map(id => esc(CR.drivers[id].n)).join(' · ')}</small></td><td class="t">${t.pts} pts</td></tr>`; }).join('') + '</table>';
+    h += '<h3>Karts</h3>' + TEAM_DEF.map(t => { const TT = CR.teams[t.id]; return `<div class="ofr"><div class="ofrH">${badge(TT)}<b>${esc(TT.n)}</b>${tierTag(CR, t.id)}</div><p class="note">${esc(TT.perfil)}</p>${bars(TT.k)}</div>`; }).join('');
+  } else if(crTab === 'mercado'){
+    if(off){
+      h += `<h3>Propostas para a temporada ${CR.season + 1}</h3>`;
+      h += CR.offers.length ? CR.offers.map((o, i) => offerCard(CR, o, i, 'sign')).join('') : '<p class="cinfo">Nenhuma equipe fez proposta nesta janela.</p>';
+      h += CR.contract.to > CR.season ? `<div class="ofr"><p class="cinfo">Seu contrato com a <b>${esc(T.n)}</b> vale até a temporada ${CR.contract.to}. Você pode simplesmente continuar.</p><button class="btn" data-cr="stay" type="button">Continuar na ${esc(T.n)}</button></div>`
+        : '<p class="note">Seu contrato terminou: assine uma das propostas para disputar a próxima temporada.</p>';
+    } else {
+      h += `<p class="cinfo">As equipes fazem as propostas no fim da temporada, olhando sua reputação (<b>${Math.round(CR.rep)}</b>), a posição no campeonato (<b>${g.done ? pos + "º" : "—"}</b>), a média das últimas etapas (<b>${g.done ? recentForm().toFixed(1) + "º" : "—"}</b>) e se há vaga.</p><table class="res">`;
+      h += TIER.map((tr, i) => `<tr><td>${['A', 'B', 'C', 'D'][i]}</td><td>${tr.n}<br><small>reputação ${tr.minRep}+ · ${['top 4 ou 2 vitórias', 'top 7 ou média até 6º', 'top 11 ou média até 9º', 'sempre há vaga'][i]}</small></td><td class="t">${CR.rep >= tr.minRep ? '✅' : '⏳'}</td></tr>`).join('') + '</table>';
+      const intr = TEAM_DEF.filter(t => CR.interest[CR.season + t.id]).map(t => CR.teams[t.id].n);
+      h += `<p class="cinfo">👀 Interessadas em você: <b>${intr.length ? esc(intr.join(', ')) : 'ninguém ainda'}</b></p>`;
+    }
+  } else if(crTab === 'historico'){
+    const s = careerStats();
+    h += `<div class="chips"><span class="chip">🏁 ${s.races} corridas</span><span class="chip">🏆 ${s.wins} vitórias</span><span class="chip">🥉 ${s.pods} pódios</span><span class="chip">⏱ ${s.poles} poles</span><span class="chip">⚡ ${s.fls} voltas mais rápidas</span><span class="chip">${s.pts} pontos</span><span class="chip">melhor: ${s.best ? s.best + 'º' : '—'}</span><span class="chip">👑 ${s.titles} títulos</span><span class="chip">🏭 ${s.tTitles} de equipes</span></div>`;
+    h += '<h3>Temporadas</h3>' + (CR.hist.length ? '<table class="res">' + CR.hist.map(x => `<tr><td>T${x.season}</td><td>${esc(x.teamN)}<br><small>campeão: ${esc(x.champ)} · equipes: ${esc(x.tchamp)}</small></td><td class="t">${x.pos}º · ${x.pts} pts${x.title ? ' 👑' : ''}<br><small>${x.wins}🏆 ${x.pods} pódios · meta ${x.goalOk ? '✅' : '❌'}</small></td></tr>`).join('') + '</table>' : '<p class="note">Nenhuma temporada concluída ainda.</p>');
+    h += '<h3>Contratos</h3><table class="res">' + CR.chist.concat([CR.contract]).map(x => `<tr><td>T${x.from}</td><td>${esc(CR.teams[x.team].n)}<br><small>até T${x.to} · meta: ${esc(x.goalTxt)}</small></td><td class="t">${esc(x.status)}</td></tr>`).join('') + '</table>';
+  }
+  body.innerHTML = h;
+}
+/* ações da carreira (um único lugar para os cliques) */
+$('scrCareer').addEventListener('click', e => {
+  const t = e.target.closest('[data-crt]'); if(t){ crTab = t.dataset.crt; SFX.toggle(); renderMenu(); return; }
+  const dv = e.target.closest('#crDiff button'); if(dv){ OPT.cdiff = Number(dv.dataset.v); saveOpt(); SFX.toggle(); renderMenu(); return; }
+  const a = e.target.closest('[data-cr]'); if(!a) return; const i = Number(a.dataset.i);
+  if(a.dataset.cr === 'start'){
+    const name = ($('crName').value || '').trim().slice(0, 16) || 'Piloto', base = careerBase(name, OPT.cdiff ?? 1), o = startingOffers(base)[i]; if(!o) return;
+    OPT.name = name; saveOpt(); newCareer(name, OPT.cdiff ?? 1, o); SFX.coin(); crTab = 'resumo'; G.mode = 'career'; buildField(); renderMenu();
+  } else if(a.dataset.cr === 'sign'){
+    const o = CR.offers[i]; if(!o || CR.phase !== 'offseason') return;
+    applyOffer(CR, o, CR.season + 1); crNews(`${CR.drivers[PLAYER_ID].n} assina com a ${CR.teams[o.team].n} até a temporada ${CR.contract.to}.`); SFX.coin();
+    if(nextSeason()){ crTab = 'resumo'; buildField(); } renderMenu();
+  } else if(a.dataset.cr === 'stay'){ if(nextSeason()){ SFX.click(); crTab = 'resumo'; buildField(); } else SFX.error(); renderMenu(); }
+});
+$('crSkip').addEventListener('click', () => { if(!CR || CR.phase !== 'race' || CR.cal[CR.round].st !== 'pendente') return; SFX.back(); simGrid(); renderMenu(); });
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;'}[c]));
 let bannerT = 0;
 function banner(a, b, ms = 2000){
@@ -2144,7 +2626,7 @@ function pauseOff(){ if(STATE === 'pause') SFX.resume(); STATE = G.prevState || 
 $('btnResume').addEventListener('click', pauseOff);
 $('btnRestart').addEventListener('click', startRace);
 $('btnQuit').addEventListener('click', () => { SFX.back(); toMenu(); });
-$('btnAgain').addEventListener('click', () => G.mode === 'career' ? careerGo() : startRace());
+$('btnAgain').addEventListener('click', () => { if(G.mode !== 'career') return startRace(); if(G.sess === 'quali') careerGo(); else { SFX.click(); toMenu(); } });
 $('btnMenu').addEventListener('click', () => { SFX.back(); toMenu(); });
 $('btnHow').addEventListener('click', () => { SFX.click(); $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
 $('howClose').addEventListener('click', () => { SFX.back(); $('how').hidden = true; });
@@ -2156,7 +2638,6 @@ function seg(id, key, conv = v => v){
 }
 $('optLiv').innerHTML = LIVERIES.map((L, i) => `<button data-v="${i}" aria-pressed="false" style="min-width:0;flex:0 0 auto;padding:8px 12px"><i style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${L.css};vertical-align:-2px"></i><span> ${L.n}</span></button>`).join('');
 for(const id of ['qTrack', 'tTrack']) $(id).addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
-$('optCup').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const c = Number(b.dataset.v); if(c !== CAR.cup){ CAR.cup = c; CAR.race = 0; CAR.pts = {}; saveCar(); } SFX.click(); renderMenu(); });
 $('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr){ SFX.error(); return; } CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.coin(); renderMenu(); });
 document.querySelectorAll('[data-coll]').forEach(el => el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT.coll = Number(b.dataset.v); saveOpt(); SFX.toggle(); renderMenu(); }));
 seg('optItems', 'items', Number); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
@@ -2187,13 +2668,9 @@ const bestOf = t => store.get('Best' + (t.id === 'apex' ? '' : '_' + t.id), null
 function renderMenu(){
   const st = store.get('Stats', {races:0, wins:0, pods:0}), champs = CAR.trophies.filter(t => t && t <= 3).length;
   $('hubStats').innerHTML = [`🪙 ${CAR.coins}`, `🏆 ${champs}/5 troféus`, `🏁 ${st.races} corridas`].map(t => `<span class="chip">${t}</span>`).join('');
-  $('hubCareer').textContent = CUPS[CAR.cup].n + ' · etapa ' + (CAR.race + 1) + '/5';
+  $('hubCareer').textContent = CR ? CR.teams[CR.contract.team].n + ' · temporada ' + CR.season + (CR.phase === 'race' ? ' · etapa ' + (CR.round + 1) + '/' + CR_ROUNDS : ' · mercado aberto') : '8 equipes, 16 pilotos, contratos e temporadas';
   /* carreira */
-  $('optCup').innerHTML = CUPS.map((c, i) => `<button data-v="${i}" aria-pressed="${i === CAR.cup}" ${i < CAR.unlocked ? '' : 'disabled style="opacity:.45"'}>${i < CAR.unlocked ? '' : '🔒 '}${c.n}<small>${CAR.trophies[i] ? ['', '🏆 campeão', '🥈 2º', '🥉 3º'][CAR.trophies[i]] || CAR.trophies[i] + 'º' : c.d}</small></button>`).join('');
-  const cup = CUPS[CAR.cup], tab = Object.entries(CAR.pts).sort((a, b) => b[1] - a[1]), me = OPT.name || 'Você';
-  $('cInfo').innerHTML = `Etapa <b>${CAR.race + 1}/5</b>: <b>${TRACKS[cup.ti[CAR.race]].n}</b> · 3 voltas · 🪙 ${CAR.coins}<br>` + cup.ti.map((ti, k) => (k < CAR.race ? '✔ ' : k === CAR.race ? '▶ ' : '· ') + TRACKS[ti].n).join(' &nbsp; ');
-  $('cStand').innerHTML = tab.length ? '<h3>Classificação</h3><table class="res">' + tab.map((e, i) => `<tr class="${e[0] === me ? 'me' : ''}"><td>${i + 1}</td><td>${esc(e[0])}</td><td class="t">${e[1]} pts</td></tr>`).join('') + '</table>' : '';
-  $('goCareer').textContent = 'Correr etapa ' + (CAR.race + 1);
+  renderCareer();
   /* corrida rápida e contra o relógio */
   $('qTrack').innerHTML = $('tTrack').innerHTML = trackOptions();
   for(const [id, key] of [['optItems', 'items'], ['optLaps', 'laps'], ['optDiff', 'diff'], ['optLiv', 'liv']]) [...$(id).children].forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v) === String(OPT[key])));
@@ -2206,12 +2683,12 @@ function renderMenu(){
   $('trophyCups').innerHTML = CUPS.map((c, i) => { const t = CAR.trophies[i], lock = i >= CAR.unlocked, ic = lock ? '🔒' : t === 1 ? '🏆' : t === 2 ? '🥈' : t === 3 ? '🥉' : '🏁';
     return `<div class="tro ${lock ? 'lock' : t === 1 ? 'gold' : ''}"><i>${ic}</i><b>${c.n}</b><small>${lock ? 'bloqueado' : t ? (t <= 3 ? t + 'º no campeonato' : 'melhor: ' + t + 'º') : 'não disputado'}</small></div>`; }).join('');
   const recs = TRACKS.filter(t => bestOf(t)).length;
-  $('trophyStats').innerHTML = [`🏁 ${st.races} corridas`, `🥇 ${st.wins} vitórias`, `🥉 ${st.pods} pódios`, `🏆 ${champs} campeonatos no pódio`, `⏱ recorde em ${recs}/${TRACKS.length} pistas`].map(t => `<span class="chip">${t}</span>`).join('');
+  $('trophyStats').innerHTML = [`🏁 ${st.races} corridas`, `🥇 ${st.wins} vitórias`, `🥉 ${st.pods} pódios`, `🏆 ${champs} campeonatos no pódio`, `⏱ recorde em ${recs}/${TRACKS.length} pistas`].concat(CR ? (s => [`👑 ${s.titles} títulos na carreira`, `🏎 ${s.seasons} temporadas · ${s.wins} vitórias na carreira`])(careerStats()) : []).map(t => `<span class="chip">${t}</span>`).join('');
   $('trophyRecs').innerHTML = TRACKS.map((t, i) => `<div class="${trackUnlocked(i) ? '' : 'lock'}"><span>${trackUnlocked(i) ? '' : '🔒 '}${t.n}</span><b>${fmt(bestOf(t))}</b></div>`).join('');
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.0.1';
+const VERSION = '3.0';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2247,13 +2724,15 @@ function hud(dt){
   if(on){ const ic = P.itemRoll > 0 ? ITEM_ICON[['turbo', 'oleo', 'missil', 'escudo'][Math.floor(G.t*12) % 4]] : P.item ? ITEM_ICON[P.item] : ''; if($('itemIc').textContent !== ic) $('itemIc').textContent = ic; $('itemN').textContent = P.itemRoll > 0 ? '...' : P.item ? ITEM_NAME[P.item] : P.shield > 0 ? 'escudo ativo' : 'vazio'; }
   hudT -= dt; if(hudT > 0) return; hudT = .12;
   const lapNow = Math.min(G.laps, P.laps + 1);
-  $('lap').textContent = isRace() ? lapNow + '/' + G.laps : String(P.laps + 1);
+  $('lap').textContent = G.sess === 'quali' ? (P.pre ? 'aquec.' : 'Q' + Math.min(2, P.laps + 1) + '/2') : isRace() ? lapNow + '/' + G.laps : String(P.laps + 1);
   $('tCur').textContent = STATE === 'count' ? '0:00.00' : fmt(G.raceT - P.lapStart);
   $('tLast').textContent = fmt(P.lapTimes[P.lapTimes.length - 1]); $('tBest').textContent = fmt(G.bestLap);
   if(isRace()){
     const ord = order(), p = ord.indexOf(P) + 1; $('pos').innerHTML = p + '<small>/' + ord.length + '</small>';
     const lead = ord[0];
-    $('tower').innerHTML = ord.map((k, i) => { const gap = i === 0 ? 'líder' : k.finished ? '🏁' : '+' + ((lead.prog - k.prog)*DS/Math.max(10, Math.abs(k.vf) || 20)).toFixed(1); return `<div class="${k === P ? 'me' : ''}"><span>${i + 1}</span><i style="background:${k.css}"></i><span>${esc(k.name)}</span><em>${gap}</em></div>`; }).join('');
+    /* com 16 karts a torre mostra os 8 primeiros e você; na classificação, as melhores voltas */
+    const show = ord.length > 10 ? ord.filter((k, i) => i < 8 || k === P) : ord, q = G.sess === 'quali';
+    $('tower').innerHTML = show.map(k => { const i = ord.indexOf(k), gap = q ? (k.best ? fmt(k.best) : '—') : i === 0 ? 'líder' : k.finished ? '🏁' : '+' + ((lead.prog - k.prog)*DS/Math.max(10, Math.abs(k.vf) || 20)).toFixed(1); return `<div class="${k === P ? 'me' : ''}"><span>${i + 1}</span><i style="background:${k.css}"></i><span>${esc(k.name)}</span><em>${gap}</em></div>`; }).join('');
   }
 }
 
@@ -2371,7 +2850,7 @@ function frame(now){
   renderer.render(scene, camera);
 }
 /* ---------- início ---------- */
-if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CUPS[CAR.cup].ti.includes(OPT.track))){ OPT.track = 0; saveOpt(); location.reload(); }
+if(!trackUnlocked(OPT.track || 0) && !(OPT.mode === 'career' && CR && CR.phase === 'race' && CR.cal[CR.round].ti === OPT.track)){ OPT.track = 0; saveOpt(); location.reload(); }
 G.mode = OPT.mode; buildField(); setMute(!!OPT.mute); cam.mode = OPT.cam || 0;
 $('titleVer').textContent = 'versão ' + VERSION; applyPads();
 let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
