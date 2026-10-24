@@ -361,11 +361,15 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.3</div>
+      <div class="ver" id="newsVer">Versão 3.3.1</div>
       <h2 id="newsTitle">BRAÇOS <span>DE VERDADE</span></h2>
       <h3>Novo</h3>
       <ul>
         <li><b>Braços realistas na câmera do piloto</b> (WRAD ARMS, de wriks): antebraços e mãos com esqueleto, vestidos com a manga do macacão na cor da equipe, faixa, punho e luvas. Os dedos fecham no aro e os braços acompanham o volante, entrando pelos cantos da tela como na visão do capacete.</li>
+      </ul>
+      <h3>Corrigido</h3>
+      <ul>
+        <li><b>As mãos agora agarram o volante:</b> os dedos fecham em volta do aro em vez de ficarem abertos, e cada punho fica preso à sua pega, girando junto com o volante em qualquer ângulo, inclusive no esterço total (o ombro avança para alcançar).</li>
       </ul>
       <h3>Versão 3.2 · Pilotos novos</h3>
       <ul>
@@ -1944,7 +1948,11 @@ function driverTick(k){
    antebraços e mãos realistas com esqueleto; cada vértice é pintado pelo osso que o move (mão e dedos = luva,
    antebraço = manga do macacão com faixa por cima) sobre o tom da textura original, que mantém dobras e sombra.
    Os ombros ficam presos ao kart logo abaixo dos olhos e a IK leva as mãos ao volante da cabine. */
-const ARMS = {ready:false, src:null, gray:null, S:.105, ROOT:new THREE.Vector3(SX, .56, .12)};
+const ARMS = {ready:false, src:null, gray:null, S:.105, ROOT:new THREE.Vector3(SX, .56, .12),
+  /* dobra das falanges para fechar a mão no aro (eixo local de cada osso) */
+  CURL:{sgn:{l:1, r:1}, ax:new THREE.Vector3(1, 0, 0), thAx:new THREE.Vector3(1, 0, 0), fin:[1.2, 1.3, .9], th:[.6, .8, .5]},
+  /* posição do punho em relação à pega (metros): atrás do aro, para fora e para cima; over = quanto a mão passa por cima do aro */
+  HAND:{back:.075, out:.02, up:0, over:.25, roll:0}};
 function loadArms(){
   if(!THREE.GLTFLoader || !THREE.SkeletonUtils) return;
   new THREE.GLTFLoader().load('wrad/arms.glb', g => {
@@ -1962,7 +1970,7 @@ function loadArms(){
 function attachFpArms(m){
   const u = m.userData; if(!ARMS.ready || !u.fp || u.fpArms) return;
   const a = THREE.SkeletonUtils.clone(ARMS.src), B = {}; a.traverse(o => { if(o.isBone) B[o.name] = o; });
-  const L = u.liv, col = c => new THREE.Color(c), suit = col(L.p), stripe = col(L.s), glove = col(0x2e323b), cuff = col(L.s === 0x14171c ? 0x2a2c30 : L.s);
+  const L = u.liv, col = c => new THREE.Color(c), suit = col(L.p), stripe = col(L.s), glove = col(0x454b57), cuff = col(L.s === 0x14171c ? 0x2a2c30 : L.s);
   a.traverse(o => {
     if(!o.isSkinnedMesh) return;
     const geo = o.geometry = o.geometry.clone(), si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, nr = geo.attributes.normal, n = geo.attributes.position.count, C = new Float32Array(n*3);
@@ -1974,31 +1982,58 @@ function attachFpArms(m){
     geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
     o.material = new THREE.MeshLambertMaterial({map:ARMS.gray, vertexColors:true, skinning:true}); o.frustumCulled = false; o.castShadow = false; o.receiveShadow = true;
   });
-  /* mãos fechadas no aro: cada falange dobra no eixo x local */
-  for(const s of ['l', 'r']){ for(const f of ['index', 'middle', 'ring', 'pinky']) [.95, 1.0, .7].forEach((ang, k) => { const b = B[`finger_${f}${k + 1}${s}`]; if(b) b.rotateX(ang); });
-    for(const [k, ang] of [[1, .35], [2, .5], [3, .4]]){ const b = B[`finger_thumb${k}${s}`]; if(b) b.rotateX(ang); } }
+  /* mãos fechadas no aro: cada falange dobra no eixo x local (sentido positivo fecha para a palma) */
+  const CU = ARMS.CURL; for(const s of ['l', 'r']){ const g = CU.sgn[s];
+    for(const f of ['index', 'middle', 'ring', 'pinky']) CU.fin.forEach((ang, k) => { const b = B[`finger_${f}${k + 1}${s}`]; if(b) b.rotateOnAxis(CU.ax, g*ang); });
+    CU.th.forEach((ang, k) => { const b = B[`finger_thumb${k + 1}${s}`]; if(b) b.rotateOnAxis(CU.thAx, g*ang); }); }
   /* ombros mais abertos que no modelo: os antebraços entram pelos cantos de baixo da tela, como na visão real do capacete */
-  for(const s of ['l', 'r']) if(B['bicep' + s]) B['bicep' + s].position.multiplyScalar(1.7);
+  for(const s of ['l', 'r']) if(B['bicep' + s]){ B['bicep' + s].position.multiplyScalar(1.7); B['bicep' + s].userData.p1 = B['bicep' + s].position.clone(); }
   a.scale.setScalar(ARMS.S); a.position.copy(ARMS.ROOT); a.visible = false; m.add(a); a.updateMatrixWorld(true);
   for(const b of Object.values(B)) b.userData.q0 = b.quaternion.clone();
   u.fpArms = a; u.fpB = B;
 }
-/* IK dos dois braços até as pegas do volante da cabine (que gira) */
+/* gira um osso para que dois eixos dele (f: punho→dedo médio, k: indicador→mindinho) fiquem em fW e kW (espaço do mundo) */
+const _M1 = new THREE.Matrix4(), _M2 = new THREE.Matrix4(), _bx = new THREE.Vector3(), _by = new THREE.Vector3(), _bz = new THREE.Vector3();
+function basisM(M, f, k){ _bx.copy(f).normalize(); _bz.crossVectors(_bx, k).normalize(); _by.crossVectors(_bz, _bx); return M.makeBasis(_bx, _by, _bz); }
+function orientBone(bone, f, k, fW, kW){
+  basisM(_M1, f, k); basisM(_M2, fW, kW); _qa.setFromRotationMatrix(_M2.multiply(_M1.transpose()));
+  bone.getWorldQuaternion(_qb).premultiply(_qa); bone.parent.getWorldQuaternion(_qa).invert(); bone.quaternion.copy(_qa.multiply(_qb)); bone.updateMatrixWorld(true);
+}
+const _C = new THREE.Vector3(), _N = new THREE.Vector3(), _R = new THREE.Vector3(), _U = new THREE.Vector3(), _F = new THREE.Vector3(), _K = new THREE.Vector3(), _a1 = new THREE.Vector3(), _a2 = new THREE.Vector3();
+/* IK dos dois braços até o aro do volante da cabine. Tudo sai do volante neste quadro (centro, normal, raio e tangente
+   na pega), então as mãos giram exatamente junto com ele; a mão fica com os nós dos dedos ao longo do aro e o indicador em cima */
 function fpArmsTick(k){
   const u = k.model.userData, B = u.fpB; if(!u.fpArms || !u.fpArms.visible) return;
-  k.model.updateMatrixWorld(true);
+  /* nas curvas fortes o piloto inclina o tronco para a frente e para baixo, para a mão de baixo alcançar o aro */
+  const lean = Math.min(1, Math.abs(k.steer)); u.fpArms.position.set(ARMS.ROOT.x + k.steer*.03, ARMS.ROOT.y - lean*.05, ARMS.ROOT.z - lean*.07);
+  k.model.updateMatrixWorld(true); u.fp.rig.updateMatrixWorld(true);
   const e = k.model.matrixWorld.elements, right = new THREE.Vector3(e[0], e[1], e[2]).normalize(), down = new THREE.Vector3(-e[4], -e[5], -e[6]).normalize(), back = new THREE.Vector3(e[8], e[9], e[10]).normalize();
+  const sw = u.fp.sw, we = sw.matrixWorld.elements; sw.getWorldPosition(_C);
+  _N.set(we[8], we[9], we[10]).normalize(); const wUp = new THREE.Vector3(we[4], we[5], we[6]).normalize();
+  const H = ARMS.HAND;
   for(const [s, side, hi] of [['l', -1, 0], ['r', 1, 1]]){
-    const up = B['bicep' + s], fa = B['forearm' + s], wr = B['wrist' + s], mid = B['finger_middle1' + s];
-    for(const b of [up, fa, wr]) b.quaternion.copy(b.userData.q0); up.updateMatrixWorld(true);
+    const up = B['bicep' + s], fa = B['forearm' + s], wr = B['wrist' + s];
+    for(const b of [up, fa, wr]) b.quaternion.copy(b.userData.q0); up.position.copy(up.userData.p1); up.updateMatrixWorld(true);
     u.fp.hands[hi].localToWorld(_G.set(0, 0, 0));
-    _T.copy(_G).addScaledVector(back, .055).addScaledVector(down, .01);
+    /* raio para fora na pega e tangente do aro apontando para as 12 horas do volante */
+    _R.subVectors(_G, _C).normalize(); _U.crossVectors(_N, _R).normalize(); if(_U.dot(wUp) < 0) _U.negate();
+    /* punho: atrás do aro (do lado do piloto) e um pouco para fora dele */
+    _T.copy(_G).addScaledVector(_N, H.back).addScaledVector(_R, H.out).addScaledVector(_U, H.up);
     up.getWorldPosition(_S); const a = _S.distanceTo(fa.getWorldPosition(_P)), b = _P.distanceTo(wr.getWorldPosition(_E));
+    /* sem alcance (mão de cima com o volante muito virado): o ombro avança em direção à mão, como o piloto faz */
+    const short = _S.distanceTo(_T) - (a + b)*.97; if(short > 0){ _P.subVectors(_T, _S).normalize().multiplyScalar(short).add(_S); up.parent.worldToLocal(_P); up.position.copy(_P); up.updateMatrixWorld(true); up.getWorldPosition(_S); }
     _D.subVectors(_T, _S); const d = clamp(_D.length(), Math.abs(a - b) + 1e-4, a + b - 1e-4); _D.normalize();
     const pole = new THREE.Vector3().addScaledVector(down, .4).addScaledVector(right, side*1.1).addScaledVector(back, .1); pole.addScaledVector(_D, -pole.dot(_D)).normalize();
     const x = (a*a - b*b + d*d)/(2*d), h = Math.sqrt(Math.max(0, a*a - x*x));
     _E.copy(_S).addScaledVector(_D, x).addScaledVector(pole, h);
-    aimBone(up, fa, _P.subVectors(_E, _S)); aimBone(fa, wr, _P.subVectors(_T, _E)); aimBone(wr, mid, _P.subVectors(_G, _T).addScaledVector(down, .015));
+    aimBone(up, fa, _P.subVectors(_E, _S)); aimBone(fa, wr, _P.subVectors(_T, _E));
+    /* mão: aponta do punho para o aro (passando por cima dele) e o indicador fica do lado das 12 horas */
+    _F.subVectors(_G, _T).addScaledVector(_N, -H.over).normalize();
+    _K.copy(_U).negate(); _K.addScaledVector(_F, -_K.dot(_F)).normalize();
+    wr.getWorldPosition(_a1); B['finger_middle1' + s].getWorldPosition(_a2); _P.subVectors(_a2, _a1);
+    B['finger_index1' + s].getWorldPosition(_a1); B['finger_pinky1' + s].getWorldPosition(_a2); _E.subVectors(_a2, _a1);
+    orientBone(wr, _P, _E, _F, _K);
+    if(H.roll) wr.rotateOnAxis(_E.set(0, 1, 0), side*H.roll), wr.updateMatrixWorld(true);
   }
 }
 /* =====================================================================
@@ -2995,7 +3030,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.3';
+const VERSION = '3.3.1';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
