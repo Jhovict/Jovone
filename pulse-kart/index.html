@@ -351,6 +351,7 @@ body.touch .keys{display:none}
       <h2 id="newsTitle">SOM DE <span>VERDADE</span></h2>
       <h3>Novo</h3>
       <ul>
+        <li><b>Corrigido:</b> o controle (Xbox/PlayStation) agora despausa o jogo com Start. No menu de pausa, o direcional escolhe entre Continuar, Recomeçar e Menu, A confirma e B volta para a corrida.</li>
         <li><b>Motor dois tempos 125cc novo</b>, gerado em tempo real: cada explosão do cilindro, o ronco do escapamento que muda com o giro, a embreagem patinando na saída, o corte do limitador perto de 14.000 rpm e os estalos no escapamento quando você tira o pé.</li>
         <li><b>Acelere no grid</b> durante as luzes vermelhas: o motor gira solto. No menu, o kart fica em marcha lenta.</li>
         <li><b>Rivais com som de verdade:</b> os três karts mais perto aparecem do lado certo (esquerda ou direita), mais altos quando chegam perto e com o efeito Doppler ao passar.</li>
@@ -2113,11 +2114,12 @@ function readInput(dt){
     if(b(14)) steer -= 1; if(b(15)) steer += 1;
     thr = Math.max(thr, v(7), b(0) ? 1 : 0); brk = Math.max(brk, v(6), b(1) ? 1 : 0);
     if(b(5) || b(2)) drift = true; if(b(4)) item = true;
-    const now = {start:b(9), y:b(3), a:b(0), bb:b(1), up:b(12) || (gp.axes[1] || 0) < -.6, down:b(13) || (gp.axes[1] || 0) > .6};
+    const now = {start:b(9), y:b(3), a:b(0), bb:b(1), up:b(12) || (gp.axes[1] || 0) < -.6, down:b(13) || (gp.axes[1] || 0) > .6, left:b(14) || (gp.axes[0] || 0) < -.6, right:b(15) || (gp.axes[0] || 0) > .6};
     if(now.start && !prev.start){ if(STATE === 'pause') pauseOff(); else if(STATE === 'race' || STATE === 'count' || STATE === 'done') pauseOn(); else if(STATE === 'menu'){ if(SCR === 'Title') pressStart(); else document.activeElement && document.activeElement.click(); } else if(STATE === 'end') $('btnAgain').click(); }
     if(now.y && !prev.y) cycleCam();
-    if(now.a && !prev.a){ if(!$('news').hidden) closeNews(); else if(!$('how').hidden) $('how').hidden = true; else if(STATE === 'end') $('btnAgain').click(); else if(STATE === 'menu'){ if(SCR === 'Title') pressStart(); else document.activeElement && document.activeElement.click(); } }
+    if(now.a && !prev.a){ if(!$('news').hidden) closeNews(); else if(STATE === 'pause'){ const f = document.activeElement; (f && $('pause').contains(f) ? f : $('btnResume')).click(); } else if(!$('how').hidden) $('how').hidden = true; else if(STATE === 'end') $('btnAgain').click(); else if(STATE === 'menu'){ if(SCR === 'Title') pressStart(); else document.activeElement && document.activeElement.click(); } }
     if(STATE === 'menu' && $('news').hidden && $('how').hidden){ if(now.up && !prev.up) menuMove(-1); if(now.down && !prev.down) menuMove(1); if(now.bb && !prev.bb) menuBack(); }
+    if(STATE === 'pause'){ if((now.left && !prev.left) || (now.up && !prev.up)) menuMove(-1); if((now.right && !prev.right) || (now.down && !prev.down)) menuMove(1); if(now.bb && !prev.bb) pauseOff(); }
     padPrev[gp.index] = now;
   }
   input.steer = clamp(steer, -1, 1); input.thr = clamp(thr, 0, 1); input.brk = clamp(brk, 0, 1); input.drift = drift; input.itemPress = item && !input.item; input.item = item;
@@ -2176,7 +2178,7 @@ $('scrTitle').addEventListener('click', pressStart);
 $('goCareer').addEventListener('click', careerGo); $('goQuick').addEventListener('click', startRace); $('goTT').addEventListener('click', startRace);
 /* foco pelo teclado e pelo controle */
 function menuMove(dir){
-  const list = [...$('scr' + SCR).querySelectorAll('button:not([disabled]), select')].filter(el => el.offsetParent);
+  const list = [...(STATE === 'pause' ? $('pause') : $('scr' + SCR)).querySelectorAll('button:not([disabled]), select')].filter(el => el.offsetParent);
   if(!list.length) return; let i = list.indexOf(document.activeElement); i = i < 0 ? 0 : (i + dir + list.length) % list.length; list[i].focus({preventScroll:false}); SFX.move();
 }
 function menuBack(){ if(SCR !== 'Hub' && SCR !== 'Title'){ SFX.back(); show('Hub'); } }
@@ -2209,7 +2211,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '2.0';
+const VERSION = '2.0.1';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2359,7 +2361,8 @@ let last = performance.now();
 function frame(now){
   requestAnimationFrame(frame);
   let dt = Math.min(.05, (now - last)/1000); last = now;
-  if(STATE !== 'pause') step(dt);
+  /* pausado, o jogo para mas o controle continua sendo lido (Start despausa, direcional e A/B no menu de pausa) */
+  if(STATE !== 'pause') step(dt); else readInput(dt);
   updateCamera(dt);
   const f = player || {x:PX[0], y:0, z:PZ[0]};
   sun.position.set(f.x + SUN_OFF.x, f.y + SUN_OFF.y, f.z + SUN_OFF.z); sun.target.position.set(f.x, f.y, f.z);
