@@ -361,9 +361,15 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.1</div>
-      <h2 id="newsTitle">TESTES DE <span>CONTRATAÇÃO</span></h2>
+      <div class="ver" id="newsVer">Versão 3.2</div>
+      <h2 id="newsTitle">PILOTOS <span>NOVOS</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Pilotos novos</b> com o boneco do pacote Animated Characters da Kenney, vestidos de piloto de Fórmula 1: macacão na cor da equipe com faixas e patrocínios, luvas, sapatilhas, balaclava e capacete com viseira escura, faixa e aerofólio.</li>
+        <li>Sentados de verdade no kart, com as <b>mãos no volante</b>: os braços acompanham o volante quando o piloto vira, e a cabeça inclina nas curvas.</li>
+        <li>Na câmera do piloto, o boneco some para não tapar a visão (o volante com as luvas continua).</li>
+      </ul>
+      <h3>Versão 3.1 · Testes de contratação</h3>
       <ul>
         <li><b>A carreira começa sem equipe</b>, como na F1 2006: as três equipes de menor competitividade abrem testes para a sua primeira vaga profissional.</li>
         <li><b>Cada teste é um contra o relógio</b> sozinho na pista da equipe, com o kart dela: 3 voltas lançadas, vale a melhor. A meta e a meta de destaque aparecem antes de você entrar na pista.</li>
@@ -474,6 +480,9 @@ body.touch .keys{display:none}
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -1679,12 +1688,14 @@ function kartModel(L, num){
   for(const sd of [-1, 1]) tube(body, [sd*.25, .09, .6], [sd*.4, .16, .84], .013, chrome, 8);
   /* ---- piloto (macacão Nomex, luvas, sapatilhas) ---- */
   const suit = L.suit, ss = L.ss, glove = 0x121316, boot = 0x111214, V = (x, y, z) => new THREE.Vector3(x, y, z);
-  const pel = sphere(body, .17, suit, SX, .21, .14, 1, .55, .8);
+  /* pernas e quadril do piloto num grupo à parte: somem quando o boneco Kenney assume */
+  const legsG = new THREE.Group(); root.add(legsG);
+  const pel = sphere(legsG, .17, suit, SX, .21, .14, 1, .55, .8);
   for(const sd of [-1, 1]){
     const hp = V(SX + sd*.09, .22, .08), kn = V(SX + sd*.12, .37, -.25), an = V(SX + sd*.1, .17, -.6);
-    rlimb(body, hp, kn, .068, .058, suit); rlimb(body, kn, an, .056, .042, suit);
-    piping(body, hp, kn, V(sd*.064, 0, 0), .014, ss); piping(body, kn, an, V(sd*.052, 0, 0), .012, ss);
-    sphere(body, .05, boot, an.x, .16, -.63, 1, 1, 1.5); sphere(body, .045, boot, an.x, .13, -.68, 1, .7, 1.6);
+    rlimb(legsG, hp, kn, .068, .058, suit); rlimb(legsG, kn, an, .056, .042, suit);
+    piping(legsG, hp, kn, V(sd*.064, 0, 0), .014, ss); piping(legsG, kn, an, V(sd*.052, 0, 0), .012, ss);
+    sphere(legsG, .05, boot, an.x, .16, -.63, 1, 1, 1.5); sphere(legsG, .045, boot, an.x, .13, -.68, 1, .7, 1.6);
     B(body, .09, .015, .2, 0x2a2b2e, an.x, .1, -.67, -.42);
   }
   const upper = new THREE.Group(); upper.position.set(SX, .25, .17); root.add(upper);
@@ -1739,13 +1750,14 @@ function kartModel(L, num){
   /* funde as peças */
   root.updateMatrixWorld(true);
   bakeMeshes(body, body.children.filter(o => o.isMesh), root);
+  bakeMeshes(legsG, legsG.children.filter(o => o.isMesh), root);
   bakeMeshes(head, head.children.filter(o => o.isMesh), root);
   bakeMeshes(upper, upper.children.filter(o => o.isMesh), root);
   for(const s of spin){ const w = s.children[0]; bakeMeshes(w, w.children.filter(o => o.isMesh), root); }
   for(const g of [fl, fr]) bakeMeshes(g, g.children.filter(o => o.isMesh), root);
   bakeMeshes(swS, swS.children.filter(o => o.isMesh), root);
   root.traverse(o => { if(o.isMesh) o.castShadow = true; });
-  root.userData = {body, upper, head, fl, fr, spin, swS};
+  root.userData = {body, legsG, upper, head, fl, fr, spin, swS, liv:L};
   return root;
 }
 /* =====================================================================
@@ -1813,6 +1825,112 @@ function cockpitTick(k, dt){
   fp.dash.needsUpdate = true;
 }
 
+/* =====================================================================
+   PILOTO KENNEY: o boneco do "Animated Characters Protagonists" (CC0) vestido de piloto,
+   sentado no kart com macacão, luvas, sapatilhas e capacete nas cores da pintura.
+   Carrega depois da pista; sem os arquivos (offline ou aberto do disco) fica o piloto feito no código.
+   ===================================================================== */
+const DRV = {ready:false, src:null, img:null, tex:{}, S:.0036};
+const hexC = n => '#' + n.toString(16).padStart(6, '0');
+function suitPatch(g, txt, x, y, w, h, bg, fg){ g.fillStyle = bg; g.fillRect(x, y, w, h); g.fillStyle = fg; g.font = `700 ${Math.round(h*.62)}px "Chakra Petch", sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x + w/2, y + h/2 + 1); }
+/* pele do boneco repintada como macacão de corrida (as áreas seguem o mapa UV da pele original) */
+function suitTexture(L){
+  if(DRV.tex[L.n]) return DRV.tex[L.n];
+  const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d'); g.drawImage(DRV.img, 0, 0);
+  const P = hexC(L.p), Sx = hexC(L.s), A = hexC(L.a), DK = '#16171b';
+  /* tronco: cor principal, painéis laterais, gola, zíper e patrocínios */
+  g.fillStyle = P; g.fillRect(152, 490, 338, 534);
+  g.fillStyle = Sx; g.fillRect(152, 490, 46, 534); g.fillRect(444, 490, 46, 534); g.fillRect(152, 860, 338, 34);
+  g.fillStyle = DK; g.fillRect(152, 490, 338, 24);
+  g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(318, 514, 6, 510);
+  suitPatch(g, 'PULSE', 228, 548, 186, 50, '#f2f2ee', '#14171c'); suitPatch(g, '125cc', 214, 622, 96, 30, A, Sx); suitPatch(g, 'JOVONE', 332, 622, 96, 30, '#f2b632', '#14171c');
+  suitPatch(g, 'REDSHIFT', 236, 920, 170, 34, '#14171c', '#f2f2ee');
+  /* mangas: cor principal com uma faixa ao longo do braço */
+  for(const x of [0, 490]){ g.fillStyle = P; g.fillRect(x, 490, x ? 150 : 152, 534); g.fillStyle = Sx; g.fillRect(x, 600, x ? 150 : 152, 30); g.fillRect(x, 900, x ? 150 : 152, 30); }
+  /* pernas: cor principal com a faixa lateral */
+  g.fillStyle = P; g.fillRect(611, 764, 413, 260); g.fillStyle = Sx; for(const x of [690, 900]) g.fillRect(x, 764, 26, 260);
+  /* luvas escuras com detalhe na cor de destaque; sapatilhas pretas com faixa */
+  g.fillStyle = DK; g.fillRect(824, 134, 200, 390); g.fillRect(639, 524, 385, 240); g.fillStyle = Sx; g.fillRect(824, 300, 200, 14); g.fillRect(639, 640, 385, 12);
+  g.fillStyle = '#1b1c20'; g.fillRect(639, 134, 185, 390); g.fillStyle = P; g.fillRect(639, 300, 185, 22);
+  /* pescoço: balaclava preta */
+  g.fillStyle = DK; g.beginPath(); g.moveTo(232, 490); g.lineTo(232, 330); g.quadraticCurveTo(321, 280, 410, 330); g.lineTo(410, 490); g.fill();
+  const t = new THREE.CanvasTexture(c); t.anisotropy = ANISO; return DRV.tex[L.n] = t;
+}
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _va = new THREE.Vector3(), _vb = new THREE.Vector3(), _vc = new THREE.Vector3();
+/* gira o osso para que o segmento até o filho aponte para dir (espaço do mundo) */
+function aimBone(bone, child, dir){
+  bone.getWorldPosition(_va); child.getWorldPosition(_vb); _qa.setFromUnitVectors(_vb.sub(_va).normalize(), _vc.copy(dir).normalize());
+  bone.getWorldQuaternion(_qb).premultiply(_qa); bone.parent.getWorldQuaternion(_qa).invert(); bone.quaternion.copy(_qa.multiply(_qb)); bone.updateMatrixWorld(true);
+}
+const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+/* pose sentada (o boneco olha para +z antes de ir para o kart) */
+function poseSeated(ch, B){
+  ch.updateMatrixWorld(true);
+  aimBone(B.Spine, B.Chest, V3(0, 1, -.22)); aimBone(B.Chest, B.UpperChest, V3(0, 1, -.15)); aimBone(B.UpperChest, B.Neck, V3(0, 1, -.05)); aimBone(B.Neck, B.Head, V3(0, 1, .12)); aimBone(B.Head, B.Head_end, V3(0, 1, .08));
+  for(const s of [1, -1]){ const L = s > 0 ? 'Left' : 'Right';
+    aimBone(B[L + 'UpLeg'], B[L + 'Leg'], V3(s*.2, .1, 1)); aimBone(B[L + 'Leg'], B[L + 'Foot'], V3(s*.04, -.3, 1)); aimBone(B[L + 'Foot'], B[L + 'Toes'], V3(0, .7, 1));
+    aimBone(B[L + 'Arm'], B[L + 'ForeArm'], V3(s*.3, -.6, .8)); aimBone(B[L + 'ForeArm'], B[L + 'Hand'], V3(-s*.3, .2, 1)); aimBone(B[L + 'Hand'], B[L + 'HandIndex1'], V3(-s*.3, .1, 1));
+    B[L + 'Hand'].scale.multiplyScalar(.8);
+  }
+  for(const b of Object.values(B)) b.userData.q0 = b.quaternion.clone();
+}
+/* capacete preso ao osso da cabeça: casco na cor do capacete, faixas, viseira escura, queixeira e aerofólio */
+function driverHelmet(B, L){
+  const H = new THREE.Group(), r = [57, 71, 65];
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), cm(L.helm)); shell.scale.set(...r); H.add(shell);
+  const seg = (c, ps, pl, ts, tl, k = 1.012) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 16, ps, pl, ts, tl), cm(c)); m.scale.set(r[0]*k, r[1]*k, r[2]*k); H.add(m); return m; };
+  seg(L.hs, Math.PI/2 - .16, .32, .05, 2.2); seg(L.hs, -Math.PI/2 - .16, .32, .05, 1.8);
+  seg(L.hs, Math.PI/2 - 1.5, 3, 1.95, .14);
+  seg(0x0c0f14, Math.PI/2 - .95, 1.9, 1.2, .5, 1.018);
+  seg(0xd8dde4, Math.PI/2 - .97, 1.94, 1.16, .05, 1.02);
+  seg(L.helm === 0x14171c ? 0x2a2c30 : 0x15161a, Math.PI/2 - .85, 1.7, 1.86, .75, 1.006);
+  const sp = new THREE.Mesh(new THREE.BoxGeometry(74, 6, 22), cm(L.hs)); sp.position.set(0, 56, -52); sp.rotation.x = .35; H.add(sp);
+  for(const s of [-1, 1]){ const f = new THREE.Mesh(new THREE.BoxGeometry(4, 14, 18), cm(L.helm)); f.position.set(s*35, 50, -50); H.add(f); }
+  H.position.set(0, 322, -1);
+  /* do espaço do boneco (pose de bind) para o espaço do osso da cabeça */
+  H.updateMatrix(); const M = new THREE.Matrix4().copy(B.Head.matrixWorld).invert().multiply(H.matrix); M.decompose(H.position, H.quaternion, H.scale);
+  H.traverse(o => { if(o.isMesh) o.castShadow = true; }); B.Head.add(H);
+}
+/* veste o boneco e coloca no kart (quadril no banco, olhando para a frente do kart) */
+function attachDriver(m){
+  const u = m.userData; if(!DRV.ready || u.char || !u.legsG || !THREE.SkeletonUtils) return;
+  const ch = THREE.SkeletonUtils.clone(DRV.src), B = {};
+  ch.traverse(o => { if(o.isBone) B[o.name] = o; if(o.isMesh){ o.material = new THREE.MeshLambertMaterial({map:suitTexture(u.liv), skinning:true}); o.castShadow = true; o.frustumCulled = false; } });
+  if(!B.Head || !B.LeftArm || !B.RightArm) return;
+  ch.updateMatrixWorld(true); driverHelmet(B, u.liv); poseSeated(ch, B);
+  const hips = B.Hips.getWorldPosition(new THREE.Vector3());
+  ch.scale.setScalar(DRV.S); ch.rotation.y = Math.PI; ch.position.set(SX + hips.x*DRV.S, .19 - hips.y*DRV.S, .11 + hips.z*DRV.S);
+  m.add(ch); u.char = ch; u.cB = B; u.legsG.visible = u.upper.visible = u.head.visible = false;
+}
+function dressAll(){ for(const k of KARTS) attachDriver(k.model); }
+function loadDriver(){
+  if(!THREE.FBXLoader || !THREE.SkeletonUtils) return;
+  const img = new Image(); img.src = 'kenney/piloto/skaterMaleA.png';
+  new THREE.FBXLoader().load('kenney/piloto/characterMedium.fbx', obj => img.decode().then(() => { DRV.src = obj; DRV.img = img; DRV.ready = true; dressAll(); }).catch(() => {}), undefined, () => {});
+}
+/* braços seguem o volante (IK de dois ossos) nos karts perto da câmera; a cabeça inclina com a curva */
+const _T = new THREE.Vector3(), _S = new THREE.Vector3(), _E = new THREE.Vector3(), _P = new THREE.Vector3(), _D = new THREE.Vector3(), _G = new THREE.Vector3(), _e = new THREE.Vector3();
+function driverTick(k){
+  const u = k.model.userData, B = u.cB; if(!u.char || !u.char.visible) return;
+  if(k !== player && camera.position.distanceToSquared(k.model.position) > 900) return;
+  k.model.updateMatrixWorld(true);
+  const e = k.model.matrixWorld.elements, right = _e.set(e[0], e[1], e[2]).normalize(), down = new THREE.Vector3(-e[4], -e[5], -e[6]).normalize(), back = new THREE.Vector3(e[8], e[9], e[10]).normalize();
+  for(const s of [1, -1]){
+    const L = s > 0 ? 'Left' : 'Right', arm = B[L + 'Arm'], fa = B[L + 'ForeArm'], hd = B[L + 'Hand'];
+    arm.quaternion.copy(arm.userData.q0); fa.quaternion.copy(fa.userData.q0); hd.quaternion.copy(hd.userData.q0); arm.updateMatrixWorld(true);
+    /* pega no aro do volante (gira com ele); o boneco está virado para -z do kart, então a mão esquerda dele fica em -x */
+    u.swS.localToWorld(_G.set(-s*.125, .025, .012)); _T.copy(_G).addScaledVector(back, .07).addScaledVector(down, .015);
+    arm.getWorldPosition(_S); const a = _S.distanceTo(fa.getWorldPosition(_P)), b = _P.distanceTo(hd.getWorldPosition(_E));
+    _D.subVectors(_T, _S); const d = clamp(_D.length(), Math.abs(a - b) + 1e-4, a + b - 1e-4); _D.normalize();
+    const pole = new THREE.Vector3().addScaledVector(down, .7).addScaledVector(right, -s*.75).addScaledVector(back, .25);
+    pole.addScaledVector(_D, -pole.dot(_D)).normalize();
+    const x = (a*a - b*b + d*d)/(2*d), h = Math.sqrt(Math.max(0, a*a - x*x));
+    _E.copy(_S).addScaledVector(_D, x).addScaledVector(pole, h);
+    aimBone(arm, fa, _P.subVectors(_E, _S)); aimBone(fa, hd, _P.subVectors(_T, _E)); aimBone(hd, B[L + 'HandIndex1'], _P.subVectors(_G, _T).addScaledVector(down, -.02));
+  }
+  const up = new THREE.Vector3(-down.x, -down.y, -down.z), hb = B.Head; hb.quaternion.copy(hb.userData.q0); hb.updateMatrixWorld(true);
+  aimBone(hb, B.Head_end, up.addScaledVector(right, -k.lean*.18).addScaledVector(back, -.06));
+}
 /* =====================================================================
    SOM (sintetizado)
    ===================================================================== */
@@ -1989,7 +2107,7 @@ const BOT_NAMES = ['Bia Torres', 'Caio Lima', 'Duda Rocha', 'Enzo Vale', 'Gabi N
 const DIFF = [{pow:.99, corner:1.0, err:.7}, {pow:1.025, corner:1.045, err:.42}, {pow:1.055, corner:1.08, err:.22}];
 const KARTS = []; let player = null, ghost = null;
 function makeKart(livIdx, num, name, isPlayer){
-  const L = LIVERIES[livIdx], model = kartModel(L, num); scene.add(model);
+  const L = LIVERIES[livIdx], model = kartModel(L, num); scene.add(model); attachDriver(model);
   return {name, isPlayer, liv:livIdx, css:L.css, model, x:0, y:0, z:0, vy:0, air:false, h:0, vx:0, vz:0, vf:0, vr:0, steer:0, inSteer:0, thr:0, brk:0, drift:0, driftT:0, driftHeld:false, boost:0, boostLvl:0, hop:0,
     idx:0, d:0, surf:0, slip:0, laps:0, pre:true, half:false, lapStart:0, lapTimes:[], best:null, finished:false, finishT:0, prog:0, wheel:0, lean:0, skill:1, lane:0, wrong:0, ai:{off:0, t:0}};
 }
@@ -2807,7 +2925,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.1';
+const VERSION = '3.2';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -2861,7 +2979,7 @@ function hud(dt){
 let camSnap = true;
 const _cp = new THREE.Vector3(), _cl = new THREE.Vector3(), _fpE = new THREE.Euler(), _fpQ = new THREE.Quaternion();
 /* mostra o volante de corrida (câmera do piloto) ou o piloto inteiro */
-function fpShow(k, on){ const u = k.model.userData; u.head.visible = u.upper.visible = u.swS.parent.visible = !on; if(u.fp) u.fp.rig.visible = on; }
+function fpShow(k, on){ const u = k.model.userData, ch = !!u.char; u.head.visible = u.upper.visible = !on && !ch; u.swS.parent.visible = !on; if(u.legsG) u.legsG.visible = !ch; if(ch) u.char.visible = !on; if(u.fp) u.fp.rig.visible = on; }
 function updateCamera(dt){
   if(STATE === 'menu' || !player){ if(player) fpShow(player, false);
     cam.orbit += dt*.25; const k = player || {x:PX[0], y:0, z:PZ[0], h:0};
@@ -2938,6 +3056,7 @@ function step(dt){
     for(const k of KARTS){ trackInfo(k); }
   }
   for(const k of KARTS) syncModel(k, dt);
+  for(const k of KARTS) driverTick(k);
   fxTick(dt);
   /* bandeiras dos fiscais tremulam */
   for(let i = 0; i < FLAGS.length; i++) FLAGS[i].rotation.y = Math.sin(G.t*6 + i)*.35;
@@ -2975,7 +3094,7 @@ $('titleVer').textContent = 'versão ' + VERSION; applyPads();
 let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
 if(store.get('Auto', 0)){ store.set('Auto', 0); show('Career'); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
 else show(scr0 && SCREENS.includes(scr0) ? scr0 : 'Title');
-resize(); requestAnimationFrame(frame);
+resize(); requestAnimationFrame(frame); loadDriver();
 </script>
 </body>
 </html>
