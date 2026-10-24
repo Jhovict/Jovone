@@ -71,6 +71,7 @@ Corrida de kart 125cc na visão do piloto (volante de corrida com painel digital
 - **Corrida:** 3, 5 ou 8 voltas contra 7 pilotos em três níveis (Amador, Piloto, Profissional), largada com as cinco luzes vermelhas, posição ao vivo, torre de tempos, minimapa e resultado com pódio. Os bots seguem o traçado ideal, freiam antes das curvas, desviam e disputam posição.
 - **Contra o relógio:** voltas livres sozinho; o kart fantasma repete a melhor volta (salva no navegador).
 - **Pilotagem:** aderência limitada pela velocidade, drift (segure na curva para deslizar e fechar mais; não dá turbo), vácuo atrás de outro kart, grama e brita freiam, batidas no alambrado e entre karts (cada kart coberto por dois círculos; colisão entre karts pode ser desligada).
+- **Som:** motor dois tempos gerado em tempo real (AudioWorklet: explosão por volta do virabrequim com variação de ciclo, ressonância do escapamento, embreagem, limitador e estalos ao aliviar), três rivais com estéreo e Doppler, pneus, zebra, grama, brita, vento, corrente, batidas e sons de menu. Sem AudioWorklet, cai para osciladores.
 - **Controles:** teclado (setas/WASD, Espaço drift, V câmera, P pausa, M som), controle (RT/A acelera, LT/B freia, analógico, RB/X drift, Y câmera, Start pausa) e celular na horizontal (botões de direção, acelerador, freio e drift).
 
 Salva opções, melhor volta e fantasma (por pista) e estatísticas no `localStorage` com o prefixo `pkart`.

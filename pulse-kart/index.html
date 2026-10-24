@@ -347,9 +347,18 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 1.9</div>
-      <h2 id="newsTitle">VISÃO DO <span>PILOTO</span></h2>
+      <div class="ver" id="newsVer">Versão 2.0</div>
+      <h2 id="newsTitle">SOM DE <span>VERDADE</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Motor dois tempos 125cc novo</b>, gerado em tempo real: cada explosão do cilindro, o ronco do escapamento que muda com o giro, a embreagem patinando na saída, o corte do limitador perto de 14.000 rpm e os estalos no escapamento quando você tira o pé.</li>
+        <li><b>Acelere no grid</b> durante as luzes vermelhas: o motor gira solto. No menu, o kart fica em marcha lenta.</li>
+        <li><b>Rivais com som de verdade:</b> os três karts mais perto aparecem do lado certo (esquerda ou direita), mais altos quando chegam perto e com o efeito Doppler ao passar.</li>
+        <li><b>Pneus cantando</b> no drift e nas curvas no limite, <b>trepidação da zebra</b> no ritmo da velocidade, grama, brita, vento e o zumbido da corrente.</li>
+        <li><b>Batidas</b> com baque, plástico estalando e chassi tinindo nas mais fortes; aterrissagem dos pulinhos.</li>
+        <li><b>Sons dos menus:</b> passar o mouse, navegar, confirmar, voltar, trocar opção, comprar peça na garagem, falta de moedas, pausar e voltar. Avisos de volta, melhor volta, vitória e derrota com sinos novos.</li>
+      </ul>
+      <h3>Versão 1.9 · Visão do piloto</h3>
       <ul>
         <li><b>Câmera do piloto refeita</b>, agora a padrão: você vê pelos olhos do piloto, um pouco de cima do volante, com a pista à frente e a frente do kart embaixo.</li>
         <li><b>Volante de corrida</b> com pegas, raios e <b>painel digital</b> mostrando o tempo da volta, a volta, a posição e a velocidade.</li>
@@ -436,7 +445,7 @@ body.touch .keys{display:none}
 'use strict';
 /* =====================================================================
    PULSE KART — corrida de kart no circuito Apex Loop
-   Arquivo único: three.js r128 + WebAudio sintetizado. Sem assets externos.
+   Arquivo único: three.js r128 + som sintetizado (motor em AudioWorklet). Fora isso, só os .glb do Kenney em kenney/
    ===================================================================== */
 const $ = id => document.getElementById(id);
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v, lerp = (a, b, t) => a + (b - a)*t, TAU = Math.PI*2;
@@ -1478,62 +1487,170 @@ function cockpitTick(k, dt){
 /* =====================================================================
    SOM (sintetizado)
    ===================================================================== */
-const AU = {ctx:null, mute:OPT.mute};
+const AU = {ctx:null, mute:OPT.mute, voices:[], ready:false, blip:0};
+/* motor dois tempos 125cc gerado amostra a amostra (AudioWorklet): um pulso de escapamento por volta do virabrequim,
+   explosão que varia a cada ciclo, sopro de admissão, ressonâncias do escapamento (câmara de expansão) que acompanham
+   o giro e saturação; sem acelerador em giro alto, falhas e estalos no escapamento */
+const ENGINE_WORKLET = `
+class KartEngine extends AudioWorkletProcessor{
+  static get parameterDescriptors(){ return [{name:'rpm', defaultValue:2800, minValue:300, maxValue:20000, automationRate:'k-rate'}, {name:'load', defaultValue:0, minValue:0, maxValue:1, automationRate:'k-rate'}, {name:'gain', defaultValue:0, minValue:0, maxValue:2, automationRate:'k-rate'}, {name:'tone', defaultValue:1, minValue:.5, maxValue:1.5, automationRate:'k-rate'}]; }
+  constructor(){ super(); this.ph = Math.random(); this.fire = 1; this.jit = 0; this.pop = 0; this.rpm = 2800; this.load = 0; this.g = 0; this.lp = 0; this.dcx = 0; this.dcy = 0; this.b1 = [0, 0, 0, 0]; this.b2 = [0, 0, 0, 0]; this.b3 = [0, 0, 0, 0]; }
+  bp(f, q){ const w = 2*Math.PI*Math.min(f, sampleRate*.45)/sampleRate, a = Math.sin(w)/(2*q), n = 1 + a; return [a/n, -a/n, -2*Math.cos(w)/n, (1 - a)/n]; }
+  run(s, c, x){ const y = c[0]*x + c[1]*s[1] - c[2]*s[2] - c[3]*s[3]; s[1] = s[0]; s[0] = x; s[3] = s[2]; s[2] = y; return y; }
+  process(inputs, outputs, P){
+    const out = outputs[0][0], sr = sampleRate, tone = P.tone[0];
+    const f0 = this.rpm/60, c1 = this.bp(f0*3.1*tone + 90, 3.2), c2 = this.bp(f0*7.4*tone + 300, 5), c3 = this.bp(2600*tone, 1.4);
+    const lpK = Math.exp(-2*Math.PI*(1800 + 5200*this.load)*tone/sr);
+    for(let i = 0; i < out.length; i++){
+      this.rpm += (P.rpm[0] - this.rpm)*.0012; this.load += (P.load[0] - this.load)*.0025; this.g += (P.gain[0] - this.g)*.002;
+      const load = this.load;
+      this.ph += this.rpm/60*(1 + this.jit)/sr;
+      if(this.ph >= 1){ this.ph -= 1; this.jit = (Math.random() - .5)*.035;
+        const miss = load < .15 ? (this.rpm > 6000 ? .3 : .07) : .012;
+        this.fire = Math.random() < miss ? 0 : (.72 + Math.random()*.56)*(.3 + .7*load);
+        if(this.fire === 0 && this.rpm > 5500 && Math.random() < .4) this.pop = .9 + Math.random()*.6;
+      }
+      const p = this.ph, w = .2 + .12*(1 - load), nz = Math.random()*2 - 1;
+      /* pulso: a janela de escape abre, sopra e a onda refletida da câmara volta */
+      let s = p < w ? Math.sin(Math.PI*p/w)**2 : 0; const q = p - .42; if(q > 0 && q < w*1.4) s -= .5*Math.sin(Math.PI*q/(w*1.4))**2;
+      s *= this.fire;
+      const gas = nz*(p < w*1.7 ? .5 : .07)*(.2 + .8*this.fire)*(.35 + .65*load);
+      if(this.pop > 0){ s += nz*this.pop*1.6; this.pop *= .9982; if(this.pop < .01) this.pop = 0; }
+      const r1 = this.run(this.b1, c1, s + gas*.6), r2 = this.run(this.b2, c2, s*.6 + gas), r3 = this.run(this.b3, c3, gas*load);
+      let y = s*.55 + r1*1.1 + r2*.45 + r3*.35;
+      this.lp = y + (this.lp - y)*lpK; y = this.lp;
+      y = Math.tanh(y*(1.4 + 1.6*load));
+      const dc = y - this.dcx + .995*this.dcy; this.dcx = y; this.dcy = dc;
+      out[i] = dc*this.g;
+    }
+    return true;
+  }
+}
+registerProcessor('kart-engine', KartEngine);`;
 function audioInit(){
-  if(AU.ctx) { if(AU.ctx.state === 'suspended') AU.ctx.resume(); return; }
+  if(AU.ctx){ if(AU.ctx.state === 'suspended') AU.ctx.resume(); return; }
   try{
     const C = AU.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    AU.master = C.createGain(); AU.master.gain.value = AU.mute ? 0 : .8; AU.master.connect(C.destination);
+    /* compressor no fim: junta tudo e evita estourar com vários motores */
+    const comp = C.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 12; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .2; comp.connect(C.destination);
+    AU.master = C.createGain(); AU.master.gain.value = AU.mute ? 0 : .9; AU.master.connect(comp);
+    AU.ui = C.createGain(); AU.ui.gain.value = .9; AU.ui.connect(AU.master);
     const noiseBuf = C.createBuffer(1, C.sampleRate*2, C.sampleRate), d = noiseBuf.getChannelData(0); for(let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1; AU.noise = noiseBuf;
-    /* motor dois tempos: dente de serra + quadrada com batida rápida */
-    const mk = (type, f) => { const o = C.createOscillator(); o.type = type; o.frequency.value = f; o.start(); return o; };
-    AU.e1 = mk('sawtooth', 80); AU.e2 = mk('square', 160); AU.lfo = mk('square', 40);
-    AU.eF = C.createBiquadFilter(); AU.eF.type = 'lowpass'; AU.eF.frequency.value = 900; AU.eF.Q.value = 3;
-    AU.eG = C.createGain(); AU.eG.gain.value = 0; const g2 = C.createGain(); g2.gain.value = .35; const am = C.createGain(); am.gain.value = .25;
-    AU.e1.connect(AU.eF); AU.e2.connect(g2).connect(AU.eF); AU.lfo.connect(am).connect(AU.eG.gain); AU.eF.connect(AU.eG).connect(AU.master);
-    /* motores dos adversários */
-    AU.b1 = mk('sawtooth', 120); AU.bF = C.createBiquadFilter(); AU.bF.type = 'lowpass'; AU.bF.frequency.value = 1200; AU.bG = C.createGain(); AU.bG.gain.value = 0;
-    AU.b1.connect(AU.bF).connect(AU.bG).connect(AU.master);
-    /* pneus e vento */
-    const loop = (f, type, q) => { const s = C.createBufferSource(); s.buffer = noiseBuf; s.loop = true; const fl = C.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; const g = C.createGain(); g.gain.value = 0; s.connect(fl).connect(g).connect(AU.master); s.start(); return g; };
-    AU.skid = loop(1900, 'bandpass', 5); AU.wind = loop(500, 'lowpass', .7); AU.rumble = loop(160, 'lowpass', 2);
+    const src = () => { const s = C.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.loopStart = Math.random(); s.start(0, Math.random()*1.9); return s; };
+    const filt = (type, f, q = .7) => { const fl = C.createBiquadFilter(); fl.type = type; fl.frequency.value = f; fl.Q.value = q; return fl; };
+    const gain = v => { const g = C.createGain(); g.gain.value = v; return g; };
+    /* pneu cantando: tom que oscila (atrito instável) + chiado */
+    { const o = C.createOscillator(); o.type = 'triangle'; o.frequency.value = 1050; const mod = gain(160); src().connect(filt('lowpass', 22)).connect(mod).connect(o.frequency); o.start();
+      AU.skid = gain(0); o.connect(filt('bandpass', 1150, 2)).connect(AU.skid); src().connect(filt('bandpass', 2300, 6)).connect(gain(.7)).connect(AU.skid); AU.skid.connect(AU.master); AU.skidOsc = o; }
+    /* zebra: batidinha a cada faixa vermelha/branca (ritmo pela velocidade) */
+    { AU.curb = gain(0); const am = gain(.5); src().connect(filt('lowpass', 190, 1.5)).connect(am).connect(AU.curb).connect(AU.master);
+      const lfo = C.createOscillator(); lfo.type = 'square'; lfo.frequency.value = 20; lfo.connect(gain(.5)).connect(am.gain); lfo.start(); AU.curbLfo = lfo; }
+    /* grama (farfalhar grave) e brita (pedrinhas estalando) */
+    AU.grass = gain(0); src().connect(filt('bandpass', 520, .6)).connect(AU.grass).connect(AU.master);
+    { AU.gravel = gain(0); const am = gain(0); src().connect(filt('highpass', 2200, .8)).connect(am).connect(AU.gravel).connect(AU.master); src().connect(filt('lowpass', 45)).connect(gain(3)).connect(am.gain); }
+    /* vento e corrente da transmissão */
+    AU.windF = filt('lowpass', 400, .5); AU.wind = gain(0); src().connect(AU.windF).connect(AU.wind).connect(AU.master);
+    { const o = C.createOscillator(); o.type = 'sine'; o.frequency.value = 200; o.start(); AU.chain = gain(0); o.connect(AU.chain).connect(AU.master); AU.chainOsc = o; }
+    /* motores: o do jogador e três vozes para os rivais mais próximos (com posição no estéreo) */
+    const mkVoices = mk => { AU.voices = [0, 1, 2, 3].map(n => mk(n)); AU.ready = true; };
+    const workletVoice = n => { const node = new AudioWorkletNode(C, 'kart-engine', {numberOfInputs:0, outputChannelCount:[1]}); const pan = C.createStereoPanner ? C.createStereoPanner() : gain(1); node.connect(pan).connect(AU.master);
+      return {set(rpm, load, g, p, tone = 1){ const t = C.currentTime, P = node.parameters; P.get('rpm').setTargetAtTime(rpm, t, .02); P.get('load').setTargetAtTime(load, t, .02); P.get('gain').setTargetAtTime(g, t, .05); P.get('tone').setTargetAtTime(tone, t, .1); if(pan.pan) pan.pan.setTargetAtTime(p, t, .05); }}; };
+    /* sem AudioWorklet (navegador antigo ou arquivo aberto do disco): osciladores, como antes */
+    const oscVoice = n => { const o1 = C.createOscillator(), o2 = C.createOscillator(); o1.type = 'sawtooth'; o2.type = 'square'; o1.start(); o2.start(); const fl = filt('lowpass', 900, 3), g = gain(0), g2 = gain(.35);
+      const pan = C.createStereoPanner ? C.createStereoPanner() : gain(1); o1.connect(fl); o2.connect(g2).connect(fl); fl.connect(g).connect(pan).connect(AU.master);
+      return {set(rpm, load, gg, p){ const t = C.currentTime, f = rpm/60; o1.frequency.setTargetAtTime(f, t, .03); o2.frequency.setTargetAtTime(f*1.5, t, .03); fl.frequency.setTargetAtTime(500 + 2400*load, t, .05); g.gain.setTargetAtTime(gg*.25, t, .05); if(pan.pan) pan.pan.setTargetAtTime(p, t, .05); }}; };
+    if(C.audioWorklet && window.AudioWorkletNode){
+      const url = URL.createObjectURL(new Blob([ENGINE_WORKLET], {type:'application/javascript'}));
+      C.audioWorklet.addModule(url).then(() => mkVoices(workletVoice)).catch(() => mkVoices(oscVoice));
+    } else mkVoices(oscVoice);
+    if(C.state === 'suspended') C.resume();
   }catch(e){ AU.ctx = null; }
 }
-function tone(f, dur, type = 'square', vol = .2, f2){
-  if(!AU.ctx) return; const C = AU.ctx, t = C.currentTime, o = C.createOscillator(), g = C.createGain();
+/* o navegador só libera o som depois de um toque ou tecla: o primeiro em qualquer lugar já liga */
+for(const ev of ['pointerdown', 'keydown', 'touchstart']) addEventListener(ev, () => audioInit(), {capture:true, passive:true});
+/* ---------- sons curtos ---------- */
+function env(g, t, a, v, dur){ g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(.0008, t + a + dur); }
+function tone(f, dur, type = 'square', vol = .2, f2, delay = 0, bus){
+  if(!AU.ctx) return; const C = AU.ctx, t = C.currentTime + delay, o = C.createOscillator(), g = C.createGain();
   o.type = type; o.frequency.setValueAtTime(f, t); if(f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); o.connect(g).connect(AU.master); o.start(t); o.stop(t + dur + .02);
+  env(g, t, .004, vol, dur); o.connect(g).connect(bus || AU.master); o.start(t); o.stop(t + dur + .05);
 }
-function noiseHit(dur, f, vol, type = 'lowpass', f2){
-  if(!AU.ctx) return; const C = AU.ctx, t = C.currentTime, s = C.createBufferSource(), fl = C.createBiquadFilter(), g = C.createGain();
-  s.buffer = AU.noise; fl.type = type; fl.frequency.setValueAtTime(f, t); if(f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(fl).connect(g).connect(AU.master); s.start(t); s.stop(t + dur + .02);
+function noiseHit(dur, f, vol, type = 'lowpass', f2, delay = 0, q = 1, bus){
+  if(!AU.ctx) return; const C = AU.ctx, t = C.currentTime + delay, s = C.createBufferSource(), fl = C.createBiquadFilter(), g = C.createGain();
+  s.buffer = AU.noise; fl.type = type; fl.Q.value = q; fl.frequency.setValueAtTime(f, t); if(f2) fl.frequency.exponentialRampToValueAtTime(f2, t + dur);
+  env(g, t, .002, vol, dur); s.connect(fl).connect(g).connect(bus || AU.master); s.start(t, Math.random()*1.5); s.stop(t + dur + .05);
 }
+/* sino suave (seno + harmônico) para avisos e músicas curtas */
+const bell = (f, d, v, delay = 0) => { tone(f, d, 'sine', v, null, delay, AU.ui); tone(f*2, d*.6, 'sine', v*.25, null, delay, AU.ui); tone(f*3.01, d*.3, 'triangle', v*.08, null, delay, AU.ui); };
 const SFX = {
-  light(){ tone(660, .22, 'square', .14); }, go(){ tone(990, .5, 'square', .16); },
-  boost(l){ noiseHit(.6, 400, .35, 'bandpass', 3000); tone(l > 1 ? 520 : 420, .35, 'sawtooth', .07, l > 1 ? 1200 : 900); },
-  hop(){ tone(220, .08, 'triangle', .1, 330); }, hit(v){ noiseHit(.18, 300, Math.min(.5, .12 + v*.03)); tone(90, .15, 'sine', .25, 50); },
-  lap(){ [784, 988].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .18), i*120)); },
-  best(){ [660, 880, 1175].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .18), i*110)); },
-  win(){ [523, 659, 784, 1046, 1318].forEach((f, i) => setTimeout(() => tone(f, .3, 'triangle', .22), i*130)); },
-  lose(){ [523, 440, 392].forEach((f, i) => setTimeout(() => tone(f, .3, 'triangle', .18), i*150)); },
-  click(){ tone(1400, .04, 'square', .06); }
+  /* largada: bipe de cada luz e o da largada, mais longo e agudo */
+  light(){ tone(880, .16, 'sine', .13); tone(1760, .08, 'sine', .03); }, go(){ tone(1320, .55, 'sine', .15); tone(2640, .3, 'sine', .04); noiseHit(.5, 300, .06, 'bandpass', 2400); },
+  boost(l){ noiseHit(.7, 300, .3, 'bandpass', 3200, 0, 1.5); tone(l > 1 ? 160 : 130, .5, 'sawtooth', .05, l > 1 ? 480 : 380); },
+  /* pulinho do drift: o chassi bate no chão */
+  hop(){ noiseHit(.07, 900, .07, 'bandpass', 400, 0, 1.2); tone(140, .07, 'sine', .08, 80); },
+  /* batida: baque grave, plástico estalando e, se forte, o chassi tinindo */
+  hit(v){ const k = clamp(v/10, .15, 1); tone(95, .22, 'sine', .3*k + .05, 42); noiseHit(.16, 500, .25*k + .05); noiseHit(.07, 1900, .16*k, 'bandpass', 1200, 0, 2.5); noiseHit(.05, 3200, .1*k, 'bandpass', null, .03, 3);
+    if(v > 5){ tone(830, .35, 'sine', .035*k); tone(1253, .28, 'sine', .025*k); } },
+  land(v){ const k = clamp(v/8, .2, 1); tone(70, .18, 'sine', .3*k, 38); noiseHit(.12, 350, .2*k); for(let n = 0; n < 3; n++) noiseHit(.03, 2500, .06*k, 'bandpass', null, .04 + n*.035, 4); },
+  lap(){ bell(784, .35, .16); bell(988, .45, .16, .12); },
+  best(){ bell(659, .3, .15); bell(880, .3, .15, .11); bell(1175, .6, .17, .22); },
+  win(){ [523, 659, 784, 1046].forEach((f, i) => bell(f, .5, .16, i*.13)); bell(1318, 1.1, .18, .55); bell(659, 1.1, .1, .55); },
+  lose(){ [523, 440, 392].forEach((f, i) => bell(f, .45, .14, i*.16)); },
+  item(){ [880, 1175, 1568].forEach((f, i) => tone(f, .09, 'triangle', .08, null, i*.045, AU.ui)); },
+  /* menus */
+  move(){ tone(2100, .035, 'sine', .045, 1700, 0, AU.ui); noiseHit(.012, 5000, .02, 'highpass', null, 0, 1, AU.ui); },
+  click(){ tone(660, .07, 'triangle', .1, null, 0, AU.ui); tone(990, .1, 'triangle', .09, null, .055, AU.ui); noiseHit(.015, 4000, .025, 'highpass', null, 0, 1, AU.ui); },
+  toggle(){ tone(1500, .03, 'square', .025, 1100, 0, AU.ui); tone(750, .05, 'sine', .07, null, 0, AU.ui); },
+  back(){ tone(740, .07, 'triangle', .09, null, 0, AU.ui); tone(494, .12, 'triangle', .08, null, .06, AU.ui); },
+  error(){ tone(150, .16, 'square', .05, 120, 0, AU.ui); tone(155, .16, 'square', .04, 125, 0, AU.ui); },
+  coin(){ tone(988, .08, 'square', .05, null, 0, AU.ui); tone(1319, .35, 'square', .05, null, .07, AU.ui); bell(2637, .3, .04, .07); },
+  pause(){ noiseHit(.22, 2500, .07, 'bandpass', 500, 0, 1.5, AU.ui); tone(520, .14, 'sine', .06, 330, 0, AU.ui); },
+  resume(){ noiseHit(.22, 500, .07, 'bandpass', 2500, 0, 1.5, AU.ui); tone(330, .14, 'sine', .06, 520, 0, AU.ui); },
+  /* entrar na pista: acorde e uma acelerada no motor */
+  start(){ bell(523, .5, .12); bell(784, .5, .1, .05); noiseHit(.6, 400, .08, 'bandpass', 3000, 0, 1.2, AU.ui); AU.blip = 1; }
 };
-function setMute(m){ AU.mute = OPT.mute = m; saveOpt(); $('muteBtn').textContent = m ? '🔇' : '🔊'; $('muteBtn').setAttribute('aria-label', m ? 'Som desligado' : 'Som ligado'); if(AU.master) AU.master.gain.value = m ? 0 : .8; }
+function setMute(m){ AU.mute = OPT.mute = m; saveOpt(); $('muteBtn').textContent = m ? '🔇' : '🔊'; $('muteBtn').setAttribute('aria-label', m ? 'Som desligado' : 'Som ligado'); if(AU.master) AU.master.gain.value = m ? 0 : .9; }
+/* giro do motor: embreagem centrífuga (patina na saída), transmissão direta até ~14.000 rpm, limitador; solto no ar ou no drift sobe */
+function kartRpm(k, dt){
+  const sp = Math.abs(k.vf), r = clamp(sp/(KART.vmax*1.1), 0, 1.2);
+  let t;
+  if(STATE === 'count' || STATE === 'menu' || sp < .8) t = 2700 + k.thr*10800 + (AU.blip > 0 && k.isPlayer ? 7000*AU.blip : 0);
+  else { t = 3200 + r*10600; if(k.thr > 0 && sp < 9) t = Math.max(t, 6200 + k.thr*1600); if(k.drift) t *= 1.05; if(k.air && k.thr) t *= 1.1; if(k.surf >= 2 && k.thr) t *= 1.03; if(k.boost > 0) t *= 1.06; }
+  if(t > 14000) t = 13500 + Math.random()*700;
+  k.rpm = k.rpm || 2700; k.rpm += (t - k.rpm)*Math.min(1, dt*(t > k.rpm ? 7 : 4.5));
+  k.load = lerp(k.load || 0, k.thr ? clamp(.65 + .35*k.thr + (GR[k.idx] || 0)*2, 0, 1) : 0, Math.min(1, dt*12));
+  return k.rpm;
+}
 function audioTick(dt){
-  if(!AU.ctx) return; const t = AU.ctx.currentTime, P = player;
-  if(!P || STATE === 'menu' || STATE === 'pause'){ AU.eG.gain.setTargetAtTime(STATE === 'menu' ? .03 : 0, t, .1); AU.bG.gain.setTargetAtTime(0, t, .1); AU.skid.gain.setTargetAtTime(0, t, .05); AU.wind.gain.setTargetAtTime(0, t, .1); AU.rumble.gain.setTargetAtTime(0, t, .05); return; }
-  const r = clamp(Math.abs(P.vf)/KART.vmax, 0, 1.25), rev = STATE === 'count' ? P.thr*.7 : r;
-  const f = 62 + 190*rev + (P.thr ? 14 : 0) + (P.boost > 0 ? 25 : 0);
-  AU.e1.frequency.setTargetAtTime(f, t, .04); AU.e2.frequency.setTargetAtTime(f*1.5, t, .04); AU.lfo.frequency.setTargetAtTime(f/2, t, .04);
-  AU.eF.frequency.setTargetAtTime(500 + 2600*(P.thr ? .6 + .4*rev : .25*rev), t, .05);
-  AU.eG.gain.setTargetAtTime(.05 + (P.thr ? .09 : .03), t, .05);
-  let nd = 1e9, nb = null; for(const k of KARTS) if(k !== P){ const d = Math.hypot(k.x - P.x, k.z - P.z); if(d < nd){ nd = d; nb = k; } }
-  if(nb){ AU.b1.frequency.setTargetAtTime(70 + 190*clamp(Math.abs(nb.vf)/KART.vmax, 0, 1.2), t, .08); AU.bG.gain.setTargetAtTime(clamp(1 - nd/40, 0, 1)*.05, t, .1); }
-  const slide = P.drift ? .16 : clamp((Math.abs(P.vr) - 2.5)/8, 0, .12);
-  AU.skid.gain.setTargetAtTime(P.surf < 2 ? slide : 0, t, .05);
-  AU.wind.gain.setTargetAtTime(r*.08, t, .2);
-  AU.rumble.gain.setTargetAtTime(P.surf === 1 ? .35*r : P.surf >= 2 ? .25*r : 0, t, .04);
+  if(!AU.ctx) return; const C = AU.ctx, t = C.currentTime, P = player, V = AU.voices;
+  if(AU.blip > 0) AU.blip = Math.max(0, AU.blip - dt*1.6);
+  const quiet = !P || STATE === 'pause';
+  if(quiet || STATE === 'menu'){
+    for(const g of [AU.skid, AU.curb, AU.grass, AU.gravel, AU.wind, AU.chain]) g.gain.setTargetAtTime(0, t, .06);
+    if(AU.ready){ V.forEach((v, n) => { if(n || quiet) v.set(2700, 0, 0, 0); }); if(!quiet){ P.thr = AU.blip > 0 ? 1 : 0; kartRpm(P, dt); V[0].set(P.rpm, P.load, .3 + AU.blip*.25, 0); } }
+    return;
+  }
+  const r = clamp(Math.abs(P.vf)/KART.vmax, 0, 1.25);
+  if(AU.ready){
+    kartRpm(P, dt); V[0].set(P.rpm, P.load, cam.mode === 2 ? .62 : .5, 0, 1);
+    /* rivais: os três mais perto, com volume pela distância, lado pelo ângulo e efeito Doppler */
+    const sh = Math.sin(P.h), ch = Math.cos(P.h), near = KARTS.filter(k => k !== P).map(k => [Math.hypot(k.x - P.x, k.z - P.z), k]).sort((a, b) => a[0] - b[0]);
+    for(let n = 1; n < 4; n++){
+      const e = near[n - 1]; if(!e){ V[n].set(2700, 0, 0, 0); continue; }
+      const [dd, k] = e; kartRpm(k, dt);
+      const dx = k.x - P.x, dz = k.z - P.z, side = (dx*ch - dz*sh)/(dd || 1), vr = ((k.vx - P.vx)*dx + (k.vz - P.vz)*dz)/(dd || 1);
+      V[n].set(k.rpm*(1 - clamp(vr/343, -.08, .08)*2), k.load, .42/(1 + dd*dd/40), clamp(side, -.85, .85), .92 + (k.liv % 4)*.05);
+    }
+  }
+  const slide = P.air ? 0 : P.drift ? .2 : clamp((Math.abs(P.vr) - 2.2)/7, 0, .16);
+  AU.skid.gain.setTargetAtTime(P.surf < 2 ? slide*Math.min(1, Math.abs(P.vf)/8) : 0, t, .04);
+  AU.skidOsc.frequency.setTargetAtTime(950 + Math.abs(P.vr)*35, t, .05);
+  AU.curbLfo.frequency.setTargetAtTime(Math.max(2, Math.abs(P.vf)), t, .03);
+  AU.curb.gain.setTargetAtTime(P.surf === 1 && !P.air ? .55*Math.min(1, r*1.4) : 0, t, .03);
+  AU.grass.gain.setTargetAtTime(P.surf === 2 && !P.air ? .3*Math.min(1, r*1.6) : 0, t, .05);
+  AU.gravel.gain.setTargetAtTime(P.surf === 3 && !P.air ? .35*Math.min(1, r*1.6) : 0, t, .05);
+  AU.windF.frequency.setTargetAtTime(250 + r*900, t, .2); AU.wind.gain.setTargetAtTime(r*r*.16, t, .2);
+  AU.chainOsc.frequency.setTargetAtTime(60 + Math.abs(P.vf)*58, t, .05); AU.chain.gain.setTargetAtTime(r > .2 ? .012*r : 0, t, .1);
 }
 
 /* =====================================================================
@@ -1605,7 +1722,7 @@ function stepKart(k, dt, others){
   const gy = trackY(k.idx, k.d) + GR[k.idx]*((k.x - PX[k.idx])*TX[k.idx] + (k.z - PZ[k.idx])*TZ[k.idx]), GRAVY = 9.8*1.6;
   if(k.air){
     k.vy -= GRAVY*dt; k.y += k.vy*dt;
-    if(k.y <= gy){ const hit = -k.vy; k.y = gy; k.vy = 0; k.air = false; if(hit > 3){ k.hop = Math.min(1, hit*.12); if(k.isPlayer){ SFX.hit(hit*.5); cam.shake = Math.min(.4, hit*.05); } } }
+    if(k.y <= gy){ const hit = -k.vy; k.y = gy; k.vy = 0; k.air = false; if(hit > 3){ k.hop = Math.min(1, hit*.12); if(k.isPlayer){ SFX.land(hit); cam.shake = Math.min(.4, hit*.05); } } }
   } else {
     /* velocidade vertical que o chão impõe (rampa ao longo da pista + inclinação lateral até a zebra) */
     const i = k.idx, nvy = GR[i]*(k.vx*TX[i] + k.vz*TZ[i]) + (Math.abs(k.d) < HW + CURB ? BK[i]*(k.vx*RX[i] + k.vz*RZ[i]) : 0);
@@ -1772,7 +1889,7 @@ function itemsTick(dt){
   for(const b of BOXES){
     b.m.rotation.y += dt*1.6; b.m.rotation.x += dt*.6;
     if(b.t > 0){ b.t -= dt; b.m.visible = b.t <= 0; continue; }
-    for(const k of KARTS) if(!k.item && !(k.itemRoll > 0) && (k.x - b.x)**2 + (k.z - b.z)**2 < 1.7){ b.t = 4; b.m.visible = false; k.itemRoll = 1.1; if(k.isPlayer) tone(880, .12, 'triangle', .15); break; }
+    for(const k of KARTS) if(!k.item && !(k.itemRoll > 0) && (k.x - b.x)**2 + (k.z - b.z)**2 < 1.7){ b.t = 4; b.m.visible = false; k.itemRoll = 1.1; if(k.isPlayer) SFX.item(); break; }
   }
   for(const k of KARTS){ if(k.itemRoll > 0){ k.itemRoll -= dt; if(k.itemRoll <= 0){ k.itemRoll = 0; k.item = rollItem(k); k.itemHold = rnd(.6, 2.5); } } if(k.shield > 0) k.shield -= dt; }
   for(let i = OILS.length - 1; i >= 0; i--){
@@ -1818,7 +1935,7 @@ function buildField(){
 }
 const GHOSTM = new THREE.MeshLambertMaterial({color:0x9fd8ff, transparent:true, opacity:.32, depthWrite:false});
 function startRace(){
-  audioInit();
+  audioInit(); SFX.start();
   G.mode = OPT.mode; G.laps = G.mode === 'career' ? 3 : isRace() ? OPT.laps : 99;
   buildField(); clearItems(); buildItemBoxes();
   ['menu', 'end', 'pause', 'how', 'news'].forEach(id => $(id).hidden = true); $('hud').hidden = false;
@@ -2017,29 +2134,29 @@ function applyPlayerInput(dt){
   P.driftHeld = input.drift;
   if(input.itemPress && P.item) useItem(P);
 }
-function cycleCam(){ cam.mode = (cam.mode + 1) % 3; OPT.cam = cam.mode; saveOpt(); camSnap = true; }
+function cycleCam(){ SFX.toggle(); cam.mode = (cam.mode + 1) % 3; OPT.cam = cam.mode; saveOpt(); camSnap = true; }
 $('camBtn').addEventListener('click', cycleCam);
 $('muteBtn').addEventListener('click', () => { audioInit(); setMute(!AU.mute); });
-function pauseOn(){ if(STATE === 'pause') return; G.prevState = STATE; STATE = 'pause'; $('pause').hidden = false; $('btnResume').focus({preventScroll:true}); }
-function pauseOff(){ STATE = G.prevState || 'race'; $('pause').hidden = true; }
+function pauseOn(){ if(STATE === 'pause') return; SFX.pause(); G.prevState = STATE; STATE = 'pause'; $('pause').hidden = false; $('btnResume').focus({preventScroll:true}); }
+function pauseOff(){ if(STATE === 'pause') SFX.resume(); STATE = G.prevState || 'race'; $('pause').hidden = true; }
 $('btnResume').addEventListener('click', pauseOff);
 $('btnRestart').addEventListener('click', startRace);
-$('btnQuit').addEventListener('click', toMenu);
+$('btnQuit').addEventListener('click', () => { SFX.back(); toMenu(); });
 $('btnAgain').addEventListener('click', () => G.mode === 'career' ? careerGo() : startRace());
-$('btnMenu').addEventListener('click', toMenu);
-$('btnHow').addEventListener('click', () => { $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
-$('howClose').addEventListener('click', () => { $('how').hidden = true; });
+$('btnMenu').addEventListener('click', () => { SFX.back(); toMenu(); });
+$('btnHow').addEventListener('click', () => { SFX.click(); $('how').hidden = false; $('howClose').focus({preventScroll:true}); });
+$('howClose').addEventListener('click', () => { SFX.back(); $('how').hidden = true; });
 document.addEventListener('visibilitychange', () => { if(document.hidden && (STATE === 'race' || STATE === 'count')) pauseOn(); });
 
 /* ---------- menu: título, menu principal e uma tela por modo ---------- */
 function seg(id, key, conv = v => v){
-  $(id).addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; OPT[key] = conv(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); if(key === 'liv'){ G.mode = OPT.mode; buildField(); } });
+  $(id).addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; OPT[key] = conv(b.dataset.v); saveOpt(); SFX.toggle(); renderMenu(); if(key === 'liv'){ G.mode = OPT.mode; buildField(); } });
 }
 $('optLiv').innerHTML = LIVERIES.map((L, i) => `<button data-v="${i}" aria-pressed="false" style="min-width:0;flex:0 0 auto;padding:8px 12px"><i style="display:inline-block;width:14px;height:14px;border-radius:4px;background:${L.css};vertical-align:-2px"></i><span> ${L.n}</span></button>`).join('');
 for(const id of ['qTrack', 'tTrack']) $(id).addEventListener('change', e => { OPT.track = Number(e.target.value); saveOpt(); location.reload(); });
 $('optCup').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const c = Number(b.dataset.v); if(c !== CAR.cup){ CAR.cup = c; CAR.race = 0; CAR.pts = {}; saveCar(); } SFX.click(); renderMenu(); });
-$('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr) return; CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.click(); renderMenu(); });
-document.querySelectorAll('[data-coll]').forEach(el => el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT.coll = Number(b.dataset.v); saveOpt(); SFX.click(); renderMenu(); }));
+$('optUp').addEventListener('click', e => { const b = e.target.closest('button'); if(!b || b.disabled) return; const u = b.dataset.v, lv = CAR.up[u], pr = UPRICE[lv]; if(lv >= 3 || CAR.coins < pr){ SFX.error(); return; } CAR.coins -= pr; CAR.up[u]++; saveCar(); SFX.coin(); renderMenu(); });
+document.querySelectorAll('[data-coll]').forEach(el => el.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; OPT.coll = Number(b.dataset.v); saveOpt(); SFX.toggle(); renderMenu(); }));
 seg('optItems', 'items', Number); seg('optLaps', 'laps', Number); seg('optDiff', 'diff', Number); seg('optLiv', 'liv', Number);
 const SCREENS = ['Title', 'Hub', 'Career', 'Quick', 'TT', 'Garage', 'Trophies'], SCR_MODE = {Career:'career', Quick:'race', TT:'tt'};
 let SCR = 'Title';
@@ -2050,16 +2167,19 @@ function show(name){
   renderMenu();
   const f = $('scr' + name).querySelector(name === 'Hub' ? '.tile' : name === 'Title' ? '.press' : '.btn.pri, .seg button, .tro'); f && f.focus({preventScroll:true});
 }
-$('menu').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if(g){ SFX.click(); show(g.dataset.go); } });
-function pressStart(){ audioInit(); SFX.click(); show('Hub'); }
+$('menu').addEventListener('click', e => { const g = e.target.closest('[data-go]'); if(g){ g.dataset.go === 'Hub' ? SFX.back() : SFX.click(); show(g.dataset.go); } });
+/* passar o mouse por um botão do menu faz um tique */
+let hoverEl = null;
+$('menu').addEventListener('pointerover', e => { const b = e.target.closest('button, .tile, select'); if(b === hoverEl) return; hoverEl = b; if(b && !b.disabled && e.pointerType === 'mouse') SFX.move(); });
+function pressStart(){ audioInit(); SFX.start(); show('Hub'); }
 $('scrTitle').addEventListener('click', pressStart);
 $('goCareer').addEventListener('click', careerGo); $('goQuick').addEventListener('click', startRace); $('goTT').addEventListener('click', startRace);
 /* foco pelo teclado e pelo controle */
 function menuMove(dir){
   const list = [...$('scr' + SCR).querySelectorAll('button:not([disabled]), select')].filter(el => el.offsetParent);
-  if(!list.length) return; let i = list.indexOf(document.activeElement); i = i < 0 ? 0 : (i + dir + list.length) % list.length; list[i].focus({preventScroll:false});
+  if(!list.length) return; let i = list.indexOf(document.activeElement); i = i < 0 ? 0 : (i + dir + list.length) % list.length; list[i].focus({preventScroll:false}); SFX.move();
 }
-function menuBack(){ if(SCR !== 'Hub' && SCR !== 'Title'){ SFX.click(); show('Hub'); } }
+function menuBack(){ if(SCR !== 'Hub' && SCR !== 'Title'){ SFX.back(); show('Hub'); } }
 const trackOptions = () => [{n:'Pistas livres', ti:[0, 1, 2]}].concat(CUPS).map(c => `<optgroup label="${c.n}">` + c.ti.filter(i => c.n !== 'Pistas livres' ? i > 2 : true).map(i => `<option value="${i}" ${trackUnlocked(i) ? '' : 'disabled'} ${i === (OPT.track || 0) ? 'selected' : ''}>${trackUnlocked(i) ? '' : '🔒 '}${TRACKS[i].n} · ${TRACKS[i].d}</option>`).join('') + '</optgroup>').join('');
 const bestOf = t => store.get('Best' + (t.id === 'apex' ? '' : '_' + t.id), null);
 function renderMenu(){
@@ -2089,9 +2209,9 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '1.9';
-function openNews(){ $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
-function closeNews(){ $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
+const VERSION = '2.0';
+function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
+function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
 $('newsOpen').addEventListener('click', openNews); $('newsClose').addEventListener('click', closeNews);
 if(store.get('Seen', '') !== VERSION) setTimeout(openNews, 500);
