@@ -361,7 +361,7 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.3.2</div>
+      <div class="ver" id="newsVer">Versão 3.3.3</div>
       <h2 id="newsTitle">BRAÇOS <span>DE VERDADE</span></h2>
       <h3>Novo</h3>
       <ul>
@@ -369,6 +369,7 @@ body.touch .keys{display:none}
       </ul>
       <h3>Corrigido</h3>
       <ul>
+        <li><b>Pegada de piloto de kart:</b> as mãos agora seguram o aro por fora, nas "nove e quinze", com o dorso da luva virado para você e os dedos dando a volta no volante. Luvas pretas com punho e logo brancos, como as de verdade.</li>
         <li><b>Mãos com cara de mão:</b> os dedos dobravam para o lado e deformavam a luva; agora fecham para a palma, com o polegar por cima, num punho de verdade em volta do aro. A manga do macacão também ficou mais lisa, sem as manchas escuras.</li>
         <li><b>As mãos agora agarram o volante:</b> os dedos fecham em volta do aro em vez de ficarem abertos, e cada punho fica preso à sua pega, girando junto com o volante em qualquer ângulo, inclusive no esterço total (o ombro avança para alcançar).</li>
       </ul>
@@ -1795,7 +1796,7 @@ function cockpitRig(L){
   /* luvas no aro, nas "quinze para as três", com o logo branco do dorso; giram com o volante */
   const hands = [];
   for(const s of [-1, 1]){
-    const h = new THREE.Group(), a = s > 0 ? .3 : Math.PI - .3; h.position.set(Math.cos(a)*.16, Math.sin(a)*.16, .01); h.rotation.z = a - (s > 0 ? 0 : Math.PI); sw.add(h);
+    const h = new THREE.Group(), a = s > 0 ? .2 : Math.PI - .2; h.position.set(Math.cos(a)*.16, Math.sin(a)*.16, .01); h.rotation.z = a - (s > 0 ? 0 : Math.PI); sw.add(h);
     sphere(h, .038, glove, 0, 0, .012, 1.1, .85, .75); sphere(h, .026, glove, -s*.03, .026, .018, 1, .8, .8);
     for(let f = 0; f < 4; f++) sphere(h, .015, glove, s*.012, .03 - f*.02, -.03, 1.3, .8, 1.2);
     B(h, .045, .012, .004, 0xf2f2ee, -s*.005, .012, .053, 0, 0, s*.3); B(h, .02, .01, .004, 0xf2f2ee, s*.022, -.008, .05, 0, 0, s*.3);
@@ -1953,8 +1954,9 @@ const ARMS = {ready:false, src:null, gray:null, S:.105, ROOT:new THREE.Vector3(S
   /* dobra das falanges para fechar a mão no aro: os ossos apontam em y local e dobram em z local,
      com sentido oposto entre as mãos (esqueleto espelhado); o polegar dobra ao contrário dos dedos para cruzar por cima deles */
   CURL:{sgn:{l:-1, r:1}, ax:new THREE.Vector3(0, 0, 1), thAx:new THREE.Vector3(0, 0, -1), fin:[.9, 1.05, .7], th:[.4, .5, .4]},
-  /* posição do punho em relação à pega (metros): atrás do aro, para fora e para cima; over = quanto a mão passa por cima do aro */
-  HAND:{back:.075, out:.02, up:0, over:.25, roll:0}};
+  /* posição do punho em relação à pega (metros): para o piloto, para fora do aro e ao longo dele; over = quanto a mão
+     passa por cima do aro; tilt = quanto o dorso vira para fora */
+  HAND:{back:.02, out:.07, up:0, over:.5, tilt:.3}};
 function loadArms(){
   if(!THREE.GLTFLoader || !THREE.SkeletonUtils) return;
   new THREE.GLTFLoader().load('wrad/arms.glb', g => {
@@ -1972,18 +1974,36 @@ function loadArms(){
 function attachFpArms(m){
   const u = m.userData; if(!ARMS.ready || !u.fp || u.fpArms) return;
   const a = THREE.SkeletonUtils.clone(ARMS.src), B = {}; a.traverse(o => { if(o.isBone) B[o.name] = o; });
-  const L = u.liv, col = c => new THREE.Color(c), suit = col(L.p), stripe = col(L.s), glove = col(0x454b57), cuff = col(L.s === 0x14171c ? 0x2a2c30 : L.s);
+  const L = u.liv, col = c => new THREE.Color(c), suit = col(L.p), stripe = col(L.s), glove = col(0x1d1e22), white = col(0xe9e9e4);
+  /* dorso de cada mão no esqueleto de origem (em pose de descanso): punho, eixo punho→dedo médio, eixo indicador→mindinho e normal do dorso */
+  a.updateMatrixWorld(true); const wpos = n => B[n].getWorldPosition(new THREE.Vector3()), HD = {};
+  for(const s of ['l', 'r']){ const w = wpos('wrist' + s), m = wpos('finger_middle1' + s), i1 = wpos('finger_index1' + s), p1 = wpos('finger_pinky1' + s);
+    const F = m.clone().sub(w), len = F.length(); F.normalize(); const K = p1.clone().sub(i1).normalize(), back = new THREE.Vector3().crossVectors(F, K); if(s === 'l') back.negate();
+    HD[s] = {w, F, K, back, len, c:i1.clone().add(p1).multiplyScalar(.5)}; }
+  const _v = new THREE.Vector3(), _n = new THREE.Vector3();
   a.traverse(o => {
     if(!o.isSkinnedMesh) return;
-    const geo = o.geometry = o.geometry.clone(), si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, nr = geo.attributes.normal, n = geo.attributes.position.count, C = new Float32Array(n*3);
-    const hand = o.skeleton.bones.map(b => /^(wrist|finger|socket)/.test(b.name));
+    const geo = o.geometry = o.geometry.clone(), si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight, nr = geo.attributes.normal, ps = geo.attributes.position, n = ps.count, C = new Float32Array(n*3);
+    const bones = o.skeleton.bones, hand = bones.map(b => /^(wrist|finger|socket)/.test(b.name)), side = bones.map(b => b.name.slice(-1)), nm = new THREE.Matrix3().getNormalMatrix(o.matrixWorld);
     for(let i = 0; i < n; i++){
-      let hw = 0; for(let k = 0; k < 4; k++) if(hand[si.array[i*4 + k]]) hw += sw.array[i*4 + k];
-      const c = hw > .55 ? glove : hw > .12 ? cuff : nr.getY(i) > .72 ? stripe : suit; C.set([c.r, c.g, c.b], i*3);
+      let hw = 0, top = 0, tw = 0; for(let k = 0; k < 4; k++){ const j = si.array[i*4 + k], g = sw.array[i*4 + k]; if(hand[j]) hw += g; if(g > tw){ tw = g; top = j; } }
+      const c = hw > .55 ? glove : hw > .12 ? white : nr.getY(i) > .72 ? stripe : suit; C.set([c.r, c.g, c.b], i*3);
+      /* altura do dorso no meio da mão, para assentar o logo logo acima da superfície */
+      if(hw > .55){ const h = HD[side[top]]; _v.fromBufferAttribute(ps, i).applyMatrix4(o.matrixWorld); _n.fromBufferAttribute(nr, i).applyMatrix3(nm);
+        const d = _v.sub(h.w), f = d.dot(h.F)/h.len, kk = d.dot(h.K)/h.len; if(_n.dot(h.back) > 0 && Math.abs(f - .5) < .2 && Math.abs(kk) < .25) h.top = Math.max(h.top || 0, d.dot(h.back)); }
     }
     geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
     o.material = new THREE.MeshLambertMaterial({map:ARMS.gray, vertexColors:true, skinning:true}); o.frustumCulled = false; o.castShadow = false; o.receiveShadow = true;
   });
+  /* logo branco em curva no dorso de cada luva, preso ao osso do punho (a malha é simples demais para pintar por vértice) */
+  const logoGeo = (() => { const sh = new THREE.Shape(), N = 10, pt = (t, e) => [t - .5, .22*Math.sin((t - .5)*Math.PI)*.9 + e*(.03 + .07*Math.sin(t*Math.PI))];
+    for(let i = 0; i <= N; i++){ const [x, y] = pt(i/N, 1); i ? sh.lineTo(x, y) : sh.moveTo(x, y); } for(let i = N; i >= 0; i--) sh.lineTo(...pt(i/N, -1)); return new THREE.ShapeGeometry(sh); })();
+  const logoMat = new THREE.MeshLambertMaterial({color:0xf2f2ee, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-2});
+  for(const s of ['l', 'r']){ const h = HD[s], wb = B['wrist' + s]; if(!h.top) continue;
+    const X = h.F.clone().multiplyScalar(.75).addScaledVector(h.K, s === 'l' ? .65 : -.65).normalize(), Z = h.back, Y = new THREE.Vector3().crossVectors(Z, X);
+    const Mw = new THREE.Matrix4().makeBasis(X, Y, Z).scale(new THREE.Vector3(h.len*.77, h.len*.77, 1)).setPosition(h.w.clone().addScaledVector(h.F, h.len*.5).addScaledVector(h.back, h.top));
+    const lg = new THREE.Mesh(logoGeo, logoMat); new THREE.Matrix4().copy(wb.matrixWorld).invert().multiply(Mw).decompose(lg.position, lg.quaternion, lg.scale);
+    lg.translateZ(.37); wb.add(lg); } /* afastado do dorso o bastante para não sumir na luva com os dedos fechados */
   /* mãos fechadas no aro: cada falange dobra para a palma (ARMS.CURL) */
   const CU = ARMS.CURL; for(const s of ['l', 'r']){ const g = CU.sgn[s];
     for(const f of ['index', 'middle', 'ring', 'pinky']) CU.fin.forEach((ang, k) => { const b = B[`finger_${f}${k + 1}${s}`]; if(b) b.rotateOnAxis(CU.ax, g*ang); });
@@ -2029,13 +2049,14 @@ function fpArmsTick(k){
     const x = (a*a - b*b + d*d)/(2*d), h = Math.sqrt(Math.max(0, a*a - x*x));
     _E.copy(_S).addScaledVector(_D, x).addScaledVector(pole, h);
     aimBone(up, fa, _P.subVectors(_E, _S)); aimBone(fa, wr, _P.subVectors(_T, _E));
-    /* mão: aponta do punho para o aro (passando por cima dele) e o indicador fica do lado das 12 horas */
-    _F.subVectors(_G, _T).addScaledVector(_N, -H.over).normalize();
-    _K.copy(_U).negate(); _K.addScaledVector(_F, -_K.dot(_F)).normalize();
+    /* mão: aponta do punho para o aro e passa por cima dele; o dorso fica virado para o piloto (um pouco para fora).
+       No esqueleto, punho→médio × indicador→mindinho dá a palma na mão esquerda e o dorso na direita */
+    _F.subVectors(_G, _T).normalize().addScaledVector(_N, -H.over).normalize();
+    _a1.copy(_N).addScaledVector(_R, H.tilt); _a1.addScaledVector(_F, -_a1.dot(_F)).normalize();
+    if(s === 'l') _K.crossVectors(_F, _a1); else _K.crossVectors(_a1, _F);
     wr.getWorldPosition(_a1); B['finger_middle1' + s].getWorldPosition(_a2); _P.subVectors(_a2, _a1);
     B['finger_index1' + s].getWorldPosition(_a1); B['finger_pinky1' + s].getWorldPosition(_a2); _E.subVectors(_a2, _a1);
     orientBone(wr, _P, _E, _F, _K);
-    if(H.roll) wr.rotateOnAxis(_E.set(0, 1, 0), side*H.roll), wr.updateMatrixWorld(true);
   }
 }
 /* =====================================================================
@@ -3032,7 +3053,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.3.2';
+const VERSION = '3.3.3';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
