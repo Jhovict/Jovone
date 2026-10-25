@@ -361,7 +361,7 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.3.1</div>
+      <div class="ver" id="newsVer">Versão 3.3.2</div>
       <h2 id="newsTitle">BRAÇOS <span>DE VERDADE</span></h2>
       <h3>Novo</h3>
       <ul>
@@ -369,6 +369,7 @@ body.touch .keys{display:none}
       </ul>
       <h3>Corrigido</h3>
       <ul>
+        <li><b>Mãos com cara de mão:</b> os dedos dobravam para o lado e deformavam a luva; agora fecham para a palma, com o polegar por cima, num punho de verdade em volta do aro. A manga do macacão também ficou mais lisa, sem as manchas escuras.</li>
         <li><b>As mãos agora agarram o volante:</b> os dedos fecham em volta do aro em vez de ficarem abertos, e cada punho fica preso à sua pega, girando junto com o volante em qualquer ângulo, inclusive no esterço total (o ombro avança para alcançar).</li>
       </ul>
       <h3>Versão 3.2 · Pilotos novos</h3>
@@ -1949,8 +1950,9 @@ function driverTick(k){
    antebraço = manga do macacão com faixa por cima) sobre o tom da textura original, que mantém dobras e sombra.
    Os ombros ficam presos ao kart logo abaixo dos olhos e a IK leva as mãos ao volante da cabine. */
 const ARMS = {ready:false, src:null, gray:null, S:.105, ROOT:new THREE.Vector3(SX, .56, .12),
-  /* dobra das falanges para fechar a mão no aro (eixo local de cada osso) */
-  CURL:{sgn:{l:1, r:1}, ax:new THREE.Vector3(1, 0, 0), thAx:new THREE.Vector3(1, 0, 0), fin:[1.2, 1.3, .9], th:[.6, .8, .5]},
+  /* dobra das falanges para fechar a mão no aro: os ossos apontam em y local e dobram em z local,
+     com sentido oposto entre as mãos (esqueleto espelhado); o polegar dobra ao contrário dos dedos para cruzar por cima deles */
+  CURL:{sgn:{l:-1, r:1}, ax:new THREE.Vector3(0, 0, 1), thAx:new THREE.Vector3(0, 0, -1), fin:[.9, 1.05, .7], th:[.4, .5, .4]},
   /* posição do punho em relação à pega (metros): atrás do aro, para fora e para cima; over = quanto a mão passa por cima do aro */
   HAND:{back:.075, out:.02, up:0, over:.25, roll:0}};
 function loadArms(){
@@ -1960,7 +1962,7 @@ function loadArms(){
     if(img){ /* tom da pele em cinza, normalizado pela média: vira só sombreado e textura de tecido */
       const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
       const d = x.getImageData(0, 0, c.width, c.height), p = d.data; let sum = 0; for(let i = 0; i < p.length; i += 4) sum += p[i]*.3 + p[i + 1]*.59 + p[i + 2]*.11;
-      const mean = sum/(p.length/4); for(let i = 0; i < p.length; i += 4){ const v = clamp((p[i]*.3 + p[i + 1]*.59 + p[i + 2]*.11)/mean, .55, 1.25)*200; p[i] = p[i + 1] = p[i + 2] = v; }
+      const mean = sum/(p.length/4); for(let i = 0; i < p.length; i += 4){ const v = clamp(1 + ((p[i]*.3 + p[i + 1]*.59 + p[i + 2]*.11)/mean - 1)*.45, .8, 1.12)*215; p[i] = p[i + 1] = p[i + 2] = v; }
       x.putImageData(d, 0, 0); ARMS.gray = new THREE.CanvasTexture(c); ARMS.gray.flipY = false;
     }
     ARMS.src = g.scene; ARMS.ready = true; if(player) attachFpArms(player.model);
@@ -1982,7 +1984,7 @@ function attachFpArms(m){
     geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
     o.material = new THREE.MeshLambertMaterial({map:ARMS.gray, vertexColors:true, skinning:true}); o.frustumCulled = false; o.castShadow = false; o.receiveShadow = true;
   });
-  /* mãos fechadas no aro: cada falange dobra no eixo x local (sentido positivo fecha para a palma) */
+  /* mãos fechadas no aro: cada falange dobra para a palma (ARMS.CURL) */
   const CU = ARMS.CURL; for(const s of ['l', 'r']){ const g = CU.sgn[s];
     for(const f of ['index', 'middle', 'ring', 'pinky']) CU.fin.forEach((ang, k) => { const b = B[`finger_${f}${k + 1}${s}`]; if(b) b.rotateOnAxis(CU.ax, g*ang); });
     CU.th.forEach((ang, k) => { const b = B[`finger_thumb${k + 1}${s}`]; if(b) b.rotateOnAxis(CU.thAx, g*ang); }); }
@@ -3030,7 +3032,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.3.1';
+const VERSION = '3.3.2';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
