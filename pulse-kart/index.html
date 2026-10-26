@@ -361,9 +361,14 @@ body.touch .keys{display:none}
 
   <div class="overlay news" id="news" hidden role="dialog" aria-modal="true" aria-labelledby="newsTitle">
     <div class="card">
-      <div class="ver" id="newsVer">Versão 3.3.3</div>
-      <h2 id="newsTitle">BRAÇOS <span>DE VERDADE</span></h2>
+      <div class="ver" id="newsVer">Versão 3.4</div>
+      <h2 id="newsTitle">KART <span>NOVO</span></h2>
       <h3>Novo</h3>
+      <ul>
+        <li><b>Kart novo em 3D</b> para todas as equipes: chassi tubular, motor, carenagem, sideboxes, para-choque e rodas detalhados, pintados na cor de cada equipe, com o número na carenagem e nas laterais.</li>
+        <li>As rodas giram e esterçam como antes, e o volante e as mãos dos pilotos foram para o lugar do volante do kart novo.</li>
+      </ul>
+      <h3>Versão 3.3 · Braços de verdade</h3>
       <ul>
         <li><b>Braços realistas na câmera do piloto</b> (WRAD ARMS, de wriks): antebraços e mãos com esqueleto, vestidos com a manga do macacão na cor da equipe, faixa, punho e luvas. Os dedos fecham no aro e os braços acompanham o volante, entrando pelos cantos da tela como na visão do capacete.</li>
       </ul>
@@ -1655,9 +1660,10 @@ function kartModel(L, num){
   for(const sd of [-1, 1]){ tube(body, [SX + sd*.06, .09, -.66], [SX + sd*.06, .2, -.74], .011, 0x9aa1a8, 6); B(body, .06, .07, .015, black, SX + sd*.06, .2, -.745); }
   for(const sd of [-1, 1]) tube(body, [SX + .02, .13, -.6], [sd*.45, .14, -.56], .007, chrome, 6);
   /* ---- banco envolvente (perfil lateral) ---- */
-  const seat = 0x2a2c31;
-  extrudeSide(body, pathShape([['m', .04, .07], ['l', .04, .14], ['q', -.1, .1, -.22, .13], ['l', -.4, .62], ['q', -.45, .66, -.48, .6], ['l', -.36, .1], ['q', -.33, .06, -.2, .06], ['l', .04, .07]]), .36, seat, SX, .03);
-  for(const sd of [-1, 1]) extrudeSide(body, pathShape([['m', .02, .12], ['q', -.1, .26, -.26, .3], ['l', -.38, .58], ['l', -.4, .5], ['l', -.3, .12]]), .04, seat, SX + sd*.18, .015);
+  /* num grupo à parte: continua no kart 3D, que não tem banco próprio */
+  const seat = 0x2a2c31, seatG = new THREE.Group(); root.add(seatG);
+  extrudeSide(seatG, pathShape([['m', .04, .07], ['l', .04, .14], ['q', -.1, .1, -.22, .13], ['l', -.4, .62], ['q', -.45, .66, -.48, .6], ['l', -.36, .1], ['q', -.33, .06, -.2, .06], ['l', .04, .07]]), .36, seat, SX, .03);
+  for(const sd of [-1, 1]) extrudeSide(seatG, pathShape([['m', .02, .12], ['q', -.1, .26, -.26, .3], ['l', -.38, .58], ['l', -.4, .5], ['l', -.3, .12]]), .04, seat, SX + sd*.18, .015);
   for(const sd of [-1, 1]) tube(body, [SX + sd*.12, .5, .44], [sd*.22, .1, .58], .01, chrome, 6);
   /* ---- motor 125cc dois tempos (lado direito) ---- */
   const EX = .31, EZ = .3;
@@ -1757,10 +1763,12 @@ function kartModel(L, num){
   /* placas de número (frente e laterais) */
   const pmat = new THREE.MeshLambertMaterial({map:numTex(num, L.css)});
   const plate = new THREE.Mesh(new THREE.PlaneGeometry(.17, .17), pmat); plate.position.set(0, .345, -.74); plate.rotation.x = -.95; root.add(plate);
-  for(const sd of [-1, 1]){ const p2 = new THREE.Mesh(new THREE.PlaneGeometry(.13, .13), pmat); p2.position.set(sd*.655, .175, .04); p2.rotation.y = sd*Math.PI/2; root.add(p2); }
+  const plates = [plate];
+  for(const sd of [-1, 1]){ const p2 = new THREE.Mesh(new THREE.PlaneGeometry(.13, .13), pmat); p2.position.set(sd*.655, .175, .04); p2.rotation.y = sd*Math.PI/2; root.add(p2); plates.push(p2); }
   /* funde as peças */
   root.updateMatrixWorld(true);
   bakeMeshes(body, body.children.filter(o => o.isMesh), root);
+  bakeMeshes(seatG, seatG.children.filter(o => o.isMesh), root);
   bakeMeshes(legsG, legsG.children.filter(o => o.isMesh), root);
   bakeMeshes(head, head.children.filter(o => o.isMesh), root);
   bakeMeshes(upper, upper.children.filter(o => o.isMesh), root);
@@ -1768,8 +1776,59 @@ function kartModel(L, num){
   for(const g of [fl, fr]) bakeMeshes(g, g.children.filter(o => o.isMesh), root);
   bakeMeshes(swS, swS.children.filter(o => o.isMesh), root);
   root.traverse(o => { if(o.isMesh) o.castShadow = true; });
-  root.userData = {body, legsG, upper, head, fl, fr, spin, swS, liv:L};
+  root.userData = {body, legsG, upper, head, fl, fr, spin, swS, liv:L, plates};
+  attachKart3d(root);
   return root;
+}
+/* ---------- kart principal em 3D: modelo da Tripo (do autor do jogo), segmentado em peças ----------
+   simplificado de ~2 milhões para ~34 mil triângulos e sem o piloto (os pilotos continuam os do jogo).
+   Sem textura: cada peça recebe a cor da pintura da equipe; pneus e aros saem da mesma malha, por raio.
+   Mesma orientação do kart antigo (frente em -z) e mesmo entre-eixos depois de escalado. */
+const K3D = {ready:false, parts:null, S:2, OFF:new THREE.Vector3(SX, .47, -.15),
+  /* cor de cada peça: número da tabela ou campo da pintura (L.p, L.s, L.rim) */
+  COL:{p0:0xa9b0b8, p1:0x8d9298, p4:'p', p6:'p', p7:'p', p22:'p', p20:0x1d1f23, p24:0xb8bec6, p11:0x2b2e33, p15:0x9aa1a8, p18:0x2a2c31, p21:0x24262a, p23:0x1d1f23},
+  /* rodas [peça do pneu, peças que giram junto] na ordem de userData.spin: dianteira esq., dir., traseira esq., dir. */
+  WHEELS:[['p9', []], ['p8', []], ['p12', ['p19', 'p26']], ['p13', ['p14', 'p25']]],
+  /* volante da Tripo (centro e normal no espaço do modelo, raio do aro) */
+  SW:{c:new THREE.Vector3(0, .0358, -.0165), rx:-.536, r:.0862}};
+function loadKart(){
+  if(!THREE.GLTFLoader) return;
+  new THREE.GLTFLoader().load('kart3d/kart.glb', g => {
+    const P = {}; g.scene.traverse(o => { if(o.isMesh){ o.geometry.computeVertexNormals(); o.geometry.computeBoundingBox(); P[o.name] = o; } });
+    K3D.parts = P; K3D.ready = true; for(const k of KARTS) attachKart3d(k.model);
+  }, undefined, () => {});
+}
+/* pneu preto com aro na cor da equipe: vértices perto do eixo (o eixo da roda é x) */
+function tireColors(geo, rim){
+  const pa = geo.attributes.position, n = pa.count, C = new Float32Array(n*3), bb = geo.boundingBox, c = bb.getCenter(new THREE.Vector3()), R = (bb.max.y - bb.min.y)/2;
+  const t = new THREE.Color(0x1a1a1c), r = new THREE.Color(rim);
+  for(let i = 0; i < n; i++){ const d = Math.hypot(pa.getY(i) - c.y, pa.getZ(i) - c.z), k = d < R*.64 ? r : t; C[i*3] = k.r; C[i*3 + 1] = k.g; C[i*3 + 2] = k.b; }
+  const g = geo.clone(); g.setAttribute('color', new THREE.BufferAttribute(C, 3)); return g;
+}
+function attachKart3d(root){
+  const u = root.userData; if(!K3D.ready || u.k3d) return;
+  const L = u.liv, P = K3D.parts, S = K3D.S, g = new THREE.Group(); g.scale.setScalar(S); g.position.copy(K3D.OFF); root.add(g);
+  for(const [n, c] of Object.entries(K3D.COL)){ const p = P[n]; if(!p) continue;
+    const m = new THREE.Mesh(p.geometry, cm(typeof c === 'string' ? L[c] : c)); m.position.copy(p.position); m.castShadow = m.receiveShadow = true; g.add(m); }
+  /* rodas: cada uma centrada no seu eixo, dentro do grupo que gira (e esterça, na frente) */
+  const tireM = new THREE.MeshLambertMaterial({vertexColors:true}), hubM = cm(L.rim), discM = cm(0x6a7078);
+  K3D.WHEELS.forEach(([tn, extra], i) => { const sp = u.spin[i], grp = sp.parent, tp = P[tn]; if(!tp) return;
+    const c = tp.geometry.boundingBox.getCenter(new THREE.Vector3()).add(tp.position);
+    grp.position.copy(c).multiplyScalar(S).add(K3D.OFF); grp.children.forEach(o => { if(o !== sp) o.visible = false; }); sp.children.forEach(o => o.visible = false);
+    for(const n of [tn, ...extra]){ const p = P[n]; if(!p) continue;
+      const m = new THREE.Mesh(n === tn ? tireColors(p.geometry, L.rim) : p.geometry, n === tn ? tireM : /^p(14|19)$/.test(n) ? hubM : discM);
+      m.scale.setScalar(S); m.position.copy(p.position).sub(c).multiplyScalar(S); m.castShadow = true; sp.add(m); } });
+  /* volante: o do jogo vai para o lugar do volante da Tripo (as mãos do piloto e o giro continuam nele) */
+  const swp = P.p10, sw = u.swS.parent;
+  if(swp){ sw.position.copy(K3D.SW.c).multiplyScalar(S).add(K3D.OFF); sw.rotation.set(K3D.SW.rx, 0, 0); u.swS.scale.setScalar(K3D.SW.r*S/.13);
+    u.swS.children.forEach(o => o.visible = false); root.updateMatrixWorld(true);
+    const m = new THREE.Mesh(swp.geometry, cm(0x1c1d21)); m.castShadow = true;
+    _m4.makeTranslation(swp.position.x, swp.position.y, swp.position.z).premultiply(new THREE.Matrix4().makeScale(S, S, S)).premultiply(new THREE.Matrix4().makeTranslation(K3D.OFF.x, K3D.OFF.y, K3D.OFF.z));
+    new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(u.swS.matrixWorld).invert().multiply(_m4).decompose(m.position, m.quaternion, m.scale); u.swS.add(m); }
+  /* placas de número na carenagem e nas laterais do modelo */
+  const [pf, pl, pr] = u.plates; pf.position.set(SX, .455, -.776); pf.rotation.set(-2.07, 0, Math.PI);
+  pl.position.set(SX - .605, .16, .03); pr.position.set(SX + .605, .16, .03);
+  u.body.visible = false; u.k3d = g;
 }
 /* =====================================================================
    CÂMERA DO PILOTO (1ª pessoa): volante de corrida com painel digital e luvas
@@ -3053,7 +3112,7 @@ function renderMenu(){
 }
 
 /* ---------- novidades da versão ---------- */
-const VERSION = '3.3.3';
+const VERSION = '3.4';
 function openNews(){ SFX.click(); $('news').hidden = false; $('news').firstElementChild.scrollTop = 0; $('newsClose').focus({preventScroll:true}); }
 function closeNews(){ SFX.back(); $('news').hidden = true; store.set('Seen', VERSION); if(STATE === 'menu') show(SCR); }
 $('newsVer').textContent = 'Versão ' + VERSION;
@@ -3229,7 +3288,7 @@ $('titleVer').textContent = 'versão ' + VERSION; applyPads();
 let scr0 = null; try{ scr0 = sessionStorage.getItem('pkScr'); }catch(e){}
 if(store.get('Auto', 0)){ store.set('Auto', 0); show('Career'); setTimeout(() => { if(STATE === 'menu') startRace(); }, 300); }
 else show(scr0 && SCREENS.includes(scr0) ? scr0 : 'Title');
-resize(); requestAnimationFrame(frame); loadDriver(); loadArms();
+resize(); requestAnimationFrame(frame); loadDriver(); loadArms(); loadKart();
 </script>
 </body>
 </html>
