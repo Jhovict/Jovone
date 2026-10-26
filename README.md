@@ -20,6 +20,7 @@ pulse-kart/
   kenney/             modelos .glb do Racing Kit da Kenney (CC0)
 space-explorer/
   index.html          plataforma 2D em Saturno (canvas, scripts em js/ e estilo em css/)
+win7-otimizador/    ← fora do launcher: script .bat para deixar um PC com Windows 7 mais rápido
 ```
 
 ## Pane Seca
