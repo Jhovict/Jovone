@@ -30,7 +30,7 @@ space-explorer/
 Jogo de kart de câmbio (classe KZ) feito em Godot 4.7 e exportado para a web (`apex-kart/`, renderizador de compatibilidade/WebGL 2, sem threads, então funciona no GitHub Pages) e para Android (`apex-kart/ApexKartGP.apk`).
 
 - Kart do modelo texturizado da Tripo (volante e rodas separados do mesmo arquivo; na web e no celular, versão reduzida a ~100 mil triângulos) e piloto do modelo segmentado, com braços que seguem o volante.
-- 16 pistas geradas a partir de imagens de traçado, com relevo, ponte no cruzamento, zebras, brita, barreiras de pneus e Tecpro, arquibancadas com torcida e árvores.
+- 16 pistas geradas a partir de imagens de traçado, com relevo, ponte no cruzamento, zebras, brita, barreiras de pneus e Tecpro, arquibancadas (sem torcida, para não pesar no celular) e árvores.
 - Controles: teclado, controle (A confirma, B volta, Start pausa) e botões de toque reposicionáveis; em Opções → "Controle usado" escolhe-se Automático, Teclado, Controle ou Toque na tela.
 - Modos: carreira, corrida rápida, fim de semana de GP e contrarrelógio. "Sair do jogo" volta para o launcher.
 
