@@ -23,6 +23,8 @@ apex-kart/
   ApexKartGP.apk      versão Android (APK de depuração, arm64)
 space-explorer/
   index.html          plataforma 2D em Saturno (canvas, scripts em js/ e estilo em css/)
+craque-league/
+  index.html          futebol estilo mobile 2016 (carreira, clube, partidas em canvas)
 ```
 
 ## Apex Kart GP
@@ -107,6 +109,17 @@ Plataforma 2D em HTML5 Canvas e JavaScript puro, sem imagens nem arquivos de som
 - Código em `space-explorer/js/` (`level.js` monta a fase; `config.js` ajusta a física). Detalhes em `space-explorer/README.md`.
 
 Salva no `localStorage` com o prefixo `spaceExplorer` (melhor tempo, estatísticas e troféus, som, versão vista). Código do menu em `space-explorer/js/front.js` e do progresso em `js/progress.js`.
+
+## Craque League 16
+
+Futebol em arquivo único (canvas 2D com projeção 3D, sem bibliotecas), inspirado nos jogos de futebol mobile de 2016. Clubes e jogadores são fictícios.
+
+- **Partida:** câmera lateral de TV em estádio noturno com torcida, placas e redes; lateral, escanteio, tiro de meta, falta com barreira, pênalti, impedimento, cartões, troca de lado no intervalo, replay dos gols, até 3 substituições e disputa de pênaltis nas copas.
+- **Carreira:** 5 divisões (Amadora, 3, 2, 1 e Elite) com 8 times, 14 rodadas, acesso dos 2 primeiros e queda dos 2 últimos, copa mata-mata no meio da temporada e moedas por jogo e por posição.
+- **Meu Clube:** escalação em 6 formações, mercado de transferências (até 32 jogadores), evolução de atributos, 7 níveis de estádio, editor de uniformes 1 e 2 e de escudo, nome e sigla.
+- **Controles:** controle no padrão Winning Eleven 6 (✕ passe/marcação, □ chute/dobrar marcação, ○ cruzamento ou lançamento/carrinho, △ enfiada/goleiro sai, L1 troca de jogador, R1 corre, Start pausa); teclado no mesmo padrão (J/Z, K/X/Espaço, L/C, I/V, U/Q, Shift); celular com analógico e três botões (Passe, Chute, Enfiada).
+
+Salva no `localStorage` na chave `craque16_save_v1`.
 
 ## Como adicionar um jogo
 
