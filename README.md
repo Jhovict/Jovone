@@ -31,7 +31,7 @@ craque-league/
 
 Jogo de kart de câmbio (classe KZ) feito em Godot 4.7 e exportado para a web (`apex-kart/`, renderizador de compatibilidade/WebGL 2, sem threads, então funciona no GitHub Pages) e para Android (`apex-kart/ApexKartGP.apk`).
 
-- Kart e piloto em 27 peças com 8 pinturas originais, uma por equipe (patrocinadores fictícios); rodas e volante giram. No PC ~120 mil triângulos por kart, na web e no celular ~37 mil.
+- Kart e piloto em 27 peças com 8 pinturas originais, uma por equipe (patrocinadores fictícios); rodas e volante giram, com as mãos do piloto acompanhando o volante (braços com ossos), direção Ackermann, pneus com marcação do composto e volante detalhado. No PC ~120 mil triângulos por kart, na web e no celular ~37 mil.
 - 16 pistas geradas a partir de imagens de traçado, com relevo, ponte no cruzamento, zebras, brita, barreiras de pneus e Tecpro e árvores (sem arquibancadas, para não pesar no celular); nenhuma curva com raio muito abaixo de 9 m, então os grampos são curvas em U de verdade.
 - Box, combustível e pneus: pit lane com box para cada equipe (uma vaga e quatro mecânicos por piloto, o grid cheio nunca forma fila) em todas as pistas, regra de 1 ou 2 paradas, combustível que pesa e acaba, desgaste de cada pneu, compostos macio/duro/chuva e IA que decide quando parar. O box é chamado com F, D-pad ↑ ou o botão BOX.
 - Clima: seco, chuva, tempestade (raios e trovões) e neve, cada um com aderência, visual e som próprios.
