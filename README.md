@@ -37,6 +37,8 @@ Jogo de kart de câmbio (classe KZ) feito em Godot 4.7 e exportado para a web (`
 - Clima: seco, chuva, tempestade (raios e trovões) e neve, cada um com aderência, visual e som próprios.
 - Som com gravações reais de kart do Freesound (CC0 e CC-BY 4.0, créditos no jogo em `sounds/CREDITOS.txt`).
 - Controles: teclado, controle (A confirma, B volta, Start pausa) e botões de toque reposicionáveis; em Opções → "Controle usado" escolhe-se Automático, Teclado, Controle ou Toque na tela.
+- Carreira com troféus por pista (ouro, prata e bronze) na Sala de troféus, garagem para personalizar pintura, macacão, luvas e capacete (18 pinturas de capacete, viseiras e acabamentos) e pódio animado.
+- IA que disputa posição: escolhe o lado da ultrapassagem, deixa espaço lado a lado e defende sem zigue-zague.
 - Modos: carreira, corrida rápida, fim de semana de GP e contrarrelógio. "Sair do jogo" volta para o launcher.
 
 ## Pane Seca
