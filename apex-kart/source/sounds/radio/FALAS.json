@@ -1,0 +1,17 @@
+{
+  "start": "Boa corrida. Vamos manter a concentração.",
+  "last_lap": "Última volta. Vamos até a bandeirada.",
+  "win": "Vitória! Excelente corrida!",
+  "finish": "Bandeirada. Bom trabalho. Vamos conferir o resultado.",
+  "rain_soon": "Chuva se aproximando. Fique atento à aderência.",
+  "wet": "Pista molhada. Considere os pneus de chuva.",
+  "drying": "A pista está secando. Avalie voltar aos pneus de seco.",
+  "tyres": "Os pneus estão gastos. Considere uma parada.",
+  "fuel": "Combustível baixo. Precisamos entrar nos boxes.",
+  "damage": "Temos danos no kart. Cuidado nas próximas curvas.",
+  "gain": "Ganhamos uma posição. Bom trabalho.",
+  "loss": "Perdemos uma posição. Mantenha a calma.",
+  "pit": "Entrada nos boxes. Respeite o limite de velocidade.",
+  "out": "Serviço concluído. Cuidado ao voltar para a pista.",
+  "ghost": "Nova melhor volta. Fantasma atualizado."
+}

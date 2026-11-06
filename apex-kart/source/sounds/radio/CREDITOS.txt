@@ -1,0 +1,1 @@
+Falas originais do Apex Kart GP, sintetizadas localmente com voz pt_BR-faber-medium (Piper), usando Piper. Dataset da voz: CC0. Fonte do modelo: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models . Modelo original: https://huggingface.co/rhasspy/piper-voices/tree/main/pt/pt_BR/faber/medium . O motor TTS e os pesos não são distribuídos com o jogo; apenas as falas WAV.

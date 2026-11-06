@@ -1,0 +1,114 @@
+[
+ {
+  "file": "res://tracks/813.json",
+  "name": "Deserto Dourado",
+  "place": "Planície árida",
+  "theme": "desert",
+  "length": 1615.7
+ },
+ {
+  "file": "res://tracks/814.json",
+  "name": "Ilha das Garças",
+  "place": "Parque às margens do rio",
+  "theme": "hills",
+  "length": 1619.6
+ },
+ {
+  "file": "res://tracks/815.json",
+  "name": "Floresta Negra",
+  "place": "Bosque de pinheiros",
+  "theme": "forest",
+  "length": 1908.0
+ },
+ {
+  "file": "res://tracks/816.json",
+  "name": "Marina Azul",
+  "place": "Porto e cais",
+  "theme": "coast",
+  "length": 2172.1
+ },
+ {
+  "file": "res://tracks/817.json",
+  "name": "Cidade Alta",
+  "place": "Planalto urbano",
+  "theme": "city",
+  "length": 2427.6
+ },
+ {
+  "file": "res://tracks/818.json",
+  "name": "Vale do Dragão",
+  "place": "Colinas orientais",
+  "theme": "hills",
+  "length": 1796.7
+ },
+ {
+  "file": "res://tracks/819.json",
+  "name": "Campos Verdes",
+  "place": "Interior rural",
+  "theme": "forest",
+  "length": 1326.9
+ },
+ {
+  "file": "res://tracks/820.json",
+  "name": "Planalto Magiar",
+  "place": "Campos abertos",
+  "theme": "hills",
+  "length": 1315.3
+ },
+ {
+  "file": "res://tracks/821.json",
+  "name": "Oval Estrelado",
+  "place": "Complexo esportivo",
+  "theme": "fast",
+  "length": 1323.0
+ },
+ {
+  "file": "res://tracks/822.json",
+  "name": "Serra do Sol",
+  "place": "Encostas do sul",
+  "theme": "hills",
+  "length": 1322.3
+ },
+ {
+  "file": "res://tracks/823.json",
+  "name": "Estreito Oriental",
+  "place": "Margem do estreito",
+  "theme": "desert",
+  "length": 1297.9
+ },
+ {
+  "file": "res://tracks/824.json",
+  "name": "Bosque Imperial",
+  "place": "Parque florestal",
+  "theme": "forest",
+  "length": 1334.5
+ },
+ {
+  "file": "res://tracks/825.json",
+  "name": "Parque Real",
+  "place": "Jardins do palácio",
+  "theme": "fast",
+  "length": 1345.4
+ },
+ {
+  "file": "res://tracks/826.json",
+  "name": "Riviera",
+  "place": "Ruas à beira-mar",
+  "theme": "coast",
+  "length": 1682.7
+ },
+ {
+  "file": "res://tracks/827.json",
+  "name": "Selva Tropical",
+  "place": "Floresta equatorial",
+  "theme": "tropical",
+  "length": 1284.4
+ },
+ {
+  "file": "res://tracks/828.json",
+  "name": "Oito do Oriente",
+  "place": "Parque de diversões",
+  "theme": "hills",
+  "length": 2124.0
+ }
+]

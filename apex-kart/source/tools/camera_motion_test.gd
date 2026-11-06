@@ -1,0 +1,27 @@
+extends SceneTree
+const Motion := preload("res://scripts/camera_motion.gd")
+func _initialize():
+	var m := Motion.new()
+	m.update(.016,0,0,0,0,1,true)
+	for i in 240:
+		m.update(1.0/60.0,i/6.0,.4,1,.1,1)
+		assert(m.jitter.is_finite() and m.offset.is_finite())
+		assert(absf(m.roll)<.046 and absf(m.pitch)<.043 and m.fov<=11)
+		assert(m.jitter.length()<.03)
+	assert(m.fov>5 and m.roll<0 and m.pitch<0)
+	for i in 60: m.update(1.0/60.0,40.0-i*.4,0,0,0,1)
+	assert(m.pitch>0 and m.chase_distance<.1)
+	m.update(.016,30,1,1,1,0)
+	assert(m.fov==0 and m.roll==0 and m.pitch==0 and m.jitter==Vector3.ZERO and m.offset==Vector3.ZERO)
+	m.update(.016,40,0,0,0,1,true)
+	assert(m.acceleration==0 and m.jitter==Vector3.ZERO)
+	# Same physical trajectory at 30 and 120 Hz gives matching damped camera targets.
+	var low := Motion.new()
+	var high := Motion.new()
+	low.reset(20)
+	high.reset(20)
+	for i in 120: low.update(1.0/30,20,.4,0,0,1)
+	for i in 480: high.update(1.0/120,20,.4,0,0,1)
+	assert(absf(low.fov-high.fov)<.005 and absf(low.roll-high.roll)<.001)
+	print("CAMERA MOTION PASS: bounded motion, braking, acceleration, off, snap, 30/120 FPS")
+	quit()
