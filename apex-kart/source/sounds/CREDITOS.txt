@@ -1,0 +1,28 @@
+Sons do jogo a partir de gravações reais do Freesound (https://freesound.org), editados por
+tools/make_sounds.py (recorte, loop sem emenda audível, normalização).
+
+engine_idle.wav, start.wav  <- "Go kart start.wav" por Hanbaal - CC0
+                               https://freesound.org/s/178666/
+engine_mid.wav              <- "KartFromPocket.ogg" por qubodup - CC-BY 4.0
+                               https://freesound.org/s/194630/
+engine_high.wav             <- "motorbike crm 250cc kick start rev engine.wav" por martian - CC-BY 4.0
+                               https://freesound.org/s/148855/
+skid.wav                    <- "screeching tyres / tires" por johnnydekk - CC0
+                               https://freesound.org/s/614627/
+crash_1.wav, crash_2.wav    <- "Car Accident with Squeal and Crash" por HoBoTrails - CC0
+                               https://freesound.org/s/426021/
+beep.wav                    <- "Countdown_Signal.wav" por Edise - CC0
+                               https://freesound.org/s/566343/
+ambience.wav                <- "Go Kart Racing Outdoors - Moderate Traffic - Sparse Crowd"
+                               por OverlookHotelRecordings - CC0
+                               https://freesound.org/s/317471/
+
+CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/ (atribuição obrigatória, mantida aqui).
+
+Clima (tools/make_weather_sounds.py):
+rain.wav                    <- "Rain heavy 2 (rural)" por jmbphilmes - CC0
+                               https://freesound.org/s/200272/
+thunder_1.wav               <- "Heavy Thunder Strike - no Rain - QUADRO.wav" por BlueDelta - CC0
+                               https://freesound.org/s/446753/
+thunder_2.wav               <- "Thunder.ogg" por lennyboy - CC0
+                               https://freesound.org/s/244053/

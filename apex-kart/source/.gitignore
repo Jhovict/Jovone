@@ -1,0 +1,12 @@
+# cache do Godot (recriado pelo importador)
+.godot/
+# backups das atualizações e prévias de modelos (muito grandes)
+.upgrade-backups/
+preview_new/
+# modelo antigo do kart (não usado pelo jogo, acima do limite de 100 MB do GitHub) e gravações-fonte dos sons
+models/kart.glb
+models/kart.glb.import
+models/baked/
+tools/src/
+tools/node_modules/
+*.tmp

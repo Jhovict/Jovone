@@ -30,3 +30,7 @@ Pra testar no PC com o mouse: clica e arrasta numa lista. Funciona do mesmo jeit
 
 Opcional: se quiser esconder a barrinha, põe `vertical_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER`
 nos ScrollContainer. A rolagem por arrasto continua funcionando.
+
+## Status
+
+Instalado no jogo na versão 1.7 como `scripts/touch_scroll.gd` (autoload `TouchScroll`), com ajustes: arrasto que começa na barra de rolagem, num slider, num campo de texto ou na prévia 3D da garagem fica com esse controle, e a lista de ScrollContainer é mantida por `node_added` (sem varrer a árvore a cada toque na corrida). Testado no PC com o mouse: `tools/touch_scroll_test.gd`.
