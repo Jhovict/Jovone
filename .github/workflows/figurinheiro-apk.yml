@@ -1,0 +1,45 @@
+name: Figurinheiro APK
+
+on:
+  push:
+    paths:
+      - 'figurinheiro-android/**'
+      - '.github/workflows/figurinheiro-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar APK
+        working-directory: figurinheiro-android
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          gradle assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../Figurinheiro.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Figurinheiro-apk
+          path: Figurinheiro.apk
+      - name: Publicar para baixar no celular
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: figurinheiro
+          name: Figurinheiro (app Android)
+          body: |
+            Baixe **Figurinheiro.apk** no celular Android e instale.
+            Atualizações: é só baixar de novo e instalar por cima.
+          files: Figurinheiro.apk
+          make_latest: false
+          overwrite_files: true

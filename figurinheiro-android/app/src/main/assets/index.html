@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Figurinheiro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bangers&family=Baloo+2:wght@800&family=Permanent+Marker&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0f1714; --panel:#17221e; --panel2:#1f2d28; --line:#2c3d36;
+    --txt:#e8f1ed; --mut:#93a89f; --acc:#2fd08a; --acc2:#1aa86b; --warn:#ffb547;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+  body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .wrap{max-width:980px;margin:0 auto;padding:14px}
+  header{display:flex;align-items:center;gap:10px;margin:4px 2px 14px}
+  header .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--acc),#0e8f5a);display:grid;place-items:center;font-size:20px}
+  header h1{font-size:19px;margin:0;letter-spacing:.2px}
+  header p{margin:0;color:var(--mut);font-size:12.5px}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:820px){.grid{grid-template-columns:minmax(0,1fr) 380px}}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;position:relative}
+  .canvasBox{position:relative;width:100%;max-width:512px;margin:0 auto;aspect-ratio:1/1;border-radius:12px;overflow:hidden;
+    background-color:#fff;background-image:linear-gradient(45deg,#d9d9d9 25%,transparent 25%),linear-gradient(-45deg,#d9d9d9 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#d9d9d9 75%),linear-gradient(-45deg,transparent 75%,#d9d9d9 75%);
+    background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}
+  .canvasBox.dark{background-color:#1b1b1b;background-image:linear-gradient(45deg,#2a2a2a 25%,transparent 25%),linear-gradient(-45deg,#2a2a2a 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#2a2a2a 75%),linear-gradient(-45deg,transparent 75%,#2a2a2a 75%)}
+  canvas#view{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  canvas#view.erase{cursor:crosshair}
+  .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:20px;background:rgba(15,23,20,.92);color:var(--txt)}
+  .empty .big{font-size:44px}
+  .empty small{color:var(--mut)}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .modes{display:flex;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px}
+  .modes button{background:transparent;border:0;color:var(--mut);padding:8px 11px;border-radius:9px;font:600 13px Inter;cursor:pointer}
+  .modes button.on{background:var(--acc);color:#05261a}
+  .btn{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px 12px;border-radius:11px;font:600 13px Inter;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+  .btn:active{transform:scale(.97)}
+  .btn.pri{background:var(--acc);border-color:var(--acc);color:#05261a}
+  .btn.pri:hover{background:#3ee39a}
+  .btn:disabled{opacity:.45;pointer-events:none}
+  .hint{text-align:center;color:var(--mut);font-size:12px;margin-top:8px;min-height:16px}
+  .side{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .tabs{display:flex;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs button{flex:1 0 auto;background:none;border:0;color:var(--mut);padding:12px 12px;font:600 13px Inter;cursor:pointer;border-bottom:2px solid transparent}
+  .tabs button.on{color:var(--acc);border-bottom-color:var(--acc)}
+  .pane{display:none;padding:14px;gap:12px;flex-direction:column}
+  .pane.on{display:flex}
+  label.row{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--mut)}
+  .row .top{display:flex;justify-content:space-between}
+  .row .top b{color:var(--txt);font-weight:600}
+  input[type=range]{width:100%;accent-color:var(--acc)}
+  input[type=text],select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:10px;font:500 14px Inter}
+  input[type=color]{width:42px;height:34px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);padding:2px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:8px 11px;border-radius:999px;font:600 12.5px Inter;cursor:pointer}
+  .chip.on{border-color:var(--acc);color:var(--acc);background:rgba(47,208,138,.1)}
+  .inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .inline > span{font-size:12.5px;color:var(--mut)}
+  .note{font-size:12px;color:var(--mut);line-height:1.5;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .note b{color:var(--txt)}
+  .export{padding:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  .export .inline .btn{flex:1;justify-content:center}
+  .meta{font-size:12px;color:var(--mut);text-align:center}
+  .meta.ok{color:var(--acc)} .meta.warn{color:var(--warn)}
+  .gallery{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .gallery img{width:64px;height:64px;border-radius:10px;background:#fff;flex:0 0 auto;object-fit:contain;cursor:pointer;border:1px solid var(--line)}
+  details.help{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-top:14px}
+  details.help summary{cursor:pointer;font-weight:600}
+  details.help ol{color:var(--mut);font-size:13px;line-height:1.6;padding-left:20px}
+  details.help b{color:var(--txt)}
+  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);background:#0b120f;border:1px solid var(--acc);color:var(--txt);padding:10px 14px;border-radius:12px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;z-index:9;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .banner{display:flex;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--acc);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+  .banner span{flex:1;font-size:13.5px}
+  .packsBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:14px}
+  .packsBox h2{font-size:16px;margin:0 0 10px}
+  .pack{border-top:1px solid var(--line);padding:12px 0}
+  .pack:first-child{border-top:0;padding-top:0}
+  .packHead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .packHead b{flex:1;font-size:14px}
+  .packHead small{color:var(--mut);font-weight:400}
+  .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+  .thumb{position:relative;aspect-ratio:1;border-radius:10px;background:#ffffff10;border:1px solid var(--line)}
+  .thumb img{width:100%;height:100%;object-fit:contain}
+  .thumb button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:#c0392b;color:#fff;font-size:12px;display:none}
+  .thumb.sel button{display:block}
+  .thumb.sel{outline:2px solid #c0392b}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">✂️</div>
+    <div>
+      <h1>Figurinheiro</h1>
+      <p>Criador de figurinhas para WhatsApp — 512×512, fundo transparente, WebP leve</p>
+    </div>
+  </header>
+
+  <div class="banner" id="clipBanner" style="display:none"><span>🔗 Você copiou um link do X</span><button class="btn pri" id="clipUse">Virar figurinha</button><button class="btn" id="clipNo">✕</button></div>
+  <div class="grid">
+    <div class="stage">
+      <div class="canvasBox" id="box">
+        <canvas id="view" width="512" height="512"></canvas>
+        <div class="empty" id="empty">
+          <div class="big">🖼️</div>
+          <div><b id="emptyTitle">Escolha uma imagem, GIF ou vídeo</b></div>
+          <button class="btn pri" id="pickBig">Escolher foto</button>
+          <small id="emptySub">ou toque em Compartilhar → Figurinheiro num post do X</small>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="modes" id="modes">
+          <button data-m="move" class="on">✋ Mover</button>
+          <button data-m="wand">🪄 Varinha</button>
+          <button data-m="brush">🧽 Borracha</button>
+        </div>
+        <button class="btn" id="undo" disabled>↶ Desfazer</button>
+        <button class="btn" id="bgToggle" title="Alternar fundo de visualização">◐</button>
+      </div>
+      <div class="hint" id="hint">Arraste para mover · pinça ou roda do mouse para ampliar</div>
+    </div>
+
+    <div class="side">
+      <div class="tabs" id="tabs">
+        <button data-t="img" class="on">Imagem</button>
+        <button data-t="crop">Recorte</button>
+        <button data-t="bg">Fundo</button>
+        <button data-t="text">Texto</button>
+        <button data-t="out">Contorno</button>
+      </div>
+
+      <div class="pane on" data-p="img">
+        <div class="inline">
+          <button class="btn pri" id="pick">📁 Trocar foto</button>
+          <button class="btn" id="fit">⤢ Ajustar</button>
+          <button class="btn" id="fill">⬛ Preencher</button>
+        </div>
+        <div class="note" style="display:flex;flex-direction:column;gap:8px">
+          <b>🔗 GIF do X (Twitter)</b>
+          <input type="text" id="xlink" placeholder="Cole aqui o link do post com o GIF">
+          <div id="xinfo" style="display:none;line-height:1.55"></div>
+        </div>
+        <div id="animBox" class="note" style="display:none;flex-direction:column;gap:8px">
+          <div class="inline" style="justify-content:space-between"><b id="animInfo">Animada</b><button class="btn" id="play">⏸ Pausar</button></div>
+          <label class="row"><div class="top">Velocidade <b id="spv">1,0×</b></div><input type="range" id="speed" min="25" max="300" value="100"></label>
+        </div>
+        <label class="row"><div class="top">Zoom <b id="zv">100%</b></div><input type="range" id="zoom" min="5" max="400" value="100"></label>
+        <label class="row"><div class="top">Rotação <b id="rv">0°</b></div><input type="range" id="rot" min="-180" max="180" value="0"></label>
+        <div class="inline">
+          <button class="btn" id="flip">⇋ Espelhar</button>
+          <button class="btn" id="center">◎ Centralizar</button>
+        </div>
+      </div>
+
+      <div class="pane" data-p="crop">
+        <span style="font-size:12.5px;color:var(--mut)">Formato da figurinha</span>
+        <div class="chips" id="shapes">
+          <button class="chip on" data-s="free">Livre</button>
+          <button class="chip" data-s="square">Quadrado</button>
+          <button class="chip" data-s="round">Arredondado</button>
+          <button class="chip" data-s="circle">Círculo</button>
+          <button class="chip" data-s="heart">Coração</button>
+          <button class="chip" data-s="star">Estrela</button>
+        </div>
+        <div class="note"><b>Livre</b> mantém a imagem como está (ideal depois de remover o fundo). Os demais formatos recortam a imagem e deixam o restante transparente.</div>
+      </div>
+
+      <div class="pane" data-p="bg">
+        <div class="note">Use a <b>🪄 Varinha</b> e toque no fundo: ela apaga a área contínua de cor parecida. A <b>🧽 Borracha</b> apaga à mão livre. Para fundos lisos (parede, céu, fundo branco), a varinha resolve em um ou dois toques.</div>
+        <label class="row"><div class="top">Tolerância da varinha <b id="tv">32</b></div><input type="range" id="tol" min="2" max="120" value="32"></label>
+        <label class="row"><div class="top">Tamanho da borracha <b id="bv">28 px</b></div><input type="range" id="brushSize" min="4" max="120" value="28"></label>
+        <div class="inline">
+          <label class="inline" style="cursor:pointer"><input type="checkbox" id="global"> <span>Varinha apaga a cor na imagem inteira</span></label>
+        </div>
+        <div class="inline">
+          <button class="btn" id="cornerWand">🪄 Apagar pelos cantos</button>
+          <button class="btn" id="resetBg">♻ Restaurar original</button>
+        </div>
+      </div>
+
+      <div class="pane" data-p="text">
+        <label class="row">Texto de cima<input type="text" id="t1" placeholder="Ex.: BOM DIA" maxlength="60"></label>
+        <label class="row">Texto de baixo<input type="text" id="t2" placeholder="Ex.: grupo da família" maxlength="60"></label>
+        <label class="row">Fonte
+          <select id="font">
+            <option value="Anton">Anton (meme)</option>
+            <option value="Bangers">Bangers (gibi)</option>
+            <option value="'Baloo 2'">Baloo (redondinha)</option>
+            <option value="'Permanent Marker'">Marcador</option>
+            <option value="Impact, 'Arial Black', sans-serif">Impact</option>
+          </select>
+        </label>
+        <label class="row"><div class="top">Tamanho <b id="fsv">64</b></div><input type="range" id="fs" min="24" max="140" value="64"></label>
+        <div class="inline">
+          <span>Cor</span><input type="color" id="tc" value="#ffffff">
+          <span>Borda</span><input type="color" id="tsc" value="#000000">
+          <label class="inline" style="cursor:pointer"><input type="checkbox" id="caps" checked> <span>MAIÚSCULAS</span></label>
+        </div>
+      </div>
+
+      <div class="pane" data-p="out">
+        <label class="row"><div class="top">Espessura do contorno <b id="ov">0 px</b></div><input type="range" id="ow" min="0" max="24" value="0"></label>
+        <div class="inline"><span>Cor do contorno</span><input type="color" id="oc" value="#ffffff"></div>
+        <label class="row"><div class="top">Sombra <b id="shv">0</b></div><input type="range" id="sh" min="0" max="20" value="0"></label>
+        <div class="note">O contorno branco é o clássico das figurinhas recortadas. Se ele encostar na borda, diminua um pouco o zoom.</div>
+      </div>
+
+      <div class="export">
+        <button class="btn pri" id="saveWebp" disabled style="justify-content:center;padding:13px;font-size:15px">➕ Salvar no meu pacote do WhatsApp</button>
+        <div class="inline">
+          <button class="btn" id="shareNow" disabled>📤 Enviar agora</button>
+          <button class="btn" id="saveGal" disabled>🖼 Salvar na galeria</button>
+        </div>
+        <div class="meta" id="meta">—</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="packsBox">
+    <h2>📦 Meus pacotes no WhatsApp</h2>
+    <div id="packList"><div class="note">Nenhuma figurinha salva ainda. Crie a primeira acima e toque em <b>➕ Salvar no meu pacote</b>.</div></div>
+  </section>
+  <details class="help">
+    <summary>Como funciona</summary>
+    <ol>
+      <li><b>Do X direto:</b> no app do X, toque em <b>Compartilhar → Figurinheiro</b> (ou copie o link e abra o app). O GIF é baixado sozinho.</li>
+      <li>Ajuste (texto, contorno, recorte, fundo) e toque em <b>➕ Salvar no meu pacote</b>.</li>
+      <li>Com 3 figurinhas no pacote (exigência do WhatsApp), toque em <b>Adicionar ao WhatsApp</b> uma vez. Daí em diante, as novas que você salvar entram sozinhas no pacote — elas aparecem na bandeja de figurinhas do WhatsApp.</li>
+      <li><b>📤 Enviar agora</b> manda a figurinha direto numa conversa, sem precisar de pacote.</li>
+      <li>Estáticas e animadas ficam em pacotes separados (regra do WhatsApp), com até 30 por pacote.</li>
+    </ol>
+  </details>
+</div>
+
+<input type="file" id="file" accept="image/*,video/*" hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const S = 512;
+  const STILL_LIMIT = 100*1024, ANIM_LIMIT = 500*1024, MAX_SEC = 8, FPS = 12, MAX_FRAMES = 96;
+  const $ = id => document.getElementById(id);
+  const view = $('view'), vctx = view.getContext('2d');
+  const comp = document.createElement('canvas'); comp.width = comp.height = S;
+  const cctx = comp.getContext('2d');
+  let frames = [], delays = [], originals = [], cur = 0, playing = true, busy = false;
+  const isAnim = () => frames.length > 1;
+  const st = { x:0, y:0, s:1, rot:0, flip:1, shape:'free', mode:'move',
+    t1:'', t2:'', font:'Anton', fs:64, tc:'#ffffff', tsc:'#000000', caps:true,
+    ow:0, oc:'#ffffff', sh:0, speed:1 };
+  const undoStack = [];
+
+
+  function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),3000); }
+  function overlay(title, sub, showBtn){ $('empty').style.display='flex'; $('emptyTitle').textContent=title; $('emptySub').textContent=sub||''; $('pickBig').style.display=showBtn?'':'none'; }
+  const nextFrame = () => new Promise(r => setTimeout(r, 0));
+
+  // ---------- loading ----------
+  function newCanvas(w,h){ const c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+  function scaled(srcW, srcH, max){ const k=Math.min(1, max/Math.max(srcW,srcH)); return [Math.max(1,Math.round(srcW*k)), Math.max(1,Math.round(srcH*k))]; }
+  function ctxOf(c){ return c._ctx || (c._ctx = c.getContext('2d', { willReadFrequently:true })); }
+
+  async function loadFile(f){
+    if (!f || busy) return;
+    const type = f.type || '';
+    const name = (f.name||'').toLowerCase();
+    try {
+      if (type.startsWith('video/') || /\.(mp4|webm|mov|m4v)$/.test(name)) return await loadVideo(f);
+      if (type === 'image/gif' || name.endsWith('.gif')) return await loadGif(f);
+      if (type.startsWith('image/')) return loadStill(f);
+      toast('Formato não reconhecido. Use imagem, GIF ou vídeo MP4.');
+    } catch(e) { busy=false; console.error(e); toast('Não consegui abrir esse arquivo.'); if(!frames.length) overlay('Escolha uma imagem, GIF ou vídeo','',true); else $('empty').style.display='none'; }
+  }
+  function loadStill(f){
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => { const [w,h]=scaled(img.naturalWidth,img.naturalHeight,1200); const c=newCanvas(w,h); ctxOf(c).drawImage(img,0,0,w,h); setFrames([c],[100]); URL.revokeObjectURL(url); };
+    img.onerror = () => toast('Não consegui abrir essa imagem.');
+    img.src = url;
+  }
+  async function loadVideo(f){
+    busy = true; overlay('Lendo o vídeo…','preparando quadros', false);
+    const url = URL.createObjectURL(f);
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+    await new Promise((res, rej) => { v.onloadeddata = res; v.onerror = () => rej(new Error('video')); });
+    const dur = Math.min(isFinite(v.duration) ? v.duration : MAX_SEC, MAX_SEC);
+    const n = Math.max(1, Math.min(MAX_FRAMES, Math.floor(dur*FPS)));
+    const [w,h] = scaled(v.videoWidth, v.videoHeight, 512);
+    const out = [];
+    for (let i=0;i<n;i++){
+      const t = Math.min(dur-0.01, i/FPS + 0.001);
+      await new Promise(res => { const done=()=>{v.removeEventListener('seeked',done);res();}; v.addEventListener('seeked',done); v.currentTime = t; setTimeout(done, 1500); });
+      const c = newCanvas(w,h); ctxOf(c).drawImage(v,0,0,w,h); out.push(c);
+      $('emptySub').textContent = `extraindo quadros… ${Math.round((i+1)/n*100)}%`;
+    }
+    URL.revokeObjectURL(url); busy = false;
+    setFrames(out, out.map(()=>Math.round(1000/FPS)));
+    if ((v.duration||0) > MAX_SEC+0.2) toast(`Usei os primeiros ${MAX_SEC} s do vídeo (limite das figurinhas).`);
+  }
+  async function loadGif(f){
+    if (!('ImageDecoder' in window)) { toast('Este navegador não lê GIF animado — use o vídeo MP4, ou abra no Chrome.'); return loadStill(f); }
+    busy = true; overlay('Lendo o GIF…','', false);
+    const dec = new ImageDecoder({ data: await f.arrayBuffer(), type: 'image/gif' });
+    await dec.tracks.ready;
+    const count = dec.tracks.selectedTrack.frameCount;
+    let out = [], dl_ = [], total = 0;
+    for (let i=0;i<count && total < MAX_SEC*1000;i++){
+      const { image } = await dec.decode({ frameIndex:i });
+      const [w,h] = scaled(image.displayWidth, image.displayHeight, 512);
+      const c = newCanvas(w,h); ctxOf(c).drawImage(image,0,0,w,h);
+      const d = Math.max(20, Math.round((image.duration||100000)/1000));
+      image.close(); out.push(c); dl_.push(d); total += d;
+      $('emptySub').textContent = `quadro ${i+1} de ${count}`;
+    }
+    while (out.length > MAX_FRAMES) { const o=[], d=[]; for (let i=0;i<out.length;i+=2){ o.push(out[i]); d.push(dl_[i]+(dl_[i+1]||0)); } out=o; dl_=d; }
+    busy = false; setFrames(out, dl_);
+  }
+  function setFrames(list, dels){
+    frames = list; delays = dels; cur = 0;
+    originals = frames.map(c => ctxOf(c).getImageData(0,0,c.width,c.height));
+    undoStack.length = 0; $('undo').disabled = true;
+    st.rot = 0; st.flip = 1; $('rot').value = 0; $('rv').textContent='0°';
+    $('empty').style.display = 'none';
+    ['saveWebp','shareNow','saveGal'].forEach(id => $(id).disabled = false);
+    const anim = isAnim();
+    $('animBox').style.display = anim ? 'flex' : 'none';
+        if (anim) { const secs = delays.reduce((a,b)=>a+b,0)/1000; $('animInfo').textContent = `🎞 Animada · ${frames.length} quadros · ${secs.toFixed(1).replace('.',',')} s`; playing = true; $('play').textContent='⏸ Pausar'; }
+    fit(0.92);
+  }
+  const W = () => frames[cur].width, H = () => frames[cur].height;
+  function fit(f){ if(!frames.length) return; st.s = Math.min(S/W(), S/H())*f; st.x = 0; st.y = 0; syncZoom(); render(); }
+  function fillFit(){ if(!frames.length) return; st.s = Math.max(S/W(), S/H()); st.x=0; st.y=0; syncZoom(); render(); }
+  function syncZoom(){ $('zoom').value = Math.round(st.s*100); $('zv').textContent = Math.round(st.s*100)+'%'; }
+
+  $('pick').onclick = $('pickBig').onclick = () => $('file').click();
+  $('file').onchange = e => { loadFile(e.target.files[0]); e.target.value=''; };
+  const box = $('box');
+  box.addEventListener('dragover', e => e.preventDefault());
+  box.addEventListener('drop', e => { e.preventDefault(); loadFile(e.dataTransfer.files[0]); });
+  window.addEventListener('paste', e => {
+    if (e.target && e.target.id === 'xlink') return;
+    const it = [...(e.clipboardData?.items||[])].find(i => i.type.startsWith('image/') || i.type.startsWith('video/'));
+    if (it) loadFile(it.getAsFile());
+  });
+
+  // ---------- X link ----------
+  let lastTid = null;
+  function onXLink(force){
+    const v = $('xlink').value.trim(), box = $('xinfo');
+    if (!v) { box.style.display='none'; return; }
+    const m = v.match(/(?:x|twitter|fxtwitter|vxtwitter|fixupx)\.com\/([^\/?#]+)\/status(?:es)?\/(\d+)/i);
+    box.style.display = 'block';
+    if (!m) { box.innerHTML = 'Esse não parece um link de post do X (<b>x.com/usuario/status/…</b>).'; return; }
+    if (m[2] === lastTid && !force) return;
+    lastTid = m[2];
+    box.innerHTML = '⏳ Buscando o GIF de <b>@'+m[1]+'</b>…';
+    overlay('Buscando o GIF…', '@'+m[1], false);
+    window.Android ? Android.fetchX(v) : toast('Abra pelo app Figurinheiro.');
+  }
+  window.onNativeStatus = msg => { $('xinfo').style.display='block'; $('xinfo').textContent = '⏳ ' + msg; if ($('empty').style.display!=='none') $('emptyTitle').textContent = msg; };
+  window.onNativeError = msg => { lastTid = null; $('xinfo').style.display='block'; $('xinfo').innerHTML = '✗ ' + msg + '<br><button class="btn" onclick="window.__retry()">Tentar de novo</button>';
+    toast(msg); if (!frames.length) overlay('Escolha uma imagem, GIF ou vídeo','ou compartilhe um post do X com o Figurinheiro',true); else $('empty').style.display='none'; };
+  window.__retry = () => onXLink(true);
+  window.onNativeMedia = async (url, mime, name) => {
+    try { const b = await (await fetch(url)).blob(); $('xinfo').textContent = '✓ Mídia baixada.'; await loadFile(new File([b], name, { type: mime })); }
+    catch(e){ window.onNativeError('Não consegui ler a mídia baixada.'); }
+  };
+  window.onSharedText = t => { $('xlink').value = t; $('clipBanner').style.display='none'; onXLink(true); };
+  window.onClipboard = t => { if (Downloader_tid(t) === lastTid) return; $('clipBanner').style.display='flex'; $('clipUse').onclick = () => window.onSharedText(t); };
+  const Downloader_tid = t => (t.match(/status(?:es)?\/(\d+)/)||[])[1];
+  $('clipNo').onclick = () => $('clipBanner').style.display='none';
+  window.onBack = () => { window.Android && Android.exitApp(); };
+  $('xlink').addEventListener('input', onXLink);
+
+  // ---------- shapes ----------
+  function shapePath(ctx, shape, pad){
+    const a = pad, b = S - pad, w = b - a, c = S/2;
+    ctx.beginPath();
+    if (shape === 'square') ctx.rect(a, a, w, w);
+    else if (shape === 'round') { const r = w*0.18; ctx.moveTo(a+r,a); ctx.arcTo(b,a,b,b,r); ctx.arcTo(b,b,a,b,r); ctx.arcTo(a,b,a,a,r); ctx.arcTo(a,a,b,a,r); ctx.closePath(); }
+    else if (shape === 'circle') ctx.arc(c, c, w/2, 0, Math.PI*2);
+    else if (shape === 'heart') {
+      const k = w/2;
+      ctx.moveTo(c, c + k*0.95);
+      ctx.bezierCurveTo(c - k*1.25, c + k*0.1, c - k*0.95, c - k*1.05, c, c - k*0.45);
+      ctx.bezierCurveTo(c + k*0.95, c - k*1.05, c + k*1.25, c + k*0.1, c, c + k*0.95);
+      ctx.closePath();
+    } else if (shape === 'star') {
+      const R = w/2, r = R*0.5;
+      for (let i=0;i<10;i++){ const ang=-Math.PI/2+i*Math.PI/5, rr=i%2?r:R; const px=c+Math.cos(ang)*rr, py=c+Math.sin(ang)*rr+R*0.06; i?ctx.lineTo(px,py):ctx.moveTo(px,py); }
+      ctx.closePath();
+    }
+  }
+
+  // ---------- render ----------
+  const tmpA = newCanvas(S,S), tmpB = newCanvas(S,S);
+  function compose(idx){
+    cctx.setTransform(1,0,0,1,0,0); cctx.clearRect(0,0,S,S);
+    const src = frames[idx];
+    const pad = Math.ceil(st.ow + st.sh*0.6) + 2;
+    const a = tmpA.getContext('2d');
+    a.setTransform(1,0,0,1,0,0); a.clearRect(0,0,S,S);
+    a.imageSmoothingQuality = 'high';
+    a.translate(S/2 + st.x, S/2 + st.y); a.rotate(st.rot*Math.PI/180); a.scale(st.s*st.flip, st.s);
+    a.drawImage(src, -src.width/2, -src.height/2);
+    a.setTransform(1,0,0,1,0,0);
+    if (st.shape !== 'free') { a.globalCompositeOperation='destination-in'; shapePath(a, st.shape, pad); a.fillStyle='#000'; a.fill(); a.globalCompositeOperation='source-over'; }
+    if (st.ow > 0) {
+      const b = tmpB.getContext('2d');
+      b.setTransform(1,0,0,1,0,0); b.clearRect(0,0,S,S); b.drawImage(tmpA,0,0);
+      b.globalCompositeOperation='source-in'; b.fillStyle=st.oc; b.fillRect(0,0,S,S); b.globalCompositeOperation='source-over';
+      const t = st.ow;
+      for (const rr of [t, t*0.66, t*0.33]) { const n=Math.max(12,Math.round(rr*4)); for (let i=0;i<n;i++){ const g=i/n*Math.PI*2; cctx.drawImage(tmpB, Math.cos(g)*rr, Math.sin(g)*rr); } }
+    }
+    if (st.sh > 0) {
+      const b = tmpB.getContext('2d');
+      b.setTransform(1,0,0,1,0,0); b.clearRect(0,0,S,S); b.drawImage(comp,0,0); b.drawImage(tmpA,0,0);
+      cctx.clearRect(0,0,S,S);
+      cctx.save(); cctx.shadowColor='rgba(0,0,0,.45)'; cctx.shadowBlur=st.sh*1.6; cctx.shadowOffsetY=st.sh*0.5; cctx.drawImage(tmpB,0,0); cctx.restore();
+    } else cctx.drawImage(tmpA,0,0);
+    drawText(st.t1,'top'); drawText(st.t2,'bottom');
+  }
+  function render(){
+    if (!frames.length) { vctx.clearRect(0,0,S,S); updateMeta(); return; }
+    compose(cur);
+    vctx.clearRect(0,0,S,S); vctx.drawImage(comp,0,0);
+    scheduleMeta();
+  }
+  function wrapLines(ctx, text, maxW){
+    const words = text.split(/\s+/).filter(Boolean); const lines=[]; let c='';
+    for (const w of words){ const t=c?c+' '+w:w; if (ctx.measureText(t).width>maxW && c){ lines.push(c); c=w; } else c=t; }
+    if (c) lines.push(c); return lines;
+  }
+  function drawText(raw, pos){
+    if (!raw || !raw.trim()) return;
+    const text = st.caps ? raw.toUpperCase() : raw;
+    let fs = st.fs; const maxW = S - 36, x = cctx;
+    x.save(); x.textAlign='center'; x.textBaseline='middle'; x.lineJoin='round'; x.miterLimit=2;
+    let lines;
+    for (;;) { x.font=`${fs}px ${st.font}`; lines=wrapLines(x,text,maxW); const wd=Math.max(...lines.map(l=>x.measureText(l).width)); if ((wd<=maxW && lines.length<=3) || fs<=18) break; fs-=3; }
+    const lh = fs*1.05, total = lh*lines.length;
+    const y0 = pos==='top' ? 14 + lh/2 + fs*0.08 : S - 14 - total + lh/2;
+    lines.forEach((l,i)=>{ const y=y0+i*lh; x.lineWidth=Math.max(4,fs*0.2); x.strokeStyle=st.tsc; x.strokeText(l,S/2,y); x.fillStyle=st.tc; x.fillText(l,S/2,y); });
+    x.restore();
+  }
+
+  // ---------- animation loop ----------
+  let acc = 0, lastT = 0;
+  function loop(t){
+    requestAnimationFrame(loop);
+    if (!isAnim() || !playing || busy) { lastT = t; return; }
+    acc += (t - lastT) * st.speed; lastT = t;
+    let changed = false;
+    while (acc >= delays[cur]) { acc -= delays[cur]; cur = (cur+1) % frames.length; changed = true; }
+    if (changed) { compose(cur); vctx.clearRect(0,0,S,S); vctx.drawImage(comp,0,0); }
+  }
+  requestAnimationFrame(loop);
+  $('play').onclick = () => { playing = !playing; $('play').textContent = playing ? '⏸ Pausar' : '▶ Tocar'; };
+  $('speed').oninput = e => { st.speed = e.target.value/100; $('spv').textContent = st.speed.toFixed(2).replace(/0$/,'').replace('.',',')+'×'; scheduleMeta(); };
+
+  // ---------- encoding ----------
+  function toBlob(type, q){ return new Promise(r => comp.toBlob(b => r(b), type, q)); }
+  async function makeWebp(){
+    compose(cur);
+    let q = 0.92, blob = null;
+    for (; q >= 0.2; q -= 0.08) {
+      blob = await toBlob('image/webp', q);
+      if (!blob || blob.type !== 'image/webp') return { blob:null };
+      if (blob.size <= STILL_LIMIT) break;
+    }
+    return { blob, q };
+  }
+  // parse a still WebP into its image chunks (ALPH + VP8 / VP8L)
+  function webpChunks(buf){
+    const dv = new DataView(buf), u8 = new Uint8Array(buf), out = [];
+    let p = 12;
+    while (p + 8 <= u8.length) {
+      const id = String.fromCharCode(u8[p],u8[p+1],u8[p+2],u8[p+3]); const sz = dv.getUint32(p+4, true);
+      if (id === 'ALPH' || id === 'VP8 ' || id === 'VP8L') out.push(u8.subarray(p, p + 8 + sz + (sz & 1)));
+      p += 8 + sz + (sz & 1);
+    }
+    return out;
+  }
+  const u24 = (arr, v) => arr.push(v & 255, (v>>8) & 255, (v>>16) & 255);
+  const u32 = (arr, v) => arr.push(v & 255, (v>>8) & 255, (v>>16) & 255, (v>>>24) & 255);
+  const fourcc = (arr, s) => { for (const ch of s) arr.push(ch.charCodeAt(0)); };
+  function buildAnimated(frameChunks, durs){
+    const parts = [];
+    const head = []; fourcc(head,'VP8X'); u32(head,10); head.push(0x12,0,0,0); u24(head,S-1); u24(head,S-1);
+    const anim = []; fourcc(anim,'ANIM'); u32(anim,6); u32(anim,0); anim.push(0,0);
+    parts.push(new Uint8Array(head), new Uint8Array(anim));
+    frameChunks.forEach((chunks, i) => {
+      const len = chunks.reduce((a,c)=>a+c.length,0);
+      const h = []; fourcc(h,'ANMF'); u32(h, 16 + len); u24(h,0); u24(h,0); u24(h,S-1); u24(h,S-1); u24(h, Math.max(10, Math.round(durs[i]))); h.push(0x02);
+      parts.push(new Uint8Array(h), ...chunks);
+    });
+    const body = parts.reduce((a,p)=>a+p.length,0);
+    const riff = []; fourcc(riff,'RIFF'); u32(riff, 4 + body); fourcc(riff,'WEBP');
+    return new Blob([new Uint8Array(riff), ...parts], { type:'image/webp' });
+  }
+  async function makeAnimWebp(onProgress){
+    const wasPlaying = playing; playing = false; busy = true;
+    try {
+      let step = 1, q = 0.8;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        const idx = []; for (let i=0;i<frames.length;i+=step) idx.push(i);
+        const durs = idx.map(i => { let d=0; for (let k=i;k<Math.min(i+step,frames.length);k++) d+=delays[k]; return d/st.speed; });
+        const chunks = [];
+        for (let j=0;j<idx.length;j++){
+          compose(idx[j]);
+          const b = await toBlob('image/webp', q);
+          if (!b || b.type !== 'image/webp') return { blob:null };
+          chunks.push(webpChunks(await b.arrayBuffer()));
+          onProgress && onProgress(attempt, j/idx.length);
+          if (j % 6 === 0) await nextFrame();
+        }
+        const blob = buildAnimated(chunks, durs);
+        if (blob.size <= ANIM_LIMIT) return { blob, q, n: idx.length };
+        if (q > 0.45) q -= 0.15; else { step++; q = 0.6; }
+      }
+      return { blob:null, tooBig:true };
+    } finally { busy = false; playing = wasPlaying; compose(cur); vctx.clearRect(0,0,S,S); vctx.drawImage(comp,0,0); }
+  }
+
+  let metaTimer = null;
+  function scheduleMeta(){ clearTimeout(metaTimer); metaTimer = setTimeout(updateMeta, 350); }
+  async function updateMeta(){
+    const m = $('meta');
+    if (!frames.length) { m.textContent='—'; m.className='meta'; return; }
+    if (isAnim()) {
+      const secs = delays.reduce((a,b)=>a+b,0)/1000/st.speed;
+      m.textContent = `512×512 · animada · ${secs.toFixed(1).replace('.',',')} s · o tamanho (até 500 KB) é ajustado ao baixar`;
+      m.className = secs > 10 ? 'meta warn' : 'meta'; if (secs > 10) m.textContent += ' — passa de 10 s, aumente a velocidade';
+      return;
+    }
+    const { blob, q } = await makeWebp();
+    if (!blob) { m.textContent = 'Este navegador não gera WebP — use o botão PNG (o WhatsApp aceita).'; m.className='meta warn'; return; }
+    const kb = (blob.size/1024).toFixed(1).replace('.',',');
+    if (blob.size <= STILL_LIMIT) { m.textContent = `512×512 · WebP ${kb} KB · qualidade ${Math.round(q*100)}% ✓ dentro do limite`; m.className='meta ok'; }
+    else { m.textContent = `WebP ${kb} KB — acima de 100 KB; simplifique a imagem`; m.className='meta warn'; }
+  }
+  function stamp(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; }
+  function b64(blob){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); }); }
+  async function trayPng(){
+    compose(cur); const t = document.createElement('canvas'); t.width = t.height = 96;
+    t.getContext('2d').drawImage(comp, 0, 0, 96, 96);
+    return new Promise(r => t.toBlob(b => r(b), 'image/png'));
+  }
+  async function buildSticker(btn){
+    const label = btn.textContent;
+    if (isAnim()) {
+      btn.disabled = true;
+      const r = await makeAnimWebp((att, f) => { btn.textContent = `Gerando… ${Math.round(f*100)}%${att?' (compactando)':''}`; });
+      btn.disabled = false; btn.textContent = label;
+      if (!r.blob) { toast(r.tooBig ? 'Não coube em 500 KB — aumente a velocidade ou simplifique.' : 'Não consegui gerar a animação.'); return null; }
+      return { blob: r.blob, animated: true };
+    }
+    const { blob } = await makeWebp();
+    if (!blob) { toast('Não consegui gerar o WebP.'); return null; }
+    return { blob, animated: false };
+  }
+  let added = {}; try { added = JSON.parse(localStorage.getItem('waAdded')||'{}'); } catch(e){}
+  const markAdded = id => { added[id] = 1; try { localStorage.setItem('waAdded', JSON.stringify(added)); } catch(e){} };
+  $('saveWebp').onclick = async () => {
+    if (busy || !window.Android) return;
+    const st_ = await buildSticker($('saveWebp')); if (!st_) return;
+    const res = JSON.parse(Android.saveSticker(await b64(st_.blob), st_.animated, await b64(await trayPng())));
+    if (!res.ok) { toast('Erro ao salvar: ' + res.error); return; }
+    renderPacks(res.packs);
+    const p = res.packs.find(x => x.id === res.pack), n = p ? p.stickers.length : 0;
+    if (added[res.pack]) toast(`✓ Salva no ${p.name}. Já vai aparecer no WhatsApp.`);
+    else if (n < 3) toast(`✓ Salva (${n}/3). Faça mais ${3-n} para liberar o pacote no WhatsApp.`);
+    else { toast('✓ Salva! Pacote pronto — adicionando ao WhatsApp…'); Android.addToWhatsApp(res.pack); lastAdd = res.pack; }
+    document.querySelector('.packsBox').scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+  $('shareNow').onclick = async () => {
+    if (busy || !window.Android) return;
+    const st_ = await buildSticker($('shareNow')); if (!st_) return;
+    Android.shareNow(await b64(st_.blob));
+  };
+  $('saveGal').onclick = async () => {
+    if (busy || !window.Android) return;
+    const st_ = await buildSticker($('saveGal')); if (!st_) return;
+    const ok = Android.saveToGallery(await b64(st_.blob), `figurinha-${stamp()}.webp`);
+    toast(ok ? '✓ Salva em Imagens/Figurinhas.' : 'Não consegui salvar na galeria neste Android.');
+  };
+  let lastAdd = null;
+  window.onWaResult = (ok, err) => {
+    if (ok) { if (lastAdd) markAdded(lastAdd); toast('✓ Pacote adicionado ao WhatsApp!'); }
+    else if (err) toast('WhatsApp recusou: ' + err);
+    else { if (lastAdd) markAdded(lastAdd); toast('Pacote já está no WhatsApp ou foi cancelado.'); }
+    renderPacks();
+  };
+  function renderPacks(list){
+    if (!window.Android) return;
+    if (!list) list = JSON.parse(Android.packs());
+    const el = $('packList');
+    if (!list.length) { el.innerHTML = '<div class="note">Nenhuma figurinha salva ainda. Crie a primeira acima e toque em <b>➕ Salvar no meu pacote</b>.</div>'; return; }
+    el.innerHTML = '';
+    for (const p of list) {
+      const d = document.createElement('div'); d.className = 'pack';
+      const n = p.stickers.length, can = n >= 3;
+      d.innerHTML = `<div class="packHead"><b>${p.animated?'🎞':'🖼'} ${p.name} <small>· ${n}/30</small></b>
+        <button class="btn ${can && !added[p.id] ? 'pri':''}" ${can?'':'disabled'}>${can ? (added[p.id] ? '↻ Atualizar no WhatsApp' : '➕ Adicionar ao WhatsApp') : `faltam ${3-n}`}</button></div><div class="thumbs"></div>`;
+      d.querySelector('.packHead button').onclick = () => { lastAdd = p.id; Android.addToWhatsApp(p.id); };
+      const th = d.querySelector('.thumbs');
+      for (const f of p.stickers) {
+        const t = document.createElement('div'); t.className = 'thumb';
+        t.innerHTML = `<img loading="lazy" src="https://app.local/pack/${p.id}/${f}"><button title="Apagar">✕</button>`;
+        t.onclick = e => { if (e.target.tagName === 'BUTTON') { renderPacks(JSON.parse(Android.deleteSticker(p.id, f))); toast('Figurinha apagada.'); } else t.classList.toggle('sel'); };
+        th.appendChild(t);
+      }
+      el.appendChild(d);
+    }
+  }
+  setTimeout(() => renderPacks(), 50);
+
+  // ---------- eraser (applies to every frame) ----------
+  function toSrc(px, py){
+    const x = px - S/2 - st.x, y = py - S/2 - st.y;
+    const r = -st.rot*Math.PI/180, c = Math.cos(r), s = Math.sin(r);
+    return { x: (x*c - y*s)/(st.s*st.flip) + W()/2, y: (x*s + y*c)/st.s + H()/2 };
+  }
+  function pushUndo(){
+    undoStack.push(frames.map(c => ctxOf(c).getImageData(0,0,c.width,c.height)));
+    const lim = isAnim() ? 2 : 20; while (undoStack.length > lim) undoStack.shift();
+    $('undo').disabled = false;
+  }
+  $('undo').onclick = () => { if (!undoStack.length) return; const snap = undoStack.pop(); frames.forEach((c,i)=>ctxOf(c).putImageData(snap[i],0,0)); $('undo').disabled = !undoStack.length; render(); };
+  $('resetBg').onclick = () => { if (!frames.length) return; pushUndo(); frames.forEach((c,i)=>ctxOf(c).putImageData(originals[i],0,0)); render(); };
+
+  function wandOn(canvas, sx, sy, tol, global){
+    const w = canvas.width, h = canvas.height, ctx = ctxOf(canvas);
+    sx = Math.floor(sx); sy = Math.floor(sy);
+    if (sx<0||sy<0||sx>=w||sy>=h) return;
+    const id = ctx.getImageData(0,0,w,h), d = id.data, i0 = (sy*w+sx)*4;
+    if (d[i0+3] === 0) return;
+    const r0=d[i0], g0=d[i0+1], b0=d[i0+2], tol2 = tol*tol*3;
+    const near = i => { const dr=d[i]-r0, dg=d[i+1]-g0, db=d[i+2]-b0; return d[i+3]>0 && dr*dr+dg*dg+db*db <= tol2; };
+    if (global) { for (let i=0;i<d.length;i+=4) if (near(i)) d[i+3]=0; }
+    else {
+      const seen = new Uint8Array(w*h), stack = [sy*w+sx];
+      while (stack.length){
+        const p = stack.pop(); if (seen[p]) continue; seen[p]=1;
+        const i = p*4; if (!near(i)) continue;
+        d[i+3] = 0;
+        const x = p % w, y = (p / w) | 0;
+        if (x>0) stack.push(p-1); if (x<w-1) stack.push(p+1); if (y>0) stack.push(p-w); if (y<h-1) stack.push(p+w);
+      }
+      const tolF = tol2*2.2;
+      for (let p=0;p<w*h;p++){
+        const i=p*4; if (d[i+3]===0) continue;
+        const x=p%w, y=(p/w)|0;
+        if ((x>0&&d[i-1]===0)||(x<w-1&&d[i+7]===0)||(y>0&&d[i-w*4+3]===0)||(y<h-1&&d[i+w*4+3]===0)){
+          const dr=d[i]-r0, dg=d[i+1]-g0, db=d[i+2]-b0, dist=dr*dr+dg*dg+db*db;
+          if (dist < tolF) d[i+3] = Math.min(d[i+3], Math.round(255*(dist-tol2)/(tolF-tol2)));
+        }
+      }
+    }
+    ctx.putImageData(id,0,0);
+  }
+  async function wandAll(points){
+    const tol = +$('tol').value, global = $('global').checked;
+    if (isAnim()) toast('Aplicando em todos os quadros…');
+    busy = true; await nextFrame();
+    for (let f=0; f<frames.length; f++){ for (const [x,y] of points) wandOn(frames[f], x, y, tol, global); if (f%8===7) await nextFrame(); }
+    busy = false; render();
+  }
+  $('cornerWand').onclick = async () => {
+    if (!frames.length || busy) return; pushUndo();
+    const w=W()-1, h=H()-1;
+    await wandAll([[0,0],[w,0],[0,h],[w,h],[w/2,0],[0,h/2],[w,h/2]]);
+    toast('Fundo dos cantos removido. Ajuste a tolerância se precisar.');
+  };
+  function brushAt(px, py){
+    const p = toSrc(px, py), r = (+$('brushSize').value/2)/st.s;
+    for (const c of frames) { const x = ctxOf(c); x.save(); x.globalCompositeOperation='destination-out'; x.beginPath(); x.arc(p.x,p.y,r,0,Math.PI*2); x.fill(); x.restore(); }
+  }
+  function brushLine(a, b){
+    const dist = Math.hypot(b.x-a.x, b.y-a.y), step = Math.max(2, +$('brushSize').value/4);
+    for (let t=step; t<dist; t+=step) brushAt(a.x+(b.x-a.x)*t/dist, a.y+(b.y-a.y)*t/dist);
+    brushAt(b.x,b.y);
+  }
+
+  // ---------- pointer ----------
+  const pts = new Map(); let pinch = null, lastPt = null;
+  function cpos(e){ const r = view.getBoundingClientRect(); return { x:(e.clientX-r.left)*S/r.width, y:(e.clientY-r.top)*S/r.height }; }
+  view.addEventListener('pointerdown', e => {
+    if (!frames.length || busy) return;
+    view.setPointerCapture(e.pointerId);
+    const p = cpos(e); pts.set(e.pointerId, p);
+    if (pts.size === 2) { const [a,b]=[...pts.values()]; pinch = { d:Math.hypot(a.x-b.x,a.y-b.y), s:st.s, ang:Math.atan2(b.y-a.y,b.x-a.x), rot:st.rot }; return; }
+    if (st.mode === 'wand') { const q = toSrc(p.x,p.y); pushUndo(); wandAll([[q.x,q.y]]); }
+    else if (st.mode === 'brush') { pushUndo(); brushAt(p.x,p.y); render(); }
+    lastPt = p;
+  });
+  view.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    const p = cpos(e), prev = pts.get(e.pointerId); pts.set(e.pointerId, p);
+    if (pts.size === 2 && pinch) {
+      const [a,b] = [...pts.values()];
+      st.s = Math.max(0.02, pinch.s * Math.hypot(a.x-b.x,a.y-b.y)/pinch.d);
+      st.rot = Math.round(pinch.rot + (Math.atan2(b.y-a.y,b.x-a.x)-pinch.ang)*180/Math.PI);
+      st.rot = ((st.rot+540)%360)-180; $('rot').value = st.rot; $('rv').textContent = st.rot+'°';
+      st.x += (p.x-prev.x)/2; st.y += (p.y-prev.y)/2; syncZoom(); render(); return;
+    }
+    if (st.mode === 'move') { st.x += p.x-prev.x; st.y += p.y-prev.y; render(); }
+    else if (st.mode === 'brush' && lastPt) { brushLine(lastPt, p); lastPt = p; render(); }
+  });
+  const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) lastPt = null; };
+  view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
+  view.addEventListener('wheel', e => { if (!frames.length) return; e.preventDefault(); st.s = Math.max(0.02, st.s*(e.deltaY<0?1.08:1/1.08)); syncZoom(); render(); }, { passive:false });
+
+  // ---------- controls ----------
+  const hints = { move:'Arraste para mover · pinça ou roda do mouse para ampliar', wand:'Toque no fundo para apagar a área de cor parecida', brush:'Passe o dedo ou o mouse para apagar' };
+  $('modes').onclick = e => { const b = e.target.closest('button'); if(!b) return;
+    st.mode = b.dataset.m; [...$('modes').children].forEach(x=>x.classList.toggle('on', x===b));
+    view.classList.toggle('erase', st.mode!=='move'); $('hint').textContent = hints[st.mode]; };
+  $('tabs').onclick = e => { const b = e.target.closest('button'); if(!b) return;
+    [...$('tabs').children].forEach(x=>x.classList.toggle('on', x===b));
+    document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on', p.dataset.p===b.dataset.t));
+    if (b.dataset.t==='bg' && st.mode==='move') $('modes').children[1].click(); };
+  $('shapes').onclick = e => { const b = e.target.closest('.chip'); if(!b) return;
+    st.shape = b.dataset.s; [...$('shapes').children].forEach(x=>x.classList.toggle('on', x===b)); render(); };
+  $('zoom').oninput = e => { st.s = e.target.value/100; $('zv').textContent = e.target.value+'%'; render(); };
+  $('rot').oninput = e => { st.rot = +e.target.value; $('rv').textContent = st.rot+'°'; render(); };
+  $('fit').onclick = () => fit(0.92); $('fill').onclick = fillFit;
+  $('center').onclick = () => { st.x=0; st.y=0; render(); };
+  $('flip').onclick = () => { st.flip *= -1; render(); };
+  $('bgToggle').onclick = () => box.classList.toggle('dark');
+  $('tol').oninput = e => $('tv').textContent = e.target.value;
+  $('brushSize').oninput = e => $('bv').textContent = e.target.value+' px';
+  const bind = (id, key, fmt, num=true) => $(id).addEventListener('input', e => {
+    st[key] = num ? +e.target.value : e.target.value; if (fmt) $(fmt[0]).textContent = fmt[1](st[key]); render(); });
+  bind('t1','t1',null,false); bind('t2','t2',null,false);
+  bind('fs','fs',['fsv',v=>v]); bind('tc','tc',null,false); bind('tsc','tsc',null,false);
+  bind('ow','ow',['ov',v=>v+' px']); bind('oc','oc',null,false); bind('sh','sh',['shv',v=>v]);
+  $('caps').onchange = e => { st.caps = e.target.checked; render(); };
+  $('font').onchange = e => { st.font = e.target.value; const fam = st.font.split(',')[0];
+    (document.fonts ? document.fonts.load(`64px ${fam}`) : Promise.resolve()).then(render, render); };
+  if (document.fonts) document.fonts.ready.then(render);
+  render();
+})();
+</script>
+</body>
+</html>
