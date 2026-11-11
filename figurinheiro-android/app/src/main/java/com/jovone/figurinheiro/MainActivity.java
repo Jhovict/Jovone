@@ -249,6 +249,28 @@ public class MainActivity extends Activity {
             return Packs.json(MainActivity.this);
         }
 
+        /** Pergunta ao próprio WhatsApp se o pacote já está instalado nele. */
+        @JavascriptInterface
+        public boolean isAdded(String id) {
+            for (String pkg : new String[]{"com.whatsapp", "com.whatsapp.w4b"}) {
+                Uri u = Uri.parse("content://" + pkg + ".provider.sticker_whitelist_check/is_whitelisted").buildUpon()
+                        .appendQueryParameter("authority", Packs.AUTHORITY).appendQueryParameter("identifier", id).build();
+                try (android.database.Cursor c = getContentResolver().query(u, null, null, null, null)) {
+                    if (c != null && c.moveToFirst() && c.getInt(c.getColumnIndexOrThrow("result")) == 1) return true;
+                } catch (Exception ignored) {}
+            }
+            return false;
+        }
+
+        @JavascriptInterface
+        public void openWhatsApp() {
+            runOnUiThread(() -> {
+                String pkg = waPackage();
+                Intent i = pkg == null ? null : getPackageManager().getLaunchIntentForPackage(pkg);
+                if (i != null) startActivity(i);
+            });
+        }
+
         @JavascriptInterface
         public boolean hasWhatsApp() { return waPackage() != null; }
 

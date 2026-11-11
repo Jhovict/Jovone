@@ -58,6 +58,24 @@ public final class Packs {
         return out;
     }
 
+    /** Só as figurinhas de verdade (sem as cópias de preenchimento). */
+    public static List<File> real(Context c, String id) {
+        List<File> out = new ArrayList<>();
+        for (File f : stickers(c, id)) if (!f.getName().startsWith("pad")) out.add(f);
+        return out;
+    }
+
+    /** O WhatsApp exige 3 figurinhas por pacote: completa com cópias até haver 3 de verdade. */
+    private static void pad(Context c, String id) throws Exception {
+        File dir = new File(root(c), id);
+        File[] old = dir.listFiles((d, n) -> n.startsWith("pad"));
+        if (old != null) for (File f : old) f.delete();
+        List<File> r = real(c, id);
+        if (r.isEmpty() || r.size() >= 3) return;
+        byte[] data = java.nio.file.Files.readAllBytes(r.get(r.size() - 1).toPath());
+        for (int i = 1; i <= 3 - r.size(); i++) write(new File(dir, "pad" + i + ".webp"), data);
+    }
+
     public static String version(Context c, String id) {
         return String.valueOf(prefs(c).getInt("v_" + id, 1));
     }
@@ -87,7 +105,8 @@ public final class Packs {
         String name = "s" + System.currentTimeMillis() + ".webp";
         write(new File(dir, name), webp);
         File tray = new File(dir, "tray.png");
-        if ((!tray.exists() || stickers(c, target).size() == 1) && trayPng != null && trayPng.length > 0) write(tray, trayPng);
+        pad(c, target);
+        if ((!tray.exists() || real(c, target).size() == 1) && trayPng != null && trayPng.length > 0) write(tray, trayPng);
         bump(c, target);
         return target;
     }
@@ -96,8 +115,10 @@ public final class Packs {
         if (file.contains("/") || id.contains("/")) return;
         File f = new File(new File(root(c), id), file);
         if (f.delete()) bump(c, id);
-        if (stickers(c, id).isEmpty()) {
-            new File(new File(root(c), id), "tray.png").delete();
+        try { pad(c, id); } catch (Exception ignored) {}
+        if (real(c, id).isEmpty()) {
+            File[] rest = new File(root(c), id).listFiles();
+            if (rest != null) for (File x : rest) x.delete();
             new File(root(c), id).delete();
         }
     }
@@ -115,7 +136,7 @@ public final class Packs {
                 o.put("name", name(id));
                 o.put("animated", isAnimated(id));
                 JSONArray s = new JSONArray();
-                for (File f : stickers(c, id)) s.put(f.getName());
+                for (File f : real(c, id)) s.put(f.getName());
                 o.put("stickers", s);
                 arr.put(o);
             }

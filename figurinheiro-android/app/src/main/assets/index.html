@@ -230,8 +230,9 @@
     <ol>
       <li><b>Do X direto:</b> no app do X, toque em <b>Compartilhar → Figurinheiro</b> (ou copie o link e abra o app). O GIF é baixado sozinho.</li>
       <li>Ajuste (texto, contorno, recorte, fundo) e toque em <b>➕ Salvar no meu pacote</b>.</li>
-      <li>Com 3 figurinhas no pacote (exigência do WhatsApp), toque em <b>Adicionar ao WhatsApp</b> uma vez. Daí em diante, as novas que você salvar entram sozinhas no pacote — elas aparecem na bandeja de figurinhas do WhatsApp.</li>
-      <li><b>📤 Enviar agora</b> manda a figurinha direto numa conversa, sem precisar de pacote.</li>
+      <li>Na primeira vez, confirme a instalação do pacote no WhatsApp. Depois, as novas entram sozinhas na bandeja de figurinhas.</li>
+      <li><b>📤 Enviar animada</b> salva no pacote e abre o WhatsApp: é só pegar a figurinha na bandeja 🙂 (o WhatsApp só mantém a animação quando ela vem de um pacote).</li>
+      <li>O WhatsApp exige 3 figurinhas por pacote; enquanto você tiver menos, o app completa com cópias, que somem sozinhas quando você criar mais.</li>
       <li>Estáticas e animadas ficam em pacotes separados (regra do WhatsApp), com até 30 por pacote.</li>
     </ol>
   </details>
@@ -329,6 +330,7 @@
     ['saveWebp','shareNow','saveGal'].forEach(id => $(id).disabled = false);
     const anim = isAnim();
     $('animBox').style.display = anim ? 'flex' : 'none';
+    $('shareNow').textContent = anim ? '📤 Enviar animada' : '📤 Enviar agora';
         if (anim) { const secs = delays.reduce((a,b)=>a+b,0)/1000; $('animInfo').textContent = `🎞 Animada · ${frames.length} quadros · ${secs.toFixed(1).replace('.',',')} s`; playing = true; $('play').textContent='⏸ Pausar'; }
     fit(0.92);
   }
@@ -564,24 +566,35 @@
     if (!blob) { toast('Não consegui gerar o WebP.'); return null; }
     return { blob, animated: false };
   }
-  let added = {}; try { added = JSON.parse(localStorage.getItem('waAdded')||'{}'); } catch(e){}
-  const markAdded = id => { added[id] = 1; try { localStorage.setItem('waAdded', JSON.stringify(added)); } catch(e){} };
+  const isAdded = id => { try { return !!(window.Android && Android.isAdded(id)); } catch(e){ return false; } };
+  let openAfterAdd = false, lastAdd = null;
+  async function saveToPack(st_){
+    const res = JSON.parse(Android.saveSticker(await b64(st_.blob), st_.animated, await b64(await trayPng())));
+    if (!res.ok) { toast('Erro ao salvar: ' + res.error); return null; }
+    renderPacks(res.packs);
+    return res;
+  }
+  function ensureAdded(id, thenOpen){
+    if (isAdded(id)) { if (thenOpen) Android.openWhatsApp(); return true; }
+    lastAdd = id; openAfterAdd = thenOpen; Android.addToWhatsApp(id); return false;
+  }
   $('saveWebp').onclick = async () => {
     if (busy || !window.Android) return;
     const st_ = await buildSticker($('saveWebp')); if (!st_) return;
-    const res = JSON.parse(Android.saveSticker(await b64(st_.blob), st_.animated, await b64(await trayPng())));
-    if (!res.ok) { toast('Erro ao salvar: ' + res.error); return; }
-    renderPacks(res.packs);
-    const p = res.packs.find(x => x.id === res.pack), n = p ? p.stickers.length : 0;
-    if (added[res.pack]) toast(`✓ Salva no ${p.name}. Já vai aparecer no WhatsApp.`);
-    else if (n < 3) toast(`✓ Salva (${n}/3). Faça mais ${3-n} para liberar o pacote no WhatsApp.`);
-    else { toast('✓ Salva! Pacote pronto — adicionando ao WhatsApp…'); Android.addToWhatsApp(res.pack); lastAdd = res.pack; }
-    document.querySelector('.packsBox').scrollIntoView({ behavior:'smooth', block:'start' });
+    const res = await saveToPack(st_); if (!res) return;
+    const p = res.packs.find(x => x.id === res.pack);
+    if (ensureAdded(res.pack, false)) toast(`✓ Salva no ${p.name} — já está na bandeja de figurinhas do WhatsApp.`);
+    else toast('✓ Salva! Confirme no WhatsApp para instalar o pacote.');
   };
   $('shareNow').onclick = async () => {
     if (busy || !window.Android) return;
     const st_ = await buildSticker($('shareNow')); if (!st_) return;
-    Android.shareNow(await b64(st_.blob));
+    if (!st_.animated) { Android.shareNow(await b64(st_.blob)); return; }
+    // Animada: o WhatsApp só mantém a animação vindo de um pacote instalado.
+    const res = await saveToPack(st_); if (!res) return;
+    const p = res.packs.find(x => x.id === res.pack);
+    const tip = `No WhatsApp: abra a conversa → 🙂 → Figurinhas → pacote “${p.name}”. A nova é a última.`;
+    if (ensureAdded(res.pack, true)) toast(tip); else window.__tip = tip;
   };
   $('saveGal').onclick = async () => {
     if (busy || !window.Android) return;
@@ -589,11 +602,12 @@
     const ok = Android.saveToGallery(await b64(st_.blob), `figurinha-${stamp()}.webp`);
     toast(ok ? '✓ Salva em Imagens/Figurinhas.' : 'Não consegui salvar na galeria neste Android.');
   };
-  let lastAdd = null;
   window.onWaResult = (ok, err) => {
-    if (ok) { if (lastAdd) markAdded(lastAdd); toast('✓ Pacote adicionado ao WhatsApp!'); }
-    else if (err) toast('WhatsApp recusou: ' + err);
-    else { if (lastAdd) markAdded(lastAdd); toast('Pacote já está no WhatsApp ou foi cancelado.'); }
+    const added = ok || (lastAdd && isAdded(lastAdd));
+    if (added) { toast(window.__tip || '✓ Pacote instalado no WhatsApp!'); if (openAfterAdd) setTimeout(() => Android.openWhatsApp(), 1200); }
+    else if (err) toast('WhatsApp recusou o pacote: ' + err);
+    else toast('Instalação do pacote cancelada.');
+    window.__tip = null; openAfterAdd = false;
     renderPacks();
   };
   function renderPacks(list){
@@ -604,10 +618,10 @@
     el.innerHTML = '';
     for (const p of list) {
       const d = document.createElement('div'); d.className = 'pack';
-      const n = p.stickers.length, can = n >= 3;
+      const n = p.stickers.length, inWa = isAdded(p.id);
       d.innerHTML = `<div class="packHead"><b>${p.animated?'🎞':'🖼'} ${p.name} <small>· ${n}/30</small></b>
-        <button class="btn ${can && !added[p.id] ? 'pri':''}" ${can?'':'disabled'}>${can ? (added[p.id] ? '↻ Atualizar no WhatsApp' : '➕ Adicionar ao WhatsApp') : `faltam ${3-n}`}</button></div><div class="thumbs"></div>`;
-      d.querySelector('.packHead button').onclick = () => { lastAdd = p.id; Android.addToWhatsApp(p.id); };
+        <button class="btn ${inWa ? '' : 'pri'}">${inWa ? '✓ No WhatsApp · abrir' : '➕ Adicionar ao WhatsApp'}</button></div><div class="thumbs"></div>`;
+      d.querySelector('.packHead button').onclick = () => ensureAdded(p.id, true);
       const th = d.querySelector('.thumbs');
       for (const f of p.stickers) {
         const t = document.createElement('div'); t.className = 'thumb';
