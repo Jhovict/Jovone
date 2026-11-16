@@ -1,19 +1,19 @@
 package com.jovone.aguaviva;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.Gravity;
 import android.view.View;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -23,23 +23,32 @@ import android.widget.Toast;
 /** Tela do app: prévia da cena, setas para escolher e botão para definir como papel de parede. */
 public class MainActivity extends Activity {
 
-    private WebView web;
+    /** Prévia: desenha a mesma Cena que vai para o fundo. */
+    static class Previa extends View {
+        Cena cena;
+        final long t0 = SystemClock.uptimeMillis();
+        Previa(Context c) { super(c); }
+        void usar(Cena c) { cena = c; if (getWidth() > 0) cena.setSize(getWidth(), getHeight()); invalidate(); }
+        @Override protected void onSizeChanged(int w, int h, int ow, int oh) { if (cena != null) cena.setSize(w, h); }
+        @Override protected void onDraw(Canvas c) {
+            long now = SystemClock.uptimeMillis();
+            if (cena != null) cena.draw(c, (now - t0) / 1000f);
+            postInvalidateDelayed(Math.max(1, 33 - (SystemClock.uptimeMillis() - now)));
+        }
+    }
+
+    private Previa previa;
     private TextView nome;
     private int cena;
 
-    @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
 
-        web = new WebView(this);
-        web.setBackgroundColor(Color.BLACK);
-        web.getSettings().setJavaScriptEnabled(true);
-        web.getSettings().setAllowFileAccess(true);
-        web.setWebViewClient(new WebViewClient());
-        root.addView(web);
+        previa = new Previa(this);
+        root.addView(previa);
 
         LinearLayout painel = new LinearLayout(this);
         painel.setOrientation(LinearLayout.VERTICAL);
@@ -111,7 +120,7 @@ public class MainActivity extends Activity {
         cena = i;
         nome.setText(Cenas.NOMES[i]);
         Cenas.escolher(this, i);
-        web.loadUrl(Cenas.url(i));
+        previa.usar(Cena.criar(i));
     }
 
     private void definir() {
@@ -130,9 +139,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onResume() { super.onResume(); web.onResume(); web.resumeTimers(); }
-    @Override protected void onPause() { super.onPause(); web.onPause(); }
-    @Override protected void onDestroy() { web.destroy(); super.onDestroy(); }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 }

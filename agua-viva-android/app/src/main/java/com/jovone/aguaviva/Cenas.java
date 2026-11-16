@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 
-/** As animações que vêm dentro do app (em assets/wall). A escolha fica num arquivo,
+/** As animações do app. A escolha fica num arquivo,
  *  lido pelo app e pelo papel de parede (que roda em outro processo). */
 public final class Cenas {
     public static final String[] IDS = {"agua-viva", "ipe", "vale", "aurora", "natal"};
@@ -29,6 +29,4 @@ public final class Cenas {
             out.write(IDS[i].getBytes(StandardCharsets.UTF_8));
         } catch (Exception ignored) { }
     }
-
-    public static String url(int i) { return "file:///android_asset/wall/" + IDS[i] + ".html"; }
 }
