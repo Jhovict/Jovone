@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Vale — viagem ao entardecer</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden;-webkit-tap-highlight-color:transparent}canvas{position:absolute;left:0;top:0;display:block}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const WALLPAPER = true;
+/* ============================================================
+   VALE — viagem ao entardecer: a câmera desliza pela paisagem
+   (montanhas, morros, água, trem, veleiro) num dia que gira em loop
+   ============================================================ */
+const SCENE = {
+  title: 'vale · viagem ao entardecer', file: 'valley.py', loop: 40,
+  KEYS: [[0, 15.5], [6, 17.4], [13, 19.2], [16, 20.5], [26, 28.5], [31, 30.5], [35, 32.5], [40, 39.5]],
+
+  init(){
+    const R = rng(33);
+    this.stars = makeStars(150, 9);
+    this.flies = Array.from({ length: 22 }, () => [R(), R(), R() * TAU, R()]);
+    this.smoke = Array.from({ length: 16 }, (_, i) => [i / 16, R()]);
+  },
+  hourAt(t){ const K = this.KEYS; for (let i = 0; i < K.length - 1; i++) if (t <= K[i + 1][0]) return lerp(K[i][1], K[i + 1][1], (t - K[i][0]) / (K[i + 1][0] - K[i][0])); return K[K.length - 1][1]; },
+
+  frame(t, T){
+    const C = G.cols, R = G.rows, asp = L.asp;
+    const HOR = Math.round(R * 0.52), SH = Math.round(R * 0.74), RAIL = R - 9;
+    const hour = this.hourAt(t) % 24;
+    const sunE = Math.sin((hour - 6) / 12 * Math.PI), moonE = Math.sin((hour - 18) / 12 * Math.PI);
+    const day = sstep(-0.12, 0.3, sunE), night = 1 - day;
+    const dusk = clamp(1 - Math.abs(sunE + 0.03) / 0.32, 0, 1);
+    const sunX = C * (0.06 + 0.88 * ((hour - 6) / 12)), moonX = C * (0.06 + 0.88 * (((hour - 18 + 24) % 24) / 12));
+    const lift = e => e > 0 ? Math.pow(e, 0.45) : e;
+    const sunR = HOR - 2 - lift(sunE) * (HOR - 6), moonR = HOR - 2 - lift(moonE) * (HOR - 7);
+
+    const top = mix(hex('#04081a'), hex('#2a64c8'), day), hor = mix(hex('#0c1834'), hex('#9ccaf0'), day);
+    const ember = hex('#ff7a3c'), rose = hex('#ff5a8a');
+    const skyCol = (k, c) => {
+      const near = Math.exp(-Math.pow((c - sunX) / (C * 0.38), 2));
+      return mix(mix(top, hor, Math.pow(k, 1.4)), mix(rose, ember, k), dusk * Math.pow(k, 1.1) * (0.35 + 0.65 * near));
+    };
+
+    /* céu */
+    for (let r = 0; r < HOR; r++){
+      const k = r / HOR;
+      for (let c = 0; c < C; c++){
+        const v = h2(c, r), dens = 0.06 + 0.16 * k + 0.08 * day;
+        if (v < dens) put(c, r, v < dens * 0.35 ? '-' : '.', skyCol(k, c), 0.3 + 0.35 * k + 0.15 * day, 0);
+      }
+    }
+    const ns = stars(this.stars, HOR - 6, night * 0.95, T, 1);
+    let meteors = 0;
+    for (const ts of [18.5, 23.2, 27.8]){
+      const a = t - ts; if (a < 0 || a > 0.9) continue;
+      meteors++;
+      const x0 = C * (0.25 + 0.5 * h1(ts * 10)), y0 = R * 0.05;
+      for (let k = 0; k < 8; k++){ const s = Math.max(0, a - k * 0.035); put(x0 - s * 40, y0 + s * 13, k ? '/' : '*', [255, 255, 255], (1 - a / 0.9) * (1 - k / 8), 3); }
+    }
+    // sol, halo e lua
+    if (sunE > -0.25){
+      const low = clamp(1 - sunE / 0.45, 0, 1);
+      disc(sunX, sunR, 3.4, (c, r, d) => put(c, r, letter(clamp(1.05 - d * 0.6, 0, .99), c * 13 + r), mix(mix(hex('#fffbe0'), hex('#ffb347'), d * 0.6), hex('#ff4a24'), low * (0.4 + 0.6 * d)), 1, 2));
+      disc(sunX, sunR, 7.0, (c, r, d) => { if (d > 0.48 && h2(c, r) < 0.6) addc(c, r, '.', mix(hex('#ffd27a'), ember, dusk), (1 - d) * 0.9, 1); });
+    }
+    if (moonE > -0.2) disc(moonX, moonR, 2.6, (c, r, d, dx, dy) => {
+      const cr = noise2(dx * 3 + 1, dy * 3 + 4) > 0.6 ? 0.6 : 1;
+      put(c, r, letter(clamp((1 - d * 0.4) * cr, 0, .99), c * 7 + r), mul(hex('#e2eaff'), cr * (0.55 + 0.45 * night)), 1, 2);
+    });
+
+    /* nuvens correndo */
+    const cloudLit = mix(mix(hex('#262e48'), hex('#f4f6ff'), day), hex('#ff9a7a'), dusk * 0.85);
+    for (let r = 2; r < HOR * 0.6; r++) for (let c = 0; c < C; c++){
+      const v = fbm2((c + T * 1.1) * 0.042, r * 0.2 + 3) - 0.07 * Math.abs(r - HOR * 0.3) / 4;
+      if (v > 0.55){
+        const d = clamp((v - 0.55) / 0.25, 0, 0.99), under = clamp((r - HOR * 0.22) / (HOR * 0.3), 0, 1);
+        put(c, r, ".,-~=+*%"[(d * 8) | 0], mix(cloudLit, mul(cloudLit, 0.55), under * 0.6), 0.55 + 0.45 * d, 3);
+      }
+    }
+
+    /* pássaros ao entardecer */
+    if (hour > 16.6 && hour < 19.6){
+      const a = sstep(16.6, 17.2, hour) * (1 - sstep(19.0, 19.6, hour));
+      const base = C + 10 - (hour - 16.6) / 3.0 * (C + 30);
+      for (let i = 0; i < 9; i++){
+        const side = i === 0 ? 0 : ((i % 2) ? 1 : -1) * Math.ceil(i / 2);
+        put(base + Math.abs(side) * 2.4, R * 0.18 + side * 1.1 + Math.sin(T * 3 + i) * 0.3, ((T * 8 + i) | 0) % 2 ? 'v' : '-', [24, 16, 28], a, 9);
+      }
+    }
+
+    /* montanhas ao fundo (lentas) e morros (médios) */
+    const off1 = T * 0.45, off2 = T * 1.3, RS = Math.max(1, R / 62);
+    const ridge1 = c => HOR - 3 - 17 * RS * (0.65 * ridged((c + off1) * 0.045 + 3) + 0.35 * fbm1((c + off1) * 0.1 + 9));
+    const ridge2 = c => HOR - 1 - 7 * RS * fbm1((c + off2) * 0.07 + 11);
+    const rim = mix(hex('#ffd27a'), ember, dusk);
+    const m1 = mix(mix(hex('#161e36'), hex('#6c82aa'), day), mix(hor, ember, dusk * 0.4), 0.25);
+    const m2 = mix(hex('#0c1620'), hex('#3e6a4a'), day);
+    for (let c = 0; c < C; c++){
+      const r1 = ridge1(c), q1 = Math.round(r1);
+      const sl1 = (ridge1(c + 1) - ridge1(c - 1)) * L.ch;
+      const sunward = clamp(1 - Math.abs(c - sunX) / (C * 0.5), 0, 1);
+      put(c, q1, slopeChar(L.cw * 2, sl1, '_'), mix(m1, rim, 0.2 + 0.5 * dusk * sunward), 1, 4);
+      for (let r = q1 + 1; r < HOR; r++){
+        const snow = r - q1 < 2 && r1 < HOR - 13 * RS;
+        const v = h2(Math.floor(c + off1), r);
+        put(c, r, snow ? (r === q1 + 1 ? '^' : '*') : (v < 0.4 ? ':' : '.'), snow ? mix(hex('#4a5a7a'), hex('#ffffff'), 0.35 + 0.65 * day) : mul(m1, 1 - 0.3 * (r - q1) / 12), snow ? 0.95 : 0.7, 4);
+      }
+      const r2 = ridge2(c), q2 = Math.round(r2);
+      put(c, q2, slopeChar(L.cw * 2, (ridge2(c + 1) - ridge2(c - 1)) * L.ch, '_'), mix(m2, rim, 0.25 * dusk * sunward), 1, 5);
+      for (let r = q2 + 1; r < HOR; r++){ const v = h2(Math.floor(c + off2) * 3, r); put(c, r, v < 0.35 ? '%' : (v < 0.7 ? ';' : ':'), m2, 0.85, 5); }
+    }
+    // pinheiros nos morros
+    const pineC = mix(hex('#050c08'), hex('#1e3a26'), day);
+    for (let wc = Math.floor(off2) - 4; wc < off2 + C + 4; wc++){
+      if (h1(wc * 11) > 0.2) continue;
+      const c = wc - off2, base = Math.round(ridge2(c)), hgt = 2 + ((h1(wc * 13) * 4) | 0);
+      for (let j = 0; j < hgt; j++){
+        const r = base - hgt + j, hw = Math.floor(j * 0.6);
+        if (j === 0){ put(c, r, '^', pineC, 1, 6); continue; }
+        put(c - hw - 1, r, '/', pineC, 1, 6); put(c + hw + 1, r, '\\', pineC, 1, 6);
+        for (let q = -hw; q <= hw; q++) put(c + q, r, q === 0 ? '|' : '#', pineC, 1, 6);
+      }
+    }
+
+    /* veleiro */
+    const bx = C + 12 - ((T * 2.2 + 20) % (C + 34)), br = HOR + 2;
+    const sail = mix(hex('#3a4258'), hex('#f2f4fa'), 0.25 + 0.75 * day), hull = mix(hex('#1a120c'), hex('#7a4a2a'), day);
+    const boat = [['   |\\  ', sail], ['   | \\ ', sail], ['   |__\\', sail], [' \\_____/', hull]];
+    boat.forEach(([s, rgb], i) => text(bx, br - 3 + i, s, rgb, 1, 8));
+    if (night > 0.4) put(bx + 3, br - 4, '*', hex('#ffd56a'), night, 9);
+
+    /* água: ondas correndo, reflexo e trilha de luz */
+    const waterTint = mix(hex('#06101e'), hex('#1a3a5a'), day);
+    let glints = 0;
+    for (let r = HOR; r < SH; r++){
+      const d = r - HOR, persp = d / (SH - HOR);
+      const mr = HOR - 1 - d * (HOR - 2) / (SH - HOR) * 0.55;    // linha do céu que esta onda espelha
+      for (let c = 0; c < C; c++){
+        const w = 0.6 * Math.sin(c * 0.5 * (1 - 0.45 * persp) + T * 2.2 + d * 1.3) + 0.4 * Math.sin(c * 1.25 - T * 1.7 + d * 2.1 + Math.sin(c * 0.07 + T * 0.3) * 2);
+        let ch = w > 0.55 ? '~' : (w > 0.05 ? '-' : (w < -0.7 ? '_' : (h2(c, r + ((T * 3) | 0)) < 0.25 ? '.' : '')));
+        if (!ch) continue;
+        let rgb = skyCol(clamp(mr / HOR, 0, 1), c);
+        if (mr >= ridge2(c)) rgb = mul(m2, 0.9);
+        else if (mr >= ridge1(c)) rgb = mix(m1, waterTint, 0.3);
+        rgb = mix(rgb, waterTint, 0.35 + 0.25 * persp);
+        put(c, r, ch, rgb, 0.45 + 0.4 * (w > 0.55) + 0.1 * persp, 3);
+      }
+      const path = (x, e, rgb) => {
+        if (e < -0.04) return;
+        const width = 1.2 + persp * 6;
+        for (let c = Math.floor(x - width - 3); c <= x + width + 3; c++){
+          const jit = Math.sin(r * 1.7 + T * 3 + c * 0.4) * (1 + persp * 2);
+          if (Math.abs(c - x + jit) < width && h3(c, r, (T * 8) | 0) < 0.55){ put(c, r, Math.abs(c - x + jit) < width * 0.4 ? '=' : '~', rgb, 0.95, 7); glints++; }
+        }
+      };
+      path(sunX, sunE, mix(hex('#fff2b0'), ember, dusk));
+      path(moonX, moonE, hex('#dfe8ff'));
+    }
+    // reflexo do veleiro
+    [['   | / ', 0.35], ['   |/  ', 0.2]].forEach(([s, a], i) => { for (let k = 0; k < s.length; k++) if (s[k] !== ' ') put(bx + k + Math.round(Math.sin(T * 3 + i) * 0.6), br + 1 + i, s[k], sail, a, 8); });
+    // espuma na margem
+    for (let c = 0; c < C; c++){ const f = Math.sin(c * 0.3 + T * 1.8) + Math.sin(c * 0.11 - T * 0.9); if (f > 0.6) put(c, SH - 1, '~', [220, 235, 255], 0.35 + 0.3 * day, 7); }
+
+    /* primeiro plano: margem, árvores e postes passando rápido, trilhos */
+    const off3 = T * 4.2;
+    const fg = mix(hex('#04070a'), hex('#24361e'), day * 0.8);
+    for (let r = SH; r < R; r++) for (let c = 0; c < C; c++){
+      const v = h2(Math.floor(c + off3), r);
+      if (r < RAIL && v < 0.5) put(c, r, ",.;'"[(v * 8) | 0], fg, 0.85, 10);
+    }
+    for (let wc = Math.floor(off3) - 10; wc < off3 + C + 10; wc++){
+      const c = wc - off3;
+      if (wc % 26 === 0){                                    // poste com fio
+        for (let r = RAIL - 9; r < RAIL; r++) put(c, r, '|', mix(hex('#1a1410'), hex('#5a4030'), day), 1, 12);
+        text(c - 1, RAIL - 10, '-T-', mix(hex('#1a1410'), hex('#5a4030'), day), 1, 12);
+        for (let k = 1; k < 26; k++){ const sag = Math.sin(k / 26 * Math.PI) * 1.6; put(c + k, RAIL - 10 + sag, '_', mix(hex('#20242c'), hex('#6a7080'), day), 0.7, 11); }
+      }
+      if (h1(wc * 7) < 0.045){                               // árvore de primeiro plano
+        const hgt = 7 + ((h1(wc * 3) * 6) | 0);
+        for (let j = 0; j < hgt; j++){
+          const r = RAIL - hgt + j, hw = Math.floor(j * 0.55);
+          if (j === 0){ put(c, r, '^', fg, 1, 13); continue; }
+          put(c - hw - 1, r, '/', fg, 1, 13); put(c + hw + 1, r, '\\', fg, 1, 13);
+          for (let q = -hw; q <= hw; q++) put(c + q, r, q === 0 ? '|' : '#', mul(fg, 0.8), 1, 13);
+        }
+      }
+    }
+    const steel = mix(hex('#3a3e48'), hex('#9aa2b2'), 0.3 + 0.7 * day);
+    for (let c = 0; c < C; c++){
+      const wc = Math.floor(c + off3);
+      put(c, RAIL, wc % 3 === 0 ? '#' : '=', steel, 0.9, 14);
+      put(c, RAIL + 1, h1(wc) < 0.5 ? ':' : '.', mix(hex('#2a1e14'), hex('#6a5038'), day), 0.6, 14);
+      for (let r = RAIL + 2; r < R; r++) if (h2(wc, r) < 0.35) put(c, r, h2(wc, r) < 0.12 ? ',' : '.', fg, 0.45, 14);
+    }
+
+    /* o trem: passa a cada 20 s, janelas acesas à noite, fumaça */
+    const PERIOD = 20, ph = T % PERIOD, speed = 16;
+    const tx = C + 4 - ph * speed;
+    const cars = 4, carW = 11, trainLen = 10 + cars * carW;
+    let trainOn = tx < C && tx + trainLen > 0;
+    const body = mix(hex('#3a1a1a'), hex('#b8342a'), 0.35 + 0.65 * day), trim = mix(hex('#2a2a30'), hex('#d8d2c4'), 0.3 + 0.7 * day);
+    const win = night > 0.35 ? hex('#ffd56a') : mix(hex('#5a7a9a'), hex('#bfe0ff'), day);
+    if (tx < C + 2 && tx + trainLen > -2){
+      text(tx, RAIL - 3, '  _||___ ', trim, 1, 20);
+      text(tx, RAIL - 2, ' /  [] |', body, 1, 20);
+      text(tx, RAIL - 1, "'-o--o--'", trim, 1, 20);
+      put(tx + 4, RAIL - 2, '[', win, 1, 21); put(tx + 5, RAIL - 2, ']', win, 1, 21);
+      for (let k = 0; k < cars; k++){
+        const x = tx + 9 + k * carW;
+        text(x, RAIL - 3, '_________ ', trim, 1, 20);
+        text(x - 1, RAIL - 2, '-|        |', body, 1, 20);
+        for (let wnd = 0; wnd < 3; wnd++){ put(x + 1 + wnd * 3, RAIL - 2, '[', win, 1, 21); put(x + 2 + wnd * 3, RAIL - 2, ']', win, 1, 21); }
+        text(x, RAIL - 1, "'-o----o-'", trim, 1, 20);
+      }
+      if (night > 0.35){ for (let k = 1; k < 12; k++) addc(tx - k, RAIL - 2 + (k > 6 ? 0 : 0), '-', hex('#fff0b0'), night * (1 - k / 12) * 0.7, 19); }
+      for (const s of this.smoke){                             // fumaça fica para trás
+        const a = (s[0] + T * 0.9) % 1;
+        const x = tx + 3 + a * 16 + Math.sin(a * 7 + s[1] * 9) * 1.2, y = RAIL - 4 - a * 6;
+        put(x, y, a < 0.25 ? 'O' : (a < 0.55 ? 'o' : '.'), mix(hex('#6a6e78'), hex('#e8eaf0'), day), (1 - a) * 0.75, 18);
+      }
+    }
+
+    /* vaga-lumes */
+    let nf = 0;
+    if (night > 0.3) for (const f of this.flies){
+      const x = f[0] * C + 6 * Math.sin(T * 0.3 + f[2]) + 3 * noise1(T * 0.5 + f[3] * 9);
+      const y = SH + 1 + f[1] * (RAIL - SH - 3) + 1.5 * Math.sin(T * 0.7 + f[2] * 2);
+      const blink = Math.max(0, Math.sin(T * 2.3 + f[2] * 5));
+      if (blink > 0.1){ addc(x, y, blink > 0.7 ? '*' : '.', hex('#d8ff6a'), (night - 0.3) * 1.4 * blink, 16); nf++; }
+    }
+
+    const bTop = mix(hex('#000004'), hex('#0b2448'), day), bHor = mix(mix(hex('#02060f'), hex('#25496e'), day), hex('#6a2c14'), dusk * 0.8);
+    const hy = HOR / R, sy = SH / R;
+    const hh = Math.floor(hour), mm = Math.floor((hour - hh) * 60);
+    const next = Math.ceil((PERIOD - ph) % PERIOD);
+    const fill = (fn, rgb, k) => (cx, dm) => {
+      cx.beginPath(); cx.moveTo(0, HOR * L.ch);
+      for (let c = -1; c <= C + 1; c++) cx.lineTo((c + 0.5) * L.cw, (fn(c) + 0.5) * L.ch);
+      cx.lineTo(L.W, HOR * L.ch); cx.closePath();
+      cx.fillStyle = `rgb(${(rgb[0] * k * dm) | 0},${(rgb[1] * k * dm) | 0},${(rgb[2] * k * dm) | 0})`; cx.fill();
+    };
+    const paintM = fill(ridge1, m1, 0.42), paintH = fill(ridge2, m2, 0.38);
+    const paint = (cx, dm) => {
+      paintM(cx, dm); paintH(cx, dm);
+      cx.fillStyle = `rgb(${(fg[0] * 0.35 * dm) | 0},${(fg[1] * 0.35 * dm) | 0},${(fg[2] * 0.35 * dm) | 0})`;
+      cx.fillRect(0, SH * L.ch, L.W, (R - SH) * L.ch);
+    };
+    return { paint,
+      stats: [['hora', String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0')], ['sol', Math.round(Math.asin(clamp(sunE, -1, 1)) * 180 / Math.PI) + '°'], ['trem', trainOn ? 'passando' : 'em ' + next + 's'], [night > 0.3 ? 'vaga-lumes' : 'brilhos', night > 0.3 ? nf : glints]],
+      dim: 1, glow: 0.72,
+      bg: [[0, bTop], [hy * 0.7, mix(bTop, bHor, 0.5)], [hy, bHor], [hy + 0.002, mul(bHor, 0.45)], [sy, mul(bTop, 0.4)], [sy + 0.002, [2, 3, 4]], [1, [0, 0, 0]]],
+    };
+  },
+};
+
+const CODE = String.raw`import numpy as np
+
+# a train ride through a valley: the camera slides, the far things move slowly,
+# the near things rush by, and the day goes round once every forty seconds
+
+HOURS = [(0, 15.5), (6, 17.4), (13, 19.2), (16, 20.5), (26, 28.5), (31, 30.5), (35, 32.5), (40, 39.5)]
+PARALLAX = {"clouds": 1.1, "mountains": 0.45, "hills": 1.3, "shore": 4.2}     # columns per second
+TRAIN_EVERY, TRAIN_SPEED, CARS = 20, 16, 4
+
+
+def hour(t):
+    # golden hour and dawn last longer, the night goes quickly
+    k, h = zip(*HOURS)
+    return np.interp(t % 40, k, h) % 24
+
+
+def sun(t):
+    h = hour(t)
+    elev = np.sin((h - 6) / 12 * np.pi)
+    return COLS * (0.06 + 0.88 * (h - 6) / 12), HORIZON - 2 - elev * (HORIZON - 4), elev
+
+
+def sky_colour(k, x, t):
+    _, _, e = sun(t)
+    day = smooth((e + 0.12) / 0.42)
+    dusk = np.clip(1 - abs(e + 0.03) / 0.32, 0, 1)
+    near_sun = np.exp(-((x - sun(t)[0]) / (0.38 * COLS)) ** 2)
+    base = mix(mix(NIGHT_TOP, DAY_TOP, day), mix(NIGHT_LOW, DAY_LOW, day), k ** 1.4)
+    return mix(base, mix(ROSE, EMBER, k), dusk * k ** 1.1 * (0.35 + 0.65 * near_sun))
+
+
+def ridge(layer, x, T):
+    # the same noise, slid sideways: that is all parallax is
+    u = x + T * PARALLAX[layer.name]
+    return HORIZON - layer.base - layer.amp * (0.65 * ridged(u * layer.freq) + 0.35 * fbm(u * 0.1))
+
+
+def water(r, x, T):
+    # two families of waves running at different speeds; the crests catch the light
+    d = r - HORIZON
+    far = d / (SHORE - HORIZON)
+    w = 0.6 * np.sin(0.5 * x * (1 - 0.45 * far) + 2.2 * T + 1.3 * d)
+    w = w + 0.4 * np.sin(1.25 * x - 1.7 * T + 2.1 * d + 2 * np.sin(0.07 * x + 0.3 * T))
+    ch = np.select([w > 0.55, w > 0.05, w < -0.7], ["~", "-", "_"], default="")
+    return ch, mirror(HORIZON - 1 - 0.55 * d * (HORIZON - 2) / (SHORE - HORIZON))
+
+
+def sun_path(r, x, T, elev):
+    # the glittering road from the sun to us widens as it comes closer
+    if elev < -0.04:
+        return None
+    width = 1.2 + 6 * (r - HORIZON) / (SHORE - HORIZON)
+    jitter = np.sin(1.7 * r + 3 * T + 0.4 * x) * (1 + 2 * width / 7)
+    return np.abs(x - sun_x + jitter) < width
+
+
+def train(T):
+    x = COLS + 4 - (T % TRAIN_EVERY) * TRAIN_SPEED
+    sprite = locomotive() + [carriage() for _ in range(CARS)]
+    lamps = WINDOW_LIT if night(T) else WINDOW_GLASS
+    smoke = [(x + 3 + 16 * a, RAIL - 4 - 6 * a, "Oo."[int(3 * a)]) for a in puffs(T)]
+    return x, sprite, lamps, smoke
+
+
+def frame(T):
+    t = T % 40
+    grid = Grid(COLS, ROWS)
+    grid.dither(sky_colour, rows=range(HORIZON))
+    grid.stars(STARS, alpha=night(t))
+    grid.disc(*sun(t)[:2], radius=3.4, ink=SUN)
+    grid.clouds(offset=PARALLAX["clouds"] * T)
+    for layer in (MOUNTAINS, HILLS):
+        grid.ridge(ridge, layer, T, lit=rim_light(t))
+    grid.boat(COLS + 12 - (2.2 * T + 20) % (COLS + 34), HORIZON + 2)
+    for r in range(HORIZON, SHORE):
+        grid.row(r, *water(r, COLS_IDX, T))
+        grid.sparkle(sun_path(r, COLS_IDX, T, sun(t)[2]), "=~")
+    grid.shore(offset=PARALLAX["shore"] * T, poles_every=26)
+    grid.sprite(*train(T))
+    grid.fireflies(FLIES, T, night(t))
+    return grid.render(glow=0.72)
+`;
+
+"use strict";
+/* ============================================================
+   motor comum: grade de letras, brilho, painel e editor
+   (cada página traz a sua cena em SCENE e o seu código em CODE)
+   ============================================================ */
+const FPS = 30, TAU = Math.PI * 2;
+const MONO = 'ui-monospace, "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", "Roboto Mono", monospace';
+
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+const smooth = x => { x = clamp(x, 0, 1); return x * x * (3 - 2 * x); };
+const sstep = (a, b, x) => smooth((x - a) / (b - a));
+const lerp = (a, b, k) => a + (b - a) * k;
+function hash(i){ i = Math.imul(i ^ 61 ^ (i >>> 16), 9); i ^= i >>> 4; i = Math.imul(i, 0x27d4eb2d); i ^= i >>> 15; return (i >>> 0) / 4294967296; }
+const h1 = i => hash(Math.imul(i | 0, 374761393) ^ 0x5bd1e995);
+const h2 = (i, j) => hash(Math.imul(i | 0, 73856093) ^ Math.imul(j | 0, 19349663));
+const h3 = (i, j, k) => hash(Math.imul(i | 0, 73856093) ^ Math.imul(j | 0, 19349663) ^ Math.imul(k | 0, 83492791));
+function rng(seed){ let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
+function noise1(x){ const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(h1(i), h1(i + 1), u); }
+function noise2(x, y){
+  const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j;
+  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+  return lerp(lerp(h2(i, j), h2(i + 1, j), ux), lerp(h2(i, j + 1), h2(i + 1, j + 1), ux), uy);
+}
+const fbm1 = x => (noise1(x) * 0.5 + noise1(x * 2.03 + 7) * 0.25 + noise1(x * 4.01 + 13) * 0.125) / 0.875;
+const fbm2 = (x, y) => (noise2(x, y) * 0.5 + noise2(x * 2.03 + 7, y * 2.03 + 3) * 0.25 + noise2(x * 4.01 + 13, y * 4.01 + 5) * 0.125) / 0.875;
+const ridged = x => 1 - Math.abs(2 * fbm1(x) - 1);
+function hex(h){ const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+const mix = (a, b, k) => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
+const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+function keyColor(keys, t){
+  if (t <= keys[0][0]) return keys[0][1];
+  for (let i = 0; i < keys.length - 1; i++){ const [t0, c0] = keys[i], [t1, c1] = keys[i + 1]; if (t <= t1) return mix(c0, c1, smooth((t - t0) / (t1 - t0))); }
+  return keys[keys.length - 1][1];
+}
+const RAMP = [".`'", ":;,", "il!1|", "rtcz=+<>", "unxvjf{}[]", "aeosQ%", "$8B0&#", "@#$8B%"].map(s => s.split(''));
+function letter(b, id){ const g = RAMP[clamp(b * RAMP.length | 0, 0, RAMP.length - 1)]; return g[(hash(id) * g.length) | 0]; }
+function slopeChar(dx, dy, flat){
+  let a = Math.abs(Math.atan2(dy, dx)); if (a > Math.PI / 2) a = Math.PI - a;
+  if (a > 1.18) return '|';
+  if (a < 0.40) return flat || '_';
+  return (dx * dy < 0) ? '/' : '\\';
+}
+
+/* ---------- grade ---------- */
+let L = {}, G = null;
+function gridInit(cols, rows){
+  const n = cols * rows;
+  G = { cols, rows, n, ch: new Array(n).fill(''), r: new Uint8ClampedArray(n), g: new Uint8ClampedArray(n), b: new Uint8ClampedArray(n), a: new Float32Array(n), p: new Int16Array(n) };
+}
+function gclear(){ G.ch.fill(''); }
+function idx(c, r){ c = Math.round(c); r = Math.round(r); return (c < 0 || r < 0 || c >= G.cols || r >= G.rows) ? -1 : r * G.cols + c; }
+function put(c, r, chr, rgb, a = 1, p = 0){
+  const i = idx(c, r); if (i < 0 || a <= 0.01) return;
+  if (G.ch[i] && p < G.p[i]) return;
+  G.ch[i] = chr; G.r[i] = rgb[0]; G.g[i] = rgb[1]; G.b[i] = rgb[2]; G.a[i] = Math.min(1, a); G.p[i] = p;
+}
+function addc(c, r, chr, rgb, a = 1, p = 0){
+  const i = idx(c, r); if (i < 0 || a <= 0.01) return;
+  if (!G.ch[i] || p > G.p[i]){ put(c, r, chr, rgb, a, p); return; }
+  if (p < G.p[i]) return;
+  const oa = G.a[i], wo = oa / (oa + a), wn = a / (oa + a);
+  G.r[i] = G.r[i] * wo + rgb[0] * wn + rgb[0] * a * 0.25; G.g[i] = G.g[i] * wo + rgb[1] * wn + rgb[1] * a * 0.25; G.b[i] = G.b[i] * wo + rgb[2] * wn + rgb[2] * a * 0.25;
+  if (a > oa) G.ch[i] = chr;
+  G.a[i] = Math.min(1, oa + a);
+}
+function line(c0, r0, c1, r1, rgb, a = 1, p = 0, flat, fn = put){
+  const dc = c1 - c0, dr = r1 - r0;
+  const n = Math.max(1, Math.ceil(Math.max(Math.abs(dc), Math.abs(dr))));
+  const chr = slopeChar(dc * L.cw, dr * L.ch, flat);
+  for (let i = 0; i <= n; i++){ const k = i / n; fn(c0 + dc * k, r0 + dr * k, chr, rgb, a, p); }
+}
+function text(c, r, s, rgb, a = 1, p = 0){ for (let i = 0; i < s.length; i++) if (s[i] !== ' ') put(c + i, r, s[i], rgb, a, p); }
+function disc(cc, rr, rad, fn){
+  const asp = L.ch / L.cw;
+  for (let r = Math.floor(rr - rad - 1); r <= rr + rad + 1; r++)
+    for (let c = Math.floor(cc - rad * asp - 1); c <= cc + rad * asp + 1; c++){
+      const dx = (c - cc) / asp, dy = r - rr, d = Math.hypot(dx, dy) / rad;
+      if (d <= 1) fn(c, r, d, dx / rad, dy / rad);
+    }
+}
+function makeStars(n, seed){ const R = rng(seed); return Array.from({ length: n }, () => [R(), R(), R(), R(), mix([200, 215, 255], [255, 236, 210], R())]); }
+function stars(list, rowsMax, alpha, t, p = 0){
+  if (alpha <= 0.02) return 0;
+  let n = 0;
+  for (const s of list){
+    const tw = 0.4 + 0.6 * Math.max(0, Math.sin(t * (1 + s[3]) + s[2] * 9));
+    put(s[0] * G.cols, s[1] * rowsMax, s[3] > 0.88 ? '+' : (tw > 0.85 ? '+' : '.'), s[4], alpha * tw, p); n++;
+  }
+  return n;
+}
+
+/* ---------- editor ---------- */
+const KW = new Set(['def', 'return', 'for', 'in', 'if', 'not', 'continue', 'and', 'or', 'import', 'as', 'from', 'while', 'else', 'elif', 'lambda', 'None', 'True', 'False', 'is', 'yield', 'with', 'class']);
+const COLK = { kw: '#ff7b72', fn: '#79c0ff', num: '#f2a65e', com: '#5d6877', str: '#a5d6ff', txt: '#d3dae3' };
+function tokenize(s){
+  const out = []; let m; const re = /(#.*$)|("[^"]*"|'[^']*')|(\b\d+\.?\d*(?:e-?\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|(\s+)|(.)/g;
+  while ((m = re.exec(s))){
+    if (m[1]) out.push([m[1], COLK.com]);
+    else if (m[2]) out.push([m[2], COLK.str]);
+    else if (m[3]) out.push([m[3], COLK.num]);
+    else if (m[4]){
+      const w = m[4], next = /^\s*\(/.test(s.slice(re.lastIndex));
+      const prev = out.length > 1 ? out[out.length - 2][0] : '';
+      if (w === 'None' || w === 'True' || w === 'False') out.push([w, COLK.num]);
+      else if (KW.has(w)) out.push([w, COLK.kw]);
+      else if (prev === 'def' || prev === 'class' || next || w === 'np') out.push([w, COLK.fn]);
+      else out.push([w, COLK.txt]);
+    } else out.push([m[5] || m[6], COLK.txt]);
+  }
+  return out;
+}
+const SRC = CODE.split('\n'), TOK = SRC.map(tokenize);
+const MARKS = (() => { const m = []; SRC.forEach((l, i) => { if (/^def |^class |^[A-Z_]+ = |^[A-Z_]+, /.test(l) && (m.length === 0 || i - m[m.length - 1] > 4)) m.push(i); }); return m; })();
+function editorState(t){
+  const n = MARKS.length, seg = SCENE.loop / n;
+  const i = Math.min(n - 1, Math.floor(t / seg)), k = (t - i * seg) / seg;
+  const l0 = MARKS[i], l1 = i + 1 < n ? MARKS[i + 1] : SRC.length - 1;
+  const prev = i > 0 ? MARKS[i - 1] : 0;
+  const top = lerp(prev - 3 + Math.min(6, l0 - prev), l0 - 3, sstep(0, 0.2, k));
+  const cursor = l0 + Math.floor(sstep(0.15, 1, k) * Math.max(0, Math.min(l1 - l0 - 1, 14)));
+  return { top, cursor };
+}
+
+/* ---------- canvas ---------- */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const scn = document.createElement('canvas'), sctx = scn.getContext('2d');
+const glw = document.createElement('canvas'), gctx = glw.getContext('2d');
+const WALL = typeof WALLPAPER !== 'undefined' && WALLPAPER;      // modo papel de parede: só a cena, tela cheia
+function layout(){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const vw = innerWidth, vh = innerHeight;
+  const W = WALL ? vw : Math.min(vw, vh * 9 / 16), H = WALL ? vh : W * 16 / 9;
+  cv.width = vw * dpr; cv.height = vh * dpr; cv.style.width = vw + 'px'; cv.style.height = vh + 'px';
+  const COLS = SCENE.cols || 84, cw = W / COLS, fs = cw / 0.6, ch = fs * 0.92;
+  const top = WALL ? 0 : H * 0.03, sceneH = WALL ? H : H * 0.675 - top;
+  const ROWS = Math.floor(sceneH / ch);
+  scn.width = Math.ceil(W * dpr); scn.height = Math.ceil(sceneH * dpr);
+  glw.width = Math.ceil(scn.width / 5); glw.height = Math.ceil(scn.height / 5);
+  L = { dpr, W, H, ox: WALL ? 0 : (vw - W) / 2, oy: WALL ? 0 : (vh - H) / 2, COLS, ROWS, cw, ch, fs, top, sceneH, asp: ch / cw };
+  gridInit(COLS, ROWS);
+}
+addEventListener('resize', layout);
+
+function drawTop(c, t){
+  const W = L.W, H = L.H, y = L.top * 0.62;
+  c.textBaseline = 'middle';
+  c.font = `${(H * 0.0105).toFixed(1)}px ${MONO}`;
+  c.textAlign = 'left'; c.fillStyle = '#7d8796'; c.fillText(SCENE.title, W * 0.022, y);
+  c.textAlign = 'right'; c.fillStyle = '#58a6ff'; c.fillText('t ' + t.toFixed(2).padStart(5, '0') + 's', W * 0.977, y);
+  c.textAlign = 'left';
+}
+function drawHUD(c, stats, letters, dim){
+  const W = L.W, H = L.H, fs = H * 0.0098;
+  c.globalAlpha = dim; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
+  c.font = `${fs.toFixed(1)}px ${MONO}`;
+  const x = W * 0.022;
+  c.fillStyle = '#9aa4b2'; c.fillText('@jovone.ascii', x, H * 0.622);
+  const xs = [0, 0.24, 0.47, 0.70];
+  stats.forEach(([label, val], i) => {
+    const xx = x + W * xs[i], yy = H * 0.642;
+    c.fillStyle = '#6b7685'; c.fillText(label, xx, yy);
+    c.fillStyle = '#aeb7c4'; c.fillText(String(val), xx + c.measureText(label + '  ').width, yy);
+  });
+  c.fillStyle = '#6b7685'; c.fillText('letras', x, H * 0.657);
+  c.fillStyle = '#aeb7c4'; c.fillText(letters.toLocaleString('pt-BR'), x + c.measureText('letras  ').width, H * 0.657);
+  c.globalAlpha = 1;
+}
+function drawEditor(c, t, dim){
+  const W = L.W, H = L.H, y0 = H * 0.675, eh = H - y0;
+  const head = H * 0.026, lh = H * 0.0157, fs = lh * 0.66;
+  c.globalAlpha = dim;
+  c.fillStyle = '#0b1019'; c.fillRect(0, y0, W, eh);
+  c.fillStyle = '#0f1622'; c.fillRect(0, y0, W, head);
+  c.fillStyle = '#18202d'; c.fillRect(0, y0 + head, W, 1);
+  c.textBaseline = 'middle'; c.font = `${fs.toFixed(1)}px ${MONO}`;
+  c.fillStyle = '#c9d1d9'; c.textAlign = 'left'; c.fillText(SCENE.file, W * 0.022, y0 + head / 2);
+  c.textAlign = 'right'; c.fillStyle = '#58a6ff'; c.fillText(paused ? 'paused · 30 fps' : 'running · 30 fps', W * 0.977, y0 + head / 2);
+  c.textAlign = 'left';
+  const st = editorState(t), bodyTop = y0 + head + lh * 0.4;
+  c.save(); c.beginPath(); c.rect(0, y0 + head + 1, W, eh - head); c.clip();
+  const first = Math.floor(st.top), frac = st.top - first, nVis = Math.ceil((eh - head) / lh) + 2;
+  const gutter = W * 0.058, cw = c.measureText('M').width;
+  for (let j = -1; j < nVis; j++){
+    const li = first + j, y = bodyTop + (j - frac) * lh + lh / 2;
+    if (li === st.cursor){ c.fillStyle = 'rgba(140,170,220,0.07)'; c.fillRect(0, y - lh / 2, W, lh); }
+    if (li < 0 || li >= SRC.length) continue;
+    c.textAlign = 'right'; c.fillStyle = li === st.cursor ? '#7d8796' : '#353e4c';
+    c.fillText(String(li + 1), gutter - cw * 0.6, y); c.textAlign = 'left';
+    let x = gutter + cw * 0.9;
+    for (const [txt, col] of TOK[li]){ c.fillStyle = col; c.fillText(txt, x, y); x += cw * txt.length; if (x > W) break; }
+  }
+  const g1 = c.createLinearGradient(0, y0 + head, 0, y0 + head + lh * 1.6);
+  g1.addColorStop(0, 'rgba(11,16,25,0.95)'); g1.addColorStop(1, 'rgba(11,16,25,0)');
+  c.fillStyle = g1; c.fillRect(0, y0 + head, W, lh * 1.6);
+  const g2 = c.createLinearGradient(0, H - lh * 2, 0, H);
+  g2.addColorStop(0, 'rgba(11,16,25,0)'); g2.addColorStop(1, 'rgba(11,16,25,0.95)');
+  c.fillStyle = g2; c.fillRect(0, H - lh * 2, W, lh * 2);
+  c.restore(); c.globalAlpha = 1;
+}
+
+/* ---------- laço ---------- */
+let t0 = performance.now(), last = 0, paused = false, pauseAt = 0;
+const QS = new URLSearchParams(location.search);
+if (QS.has('t')){ paused = true; pauseAt = parseFloat(QS.get('t')) || 0; }
+
+function frame(now){
+  requestAnimationFrame(frame);
+  if (now - last < 1000 / FPS - 2) return;
+  last = now;
+  const T = paused ? pauseAt : (now - t0) / 1000;
+  const t = T % SCENE.loop;
+  gclear();
+  const out = SCENE.frame(t, T);
+  const dim = out.dim == null ? 1 : out.dim;
+
+  const d = L.dpr, c = sctx;
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#000'; c.fillRect(0, 0, scn.width, scn.height);
+  c.setTransform(d, 0, 0, d, 0, 0);
+  if (out.bg){
+    const gr = c.createLinearGradient(0, 0, 0, L.sceneH);
+    for (const [k, rgb] of out.bg) gr.addColorStop(clamp(k, 0, 1), `rgb(${(rgb[0] * dim) | 0},${(rgb[1] * dim) | 0},${(rgb[2] * dim) | 0})`);
+    c.fillStyle = gr; c.fillRect(0, 0, L.W, L.sceneH);
+  }
+  if (out.paint) out.paint(c, dim);
+  c.font = `${L.fs.toFixed(2)}px ${MONO}`; c.textBaseline = 'middle'; c.textAlign = 'center';
+  let letters = 0;
+  for (let i = 0; i < G.n; i++){
+    const ch = G.ch[i]; if (!ch || ch === ' ') continue;
+    letters++;
+    c.fillStyle = `rgba(${G.r[i]},${G.g[i]},${G.b[i]},${(G.a[i] * dim).toFixed(3)})`;
+    c.fillText(ch, (i % G.cols + 0.5) * L.cw, (((i / G.cols) | 0) + 0.5) * L.ch);
+  }
+  gctx.setTransform(1, 0, 0, 1, 0, 0); gctx.clearRect(0, 0, glw.width, glw.height);
+  gctx.drawImage(scn, 0, 0, glw.width, glw.height);
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.setTransform(d, 0, 0, d, L.ox * d, L.oy * d);
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, L.W, L.H); ctx.clip();
+  ctx.drawImage(scn, 0, L.top, L.W, L.sceneH);
+  ctx.globalCompositeOperation = 'lighter'; ctx.imageSmoothingEnabled = true;
+  const gl = out.glow == null ? 0.8 : out.glow;
+  ctx.globalAlpha = 0.85 * gl; ctx.drawImage(glw, 0, L.top, L.W, L.sceneH);
+  ctx.globalAlpha = 0.4 * gl; ctx.drawImage(glw, -L.cw, L.top - L.ch * 0.5, L.W + 2 * L.cw, L.sceneH + L.ch);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  if (!WALL){
+    drawTop(ctx, t);
+    drawHUD(ctx, out.stats, letters, Math.max(0.35, dim));
+    drawEditor(ctx, t, Math.max(0.35, dim));
+  }
+  ctx.restore();
+}
+cv.addEventListener('click', () => {
+  const now = performance.now();
+  if (!paused){ pauseAt = (now - t0) / 1000; paused = true; }
+  else { t0 = now - pauseAt * 1000; paused = false; }
+});
+layout();
+if (SCENE.init) SCENE.init();
+requestAnimationFrame(frame);
+
+</script>
+</body>
+</html>

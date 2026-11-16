@@ -23,6 +23,7 @@
         <service
             android:name=".JellyWallpaper"
             android:label="@string/app_name"
+            android:process=":fundo"
             android:exported="true"
             android:permission="android.permission.BIND_WALLPAPER">
             <intent-filter>
