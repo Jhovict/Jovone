@@ -1,0 +1,46 @@
+name: Agua-Viva ASCII APK
+
+on:
+  push:
+    paths:
+      - 'agua-viva-android/**'
+      - '.github/workflows/agua-viva-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Compilar APK
+        working-directory: agua-viva-android
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          gradle assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../AguaVivaASCII.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AguaVivaASCII-apk
+          path: AguaVivaASCII.apk
+      - name: Publicar para baixar no celular
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: agua-viva
+          name: Água-Viva ASCII (papel de parede animado)
+          body: |
+            Baixe **AguaVivaASCII.apk** no celular Android e instale.
+            Abra o app e toque em **Definir como papel de parede**.
+            Atualizações: é só baixar de novo e instalar por cima.
+          files: AguaVivaASCII.apk
+          make_latest: false
+          overwrite_files: true
