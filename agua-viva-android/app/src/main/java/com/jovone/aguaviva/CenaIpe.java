@@ -61,11 +61,11 @@ public class CenaIpe extends Motor {
         }
         int[][] inks = {{0x7a2a0c, 0xff9a2a}, {0x6a140c, 0xff4a2a}, {0x7a5a0a, 0xffd23a}, {0x5a2a10, 0xe0702a}};
         for (Branch b : B){
-            if (!(b.tip || b.depth >= 4)) continue;
-            int cnt = b.tip ? 2 : 1;
+            if (!(b.tip || b.depth >= 3)) continue;
+            int cnt = b.tip ? 4 : (b.depth >= 4 ? 2 : 1);
             for (int k = 0; k < cnt; k++){
                 Cluster c = new Cluster();
-                c.b = b.id; c.ox = (R0.next() - 0.5f) * 2.4f; c.oy = (R0.next() - 0.5f) * 1.8f - 0.6f; c.r = 1.5f + 1.1f * R0.next();
+                c.b = b.id; c.ox = (R0.next() - 0.5f) * 3.4f; c.oy = (R0.next() - 0.5f) * 2.6f - 0.8f; c.r = 1.9f + 1.4f * R0.next();
                 c.z = R0.next(); c.seed = R0.next(); c.id = (int) (R0.next() * 1e9f);
                 c.appear = 5.6f + R0.next() * 2.6f; c.green = 12.2f + R0.next() * 1.8f; c.turn = 18.6f + R0.next() * 3.0f; c.gone = 21.5f + R0.next() * 3.6f;
                 int[] ink = inks[(int) (R0.next() * 4) % 4]; c.ink0 = ink[0]; c.ink1 = ink[1];
@@ -75,8 +75,8 @@ public class CenaIpe extends Motor {
         clusters.sort((a, b) -> Float.compare(a.z, b.z));
         for (int i = 0; i < clusters.size(); i++){
             Cluster c = clusters.get(i);
-            if (R0.next() < 0.75f){ Loose l = new Loose(); l.c = i; l.petal = true; l.t = 10.4f + R0.next() * 3.2f; l.ox = (R0.next() - 0.5f) * 3; l.oy = (R0.next() - 0.5f) * 2; l.seed = R0.next(); l.v = 4.2f + 2.0f * R0.next(); loose.add(l); }
-            for (int k = 0; k < 2; k++){ Loose l = new Loose(); l.c = i; l.petal = false; l.t = c.turn + 0.8f + R0.next() * (c.gone - c.turn); l.ox = (R0.next() - 0.5f) * 3; l.oy = (R0.next() - 0.5f) * 2; l.seed = R0.next(); l.v = 4.5f + 2.5f * R0.next(); loose.add(l); }
+            if (R0.next() < 0.35f){ Loose l = new Loose(); l.c = i; l.petal = true; l.t = 10.4f + R0.next() * 3.2f; l.ox = (R0.next() - 0.5f) * 3; l.oy = (R0.next() - 0.5f) * 2; l.seed = R0.next(); l.v = 4.2f + 2.0f * R0.next(); loose.add(l); }
+            for (int k = 0; k < 1; k++){ Loose l = new Loose(); l.c = i; l.petal = false; l.t = c.turn + 0.8f + R0.next() * (c.gone - c.turn); l.ox = (R0.next() - 0.5f) * 3; l.oy = (R0.next() - 0.5f) * 2; l.seed = R0.next(); l.v = 4.5f + 2.5f * R0.next(); loose.add(l); }
         }
         snow = new float[180][4];
         for (float[] s : snow){ s[0] = R0.next(); s[1] = 2.5f + 3.5f * R0.next(); s[2] = R0.next() * TAU; s[3] = R0.next(); }
@@ -108,9 +108,9 @@ public class CenaIpe extends Motor {
     }
 
     // mapeamento de unidades para a grade (definido a cada quadro)
-    float sc, cxm, GRr;
+    float sc, scY, cxm, GRr;
     float col(float X) { return cxm + X * sc * asp; }
-    float row(float Y) { return GRr + Y * sc; }
+    float row(float Y) { return GRr + Y * scY; }
 
     static final String BARK = "|!l1{}[]%#";
     static final String FOL = "..,::;*oo%&8@@#";
@@ -160,7 +160,8 @@ public class CenaIpe extends Motor {
 
     @Override protected void frame(float t, float T) {
         int GR = R - 6;
-        sc = Math.min((GR - 4) / extH, (C * 0.49f) / (extW * asp));
+        sc = Math.min((GR - 4) / extH, (C * 0.6f) / (extW * asp));
+        scY = Math.max(sc, Math.min((GR - R * 0.1f) / extH, sc * 1.6f));   // em tela alta, a árvore cresce para cima
         cxm = C * 0.5f; GRr = GR;
         float wind = windAt(t);
         float spring = sstep(5.5f, 8, t) * (1 - sstep(12.5f, 14.5f, t));
@@ -225,7 +226,7 @@ public class CenaIpe extends Motor {
             if (rad < 0.25f) continue;
             float sw = 0.3f * sin(t * 2.2f + cl.seed * 9) * (0.4f + wind);
             float X = ex[cl.b] + cl.ox + sw, Y = ey[cl.b] + cl.oy;
-            float c0 = col(X), r0 = row(Y), rr = rad * sc, rc = rr * asp;
+            float c0 = col(X), r0 = row(Y), rr = rad * scY * 0.9f, rc = rad * sc * asp * 1.1f;
             float toGreen = sstep(cl.green, cl.green + 1.6f, t), toAut = sstep(cl.turn, cl.turn + 1.6f, t);
             int dark = mix(mix(0xa02866, 0x0e4a22, toGreen), cl.ink0, toAut);
             int light = mix(mix(0xffb8e4, 0x9ef07a, toGreen), cl.ink1, toAut);
