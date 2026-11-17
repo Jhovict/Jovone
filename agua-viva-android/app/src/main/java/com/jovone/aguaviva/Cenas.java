@@ -9,8 +9,23 @@ import java.nio.charset.StandardCharsets;
 /** As animações do app. A escolha fica num arquivo,
  *  lido pelo app e pelo papel de parede (que roda em outro processo). */
 public final class Cenas {
-    public static final String[] IDS = {"agua-viva", "ipe", "vale", "aurora", "natal", "buraco-negro"};
-    public static final String[] NOMES = {"Água-viva", "Ipê · quatro estações", "Vale ao entardecer", "Aurora boreal", "Árvore de Natal", "Buraco negro"};
+    public static final String[] IDS = {"agua-viva", "ipe", "vale", "aurora", "natal", "buraco-negro",
+        "ipe-16bit-noite", "ipe-16bit-dia", "ipe-pontilhismo", "agua-viva-16bit-noite", "agua-viva-16bit-dia", "agua-viva-pontilhismo"};
+    public static final String[] NOMES = {"Água-viva", "Ipê · quatro estações", "Vale ao entardecer", "Aurora boreal", "Árvore de Natal", "Buraco negro",
+        "Ipê · 16 bits noite", "Ipê · 16 bits dia", "Ipê · pontilhismo", "Água-viva · 16 bits noite", "Água-viva · 16 bits fundo do mar", "Água-viva · pontilhismo"};
+
+    /** Cenas que vêm prontas em vídeo (res/raw) em vez de desenhadas ao vivo; 0 = desenhada. */
+    public static int video(int i) {
+        switch (i) {
+            case 6: return R.raw.ipe_16bit_noite;
+            case 7: return R.raw.ipe_16bit_dia;
+            case 8: return R.raw.ipe_pontilhismo;
+            case 9: return R.raw.aguaviva_16bit_noite;
+            case 10: return R.raw.aguaviva_16bit_dia;
+            case 11: return R.raw.aguaviva_pontilhismo;
+            default: return 0;
+        }
+    }
 
     private static File arquivo(Context c) { return new File(c.getFilesDir(), "cena.txt"); }
 

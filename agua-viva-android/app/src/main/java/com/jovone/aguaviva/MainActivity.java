@@ -10,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.Gravity;
@@ -19,6 +20,7 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 /** Tela do app: prévia da cena, setas para escolher e botão para definir como papel de parede. */
 public class MainActivity extends Activity {
@@ -38,6 +40,7 @@ public class MainActivity extends Activity {
     }
 
     private Previa previa;
+    private VideoView video;
     private TextView nome;
     private int cena;
 
@@ -49,6 +52,11 @@ public class MainActivity extends Activity {
 
         previa = new Previa(this);
         root.addView(previa);
+
+        video = new VideoView(this);                       // prévia das cenas que vêm em vídeo
+        video.setVisibility(View.GONE);
+        video.setOnPreparedListener(mp -> { mp.setLooping(true); mp.setVolume(0f, 0f); });
+        root.addView(video, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT, Gravity.CENTER));
 
         LinearLayout painel = new LinearLayout(this);
         painel.setOrientation(LinearLayout.VERTICAL);
@@ -120,7 +128,18 @@ public class MainActivity extends Activity {
         cena = i;
         nome.setText(Cenas.NOMES[i]);
         Cenas.escolher(this, i);
-        previa.usar(Cena.criar(i));
+        int v = Cenas.video(i);
+        if (v != 0){
+            previa.setVisibility(View.GONE);
+            video.setVisibility(View.VISIBLE);
+            video.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + v));
+            video.start();
+        } else {
+            video.stopPlayback();
+            video.setVisibility(View.GONE);
+            previa.setVisibility(View.VISIBLE);
+            previa.usar(Cena.criar(i));
+        }
     }
 
     private void definir() {
@@ -139,6 +158,12 @@ public class MainActivity extends Activity {
         }
     }
 
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (video != null && video.getVisibility() == View.VISIBLE) video.start();
+    }
 
     private int dp(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 }
