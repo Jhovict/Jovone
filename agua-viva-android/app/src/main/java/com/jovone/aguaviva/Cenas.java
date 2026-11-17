@@ -9,8 +9,8 @@ import java.nio.charset.StandardCharsets;
 /** As animações do app. A escolha fica num arquivo,
  *  lido pelo app e pelo papel de parede (que roda em outro processo). */
 public final class Cenas {
-    public static final String[] IDS = {"agua-viva", "ipe", "vale", "aurora", "natal"};
-    public static final String[] NOMES = {"Água-viva", "Ipê · quatro estações", "Vale ao entardecer", "Aurora boreal", "Árvore de Natal"};
+    public static final String[] IDS = {"agua-viva", "ipe", "vale", "aurora", "natal", "buraco-negro"};
+    public static final String[] NOMES = {"Água-viva", "Ipê · quatro estações", "Vale ao entardecer", "Aurora boreal", "Árvore de Natal", "Buraco negro"};
 
     private static File arquivo(Context c) { return new File(c.getFilesDir(), "cena.txt"); }
 

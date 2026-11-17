@@ -14,6 +14,7 @@ public interface Cena {
             case 2: return new CenaVale();
             case 3: return new CenaAurora();
             case 4: return new CenaNatal();
+            case 5: return new CenaBuracoNegro();
             default: return new CenaAguaViva();
         }
     }
